@@ -25,7 +25,8 @@
         "commit": "git-cz",
         "prepare": "husky install",
         "postinstall": "node ./src/config/install.js",
-        "doctoc": "doctoc --title '## Contents 📖' README.md"
+        "doctoc": "doctoc --title '## Contents 📖' README.md",
+        "semantic-release": "semantic-release"
     },
     "devDependencies": {
         "@commitlint/cli": "^16.2.3",
