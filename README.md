@@ -1,54 +1,122 @@
-# ts-netlinx README
+# genlinx
 
-This is the README for your project "ts-netlinx". After writing up a brief description, we recommend including the following sections.
+<div align="center">
 
-## Features
+</div>
 
-Describe specific features of your project including screenshots of your project in action. Image paths are relative to this README file.
+---
 
-For example if there is an image subfolder under your project project workspace:
+[![CI](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/actions/workflows/main.yml/badge.svg)](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/actions)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
+[![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV-Solutions-Ltd/genlinx)](#contributors)
+[![NPM](https://img.shields.io/npm/v/genlinx.svg)](https://www.npmjs.com/package/genlinx)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-\!\[feature X\]\(images/feature-x.png\)
+---
 
-> Tip: Many popular projects utilize animations. This is an excellent way to show off your project! We recommend short, focused animations that are easy to follow.
+A CLI utility for Netlinx projects 🚀🚀🚀
 
-## Requirements
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Contents 📖
 
-## Known Issues
+-   [Installation :zap:](#installation-zap)
+-   [Usage :rocket:](#usage-rocket)
+-   [Command Line :man_technologist:](#command-line-man_technologist)
+-   [Team :soccer:](#team-soccer)
+-   [Contributors :sparkles:](#contributors-sparkles)
+-   [LICENSE :balance_scale:](#license-balance_scale)
 
-Calling out known issues can help limit users opening duplicate issues against your project.
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Release Notes
+## Installation :zap:
 
-Users appreciate release notes as you update your project.
+Install genlinx globally with:
 
-### 1.0.0
+```bash
+npm install -g genlinx
 
-Initial release of ...
+# or
 
-### 1.0.1
+yarn global add genlinx
+```
 
-Fixed issue #.
+## Usage :rocket:
 
-### 1.1.0
+To run genlinx simply type:
 
-Added features X, Y, and Z.
+```bash
+genlinx
+```
 
------------------------------------------------------------------------------------------------------------
+<div align="center">
 
-## Working with Markdown
+</div>
 
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
+<!-- ## Output :package:
 
-*   Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-*   Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-*   Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
+genlinx will
 
-### For more information
+-->
 
-*   [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-*   [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+<!-- ## Command Line :man_technologist:
 
-**Enjoy!**
+```bash
+
+``` -->
+
+<!-- ## Run with Docker :whale:
+
+If you don't want to install nodejs or any node packages, use this method to run the genlinx from within a Docker container.
+
+```bash
+docker run -it -rm -v $(pwd):/usr/src/app genlinx:latest
+```
+
+> or
+
+You can download this bash script from [here](./bin/genlinx) which wraps the above command into a simple command.
+
+```bash
+genlinx
+``` -->
+
+## Team :soccer:
+
+This project is maintained by the following person(s) and a bunch of [awesome contributors](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/graphs/contributors).
+
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/damienbutt"><img src="https://avatars.githubusercontent.com/damienbutt?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Damien Butt</b></sub></a><br /></td>
+  </tr>
+</table>
+
+## Contributors :sparkles:
+
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
+
+Thanks go to these awesome people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://allcontributors.org) specification.
+Contributions of any kind are welcome!
+
+Check out the [contributing guide](CONTRIBUTING.md) for more information.
+
+## LICENSE :balance_scale:
+
+[MIT](LICENSE)
