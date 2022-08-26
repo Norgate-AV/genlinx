@@ -23,7 +23,8 @@
         "lint:fix": "eslint --fix .",
         "pretty:fix": "prettier --write .",
         "commit": "git-cz",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "postinstall": "node ./src/config/install.js"
     },
     "devDependencies": {
         "@commitlint/cli": "^16.2.3",
