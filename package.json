@@ -4,6 +4,13 @@
     "version": "0.0.0-development",
     "license": "MIT",
     "main": "./src/index.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Norgate-AV-Solutions-Ltd/genlinx.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Norgate-AV-Solutions-Ltd/genlinx/issues"
+    },
     "engines": {
         "node": ">=14"
     },
