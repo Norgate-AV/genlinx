@@ -24,7 +24,8 @@
         "pretty:fix": "prettier --write .",
         "commit": "git-cz",
         "prepare": "husky install",
-        "postinstall": "node ./src/config/install.js"
+        "postinstall": "node ./src/config/install.js",
+        "doctoc": "doctoc --title '## Contents 📖' README.md"
     },
     "devDependencies": {
         "@commitlint/cli": "^16.2.3",
