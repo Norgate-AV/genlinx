@@ -1,7 +1,7 @@
 # genlinx
 
 <div align="center">
-
+    <img src="./assets/img/AMX_NS_03.png" alt="netlinx-studio-logo" width="150" />
 </div>
 
 ---
