@@ -1,7 +1,6 @@
 {
-    "name": "ts-netlinx",
-    "displayName": "ts-netlinx",
-    "description": "",
+    "name": "genlinx",
+    "description": "A CLI utility for Netlinx projects",
     "version": "0.0.0-development",
     "license": "MIT",
     "main": "./src/index.ts",
