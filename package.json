@@ -26,7 +26,10 @@
         "prepare": "husky install",
         "postinstall": "node ./src/config/install.js",
         "doctoc": "doctoc --title '## Contents 📖' README.md",
-        "semantic-release": "semantic-release"
+        "semantic-release": "semantic-release",
+        "contrib:add": "all-contributors add",
+        "contrib:generate": "all-contributors generate",
+        "contrib:check": "all-contributors check"
     },
     "devDependencies": {
         "@commitlint/cli": "^16.2.3",
