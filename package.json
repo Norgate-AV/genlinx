@@ -36,6 +36,9 @@
         "@commitlint/config-conventional": "^17.0.3",
         "@semantic-release/changelog": "^6.0.1",
         "@semantic-release/git": "^10.0.1",
+        "@types/figlet": "^1.5.5",
+        "@types/fs-extra": "^9.0.13",
+        "@types/node": "^18.7.13",
         "all-contributors-cli": "^6.20.0",
         "cz-conventional-changelog": "3.3.0",
         "doctoc": "^2.2.0",
@@ -50,6 +53,7 @@
         "semantic-release": "^19.0.5"
     },
     "dependencies": {
+        "chalk": "^4.1.2",
         "commander": "^9.4.0",
         "esm": "^3.2.25",
         "figlet": "^1.5.2",
