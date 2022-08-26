@@ -6,12 +6,11 @@ jobs:
   build:
     name: Build, lint, and test on Node ${{ matrix.node-version }} and ${{ matrix.os }}
 
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 17.x]
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        node-version: [14.x, 16.x, 18.x]
 
     steps:
       - name: Checkout
@@ -24,3 +23,5 @@ jobs:
 
       - name: Install (with cache)
         uses: bahmutov/npm-install@v1
+        with:
+          install-command: yarn --frozen-lockfile --network-timeout 1000000
