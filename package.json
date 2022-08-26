@@ -3,7 +3,7 @@
     "description": "A CLI utility for Netlinx projects",
     "version": "0.0.0-development",
     "license": "MIT",
-    "main": "./src/index.ts",
+    "main": "src/index.js",
     "bin": {
         "@norgate-av/genlinx": "bin/genlinx",
         "genlinx": "bin/genlinx"
