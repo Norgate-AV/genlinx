@@ -1,6 +1,6 @@
 import { program, Option } from "commander";
 import { version } from "../package.json";
-import cfg from "./commands/cfg";
+import { archive, build, cfg } from "./commands";
 
 export function cli(args) {
     program
@@ -59,7 +59,7 @@ export function cli(args) {
             ".",
         )
         .option("-o, --output <string>", "The output file", "project.zip")
-        .action(() => console.log("Not implemented"));
+        .action((apw, options) => archive.create(apw, options));
 
     program
         .command("build")
@@ -68,7 +68,7 @@ export function cli(args) {
             "Netlinx build CFG File <string>",
             "The CFG file to build from",
         )
-        .action(() => console.log("Not implemented"));
+        .action((cfg, options) => build.build(cfg, options));
 
     program.parse(args);
 
