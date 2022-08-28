@@ -27,6 +27,7 @@ export const defaultAppConfig = {
         },
         executable: {
             path: "C:\\Windows\\System32\\cmd.exe",
+            arg: "/c",
         },
     },
 };
