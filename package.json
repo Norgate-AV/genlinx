@@ -5,7 +5,6 @@
     "license": "MIT",
     "main": "bin/genlinx",
     "bin": {
-        "@norgate-av/genlinx": "bin/genlinx",
         "genlinx": "bin/genlinx"
     },
     "repository": {
