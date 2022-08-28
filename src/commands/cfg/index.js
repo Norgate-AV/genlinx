@@ -1,8 +1,8 @@
 import fs from "fs-extra";
-import { APW, CfgBuilder } from "../../lib";
-import { getAppConfig } from "../../lib/utils";
+import { APW, CfgBuilder } from "../../../lib";
+import { getAppConfig } from "../../../lib/utils";
 
-export default {
+export const cfg = {
     create(filePath, options) {
         try {
             const config = getAppConfig();
@@ -17,3 +17,5 @@ export default {
         }
     },
 };
+
+export default cfg;
