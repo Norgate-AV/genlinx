@@ -25,6 +25,9 @@ export const defaultAppConfig = {
         nlrc: {
             path: "C:\\Program Files (x86)\\Common Files\\AMXShare\\COM\\NLRC.exe",
         },
+        executable: {
+            path: "C:\\Windows\\System32\\cmd.exe",
+        },
     },
 };
 
