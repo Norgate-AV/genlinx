@@ -1,5 +1,5 @@
 {
-    "name": "genlinx",
+    "name": "@norgate-av/genlinx",
     "description": "A CLI utility for Netlinx projects",
     "version": "0.0.0-development",
     "license": "MIT",
