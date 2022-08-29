@@ -5,7 +5,7 @@ import { archive, build, cfg } from "./commands";
 export function cli(args) {
     program
         .name("genlinx")
-        .description("CLI helper utility for Netlinx projects")
+        .description("cli helper utility for NetLinx projects 🚀🚀🚀")
         .version(version);
 
     program
