@@ -3,7 +3,7 @@ export const defaultAppConfig = {
         outputLogFile: "build.log",
         outputLogFileOption: "N",
         outputLogConsoleOption: true,
-        buildWithDebug: false,
+        buildWithDebugInformation: false,
         buildWithSource: false,
         includePath: [
             "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs\\",
