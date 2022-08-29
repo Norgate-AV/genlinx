@@ -53,9 +53,9 @@ export function cli(args) {
 
     program
         .command("build")
-        .description("Builds a Netlinx project from a CFG file")
+        .description("build a NetLinx project from a CFG file")
         .argument(
-            "Netlinx build CFG File <string>",
+            "NetLinx build CFG File <string>",
             "The CFG file to build from",
         )
         .action((cfg, options) => build.build(cfg, options));
