@@ -11,7 +11,7 @@ export const build = {
             const { executable } = config.build;
             await execa(
                 executable.path,
-                [executable.args, command.path, command.args],
+                [...executable.args, command.path, ...command.args],
                 {
                     cwd: process.cwd(),
                 },
