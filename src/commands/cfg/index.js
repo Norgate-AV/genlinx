@@ -1,13 +1,17 @@
 import fs from "fs-extra";
-import { APW, CfgBuilder } from "../../../lib";
+import { APW, CfgBuilder, Options } from "../../../lib";
 import { getAppConfig } from "../../../lib/utils";
 
 export const cfg = {
-    async create(filePath, options) {
+    async create(filePath, cliOptions) {
         try {
             const config = getAppConfig();
+
             const apw = new APW(filePath);
-            const cfgBuilder = new CfgBuilder(apw, options, config);
+
+            const options = Options.getCfgOptions(cliOptions, config.cfg);
+
+            const cfgBuilder = new CfgBuilder(apw, options);
             const cfg = cfgBuilder.build();
 
             await fs.writeFile(`${apw.id}.build.cfg`, cfg);
