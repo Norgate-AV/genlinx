@@ -6,7 +6,7 @@ export function cli(args) {
     program
         .name("genlinx")
         .description("cli helper utility for NetLinx projects 🚀🚀🚀")
-        .version(version);
+        .version(version, "-v, --version");
 
     program
         .command("cfg")
