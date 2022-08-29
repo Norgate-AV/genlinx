@@ -1,5 +1,5 @@
 export const archive = {
-    create(filePath, options) {
+    async create(filePath, options) {
         try {
             console.log("archive command");
             console.log(filePath);
