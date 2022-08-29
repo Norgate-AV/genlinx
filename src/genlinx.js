@@ -38,7 +38,7 @@ export function cli(args) {
 
     program
         .command("archive")
-        .description("Generates a Netlinx workspace archive")
+        .description("generate a NetLinx workspace archive")
         .argument(
             "APW File <string>",
             "The APW file to generate the archive for",
