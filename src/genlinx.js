@@ -10,40 +10,30 @@ export function cli(args) {
 
     program
         .command("cfg")
-        .description("Generates a Netlinx build CFG file")
-        .argument(
-            "APW File <string>",
-            "The APW file to generate the build CFG for",
+        .description("generate a NetLinx build CFG file")
+        .argument("apw file <string>", "apw file to generate the build CFG for")
+        .option(
+            "-d, --root-directory <string>",
+            "root directory reference",
+            ".",
         )
-        .option("-d, --dir <string>", "Main AXS Root Directory Reference", ".")
-        .option("-o, --output <string>", "The output file", "build.cfg")
-        .option("-lf, --log-file <string>", "Output log file name", "")
+        .option("-o, --output-file <string>", "output file name")
+        .option("-L, --output-log-file <string>", "output log file name")
         .addOption(
             new Option(
-                "-lo, --log-file-option <string>",
-                "Output log file option",
-            )
-                .choices(["A", "N"])
-                .default("N"),
+                "-O, --output-log-file-option <string>",
+                "output log file option",
+            ).choices(["A", "N"]),
         )
-        .option("-lc, --log-console-option", "Output log to the console", false)
+        .option("-C, --output-log-console-option", "output log to console")
         .option(
-            "-bd, --build-with-debug",
-            "Build with debug information",
-            false,
+            "-D, --build-with-debug-information",
+            "build with debug information",
         )
-        .option("-bs, --build-with-source", "Build with source", false)
-        .option(
-            "-i, --include-path <string...>",
-            "Additional include paths",
-            "",
-        )
-        .option("-m, --module-path <string...>", "Additional module paths", "")
-        .option(
-            "-l, --library-path <string...>",
-            "Additional library paths",
-            "",
-        )
+        .option("-S, --build-with-source", "build with source")
+        .option("-i, --include-path <string...>", "additional include paths")
+        .option("-m, --module-path <string...>", "additional module paths")
+        .option("-l, --library-path <string...>", "additional library paths")
         .action((apw, options) => cfg.create(apw, options));
 
     program
