@@ -9,12 +9,12 @@ export const cfg = {
 
             const apw = new APW(filePath);
 
-            const options = Options.getCfgOptions(cliOptions, config.cfg);
+            const options = Options.getCfgOptions(apw, cliOptions, config.cfg);
 
             const cfgBuilder = new CfgBuilder(apw, options);
             const cfg = cfgBuilder.build();
 
-            await fs.writeFile(`${apw.id}.build.cfg`, cfg);
+            await fs.writeFile(options.outputFile, cfg);
         } catch (error) {
             console.error(error);
             process.exit(1);
