@@ -1,5 +1,6 @@
 export const defaultAppConfig = {
     cfg: {
+        outputFile: "build.cfg",
         outputLogFile: "build.log",
         outputLogFileOption: "N",
         outputLogConsoleOption: true,
