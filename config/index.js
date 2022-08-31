@@ -19,7 +19,9 @@ export const defaultAppConfig = {
         ],
         libraryPath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"],
     },
-    archive: {},
+    archive: {
+        outputFile: "archive.zip",
+    },
     build: {
         nlrc: {
             path: "C:\\Program Files (x86)\\Common Files\\AMXShare\\COM\\NLRC.exe",
