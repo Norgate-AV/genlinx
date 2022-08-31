@@ -61,11 +61,76 @@ genlinx will
 
 -->
 
-<!-- ## Command Line :man_technologist:
+## Command Line :man_technologist:
 
 ```bash
+Usage: genlinx [options] [command]
 
-``` -->
+cli helper utility for NetLinx projects 🚀🚀🚀
+
+Options:
+  -v, --version                          output the version number
+  -h, --help                             display help for command
+
+Commands:
+  cfg [options] <apw file <string>>      generate a NetLinx build CFG file
+  archive [options] <apw file <string>>  generate a NetLinx workspace zip archive
+  build <cfg file <string>>              build a NetLinx project from a CFG file
+  help [command]                         display help for command
+```
+
+### cfg
+
+```bash
+Usage: genlinx cfg [options] <apw file <string>>
+
+generate a NetLinx build CFG file
+
+Arguments:
+  apw file <string>                      apw file to generate the CFG from
+
+Options:
+  -d, --root-directory <string>          root directory reference (default: ".")
+  -o, --output-file <string>             output file name
+  -L, --output-log-file <string>         output log file name
+  -O, --output-log-file-option <string>  output log file option (choices: "A", "N")
+  -C, --output-log-console-option        output log to console
+  -D, --build-with-debug-information     build with debug information
+  -S, --build-with-source                build with source
+  -i, --include-path <string...>         additional include paths
+  -m, --module-path <string...>          additional module paths
+  -l, --library-path <string...>         additional library paths
+  -h, --help                             display help for command
+```
+
+### archive
+
+```bash
+Usage: genlinx archive [options] <apw file <string>>
+
+generate a NetLinx workspace zip archive
+
+Arguments:
+  apw file <string>           apw file to generate the archive from
+
+Options:
+  -o, --output-file <string>  output file name
+  -h, --help                  display help for command
+```
+
+### build
+
+```bash
+Usage: genlinx build [options] <cfg file <string>>
+
+build a NetLinx project from a CFG file
+
+Arguments:
+  cfg file <string>  cfg file to build from
+
+Options:
+  -h, --help         display help for command
+```
 
 <!-- ## Run with Docker :whale:
 
@@ -73,13 +138,13 @@ If you don't want to install nodejs or any node packages, use this method to run
 
 ```bash
 docker run -it -rm -v $(pwd):/usr/src/app genlinx:latest
-```
+````
 
 > or
 
 You can download this bash script from [here](./bin/genlinx) which wraps the above command into a simple command.
 
-```bash
+````bash
 genlinx
 ``` -->
 
@@ -120,3 +185,7 @@ Check out the [contributing guide](CONTRIBUTING.md) for more information.
 ## LICENSE :balance_scale:
 
 [MIT](LICENSE)
+
+```
+
+```
