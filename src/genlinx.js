@@ -41,6 +41,22 @@ export function cli(args) {
         .description("generate a NetLinx workspace zip archive")
         .argument("apw file <string>", "apw file to generate the archive from")
         .option("-o, --output-file <string>", "output file name")
+        .option(
+            "-S, --include-compiled-source-files",
+            "include compiled source files",
+        )
+        .option(
+            "-M, --include-compiled-module-files",
+            "include compiled module files",
+        )
+        .option(
+            "-N, --include-files-not-in-workspace",
+            "include files not in workspace",
+        )
+        .option(
+            "-l, --extra-file-locations <string...>",
+            "extra file locations",
+        )
         .action((apw, options) => archive.create(apw, options));
 
     program
