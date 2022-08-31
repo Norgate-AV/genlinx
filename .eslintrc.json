@@ -24,6 +24,8 @@
         "no-restricted-syntax": "off",
         "spaced-comment": "off",
         "no-global-assign": "off",
-        "import/prefer-default-export": "off"
+        "import/prefer-default-export": "off",
+        "no-continue": "off",
+        "prefer-destructuring": "off"
     }
 }
