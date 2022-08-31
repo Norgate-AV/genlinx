@@ -11,7 +11,7 @@ export function cli(args) {
     program
         .command("cfg")
         .description("generate a NetLinx build CFG file")
-        .argument("apw file <string>", "apw file to generate the build CFG for")
+        .argument("apw file <string>", "apw file to generate the CFG from")
         .option(
             "-d, --root-directory <string>",
             "root directory reference",
