@@ -21,6 +21,8 @@ export const defaultAppConfig = {
     },
     archive: {
         outputFile: "archive.zip",
+        includeCompiledSourceFiles: true,
+        includeCompiledModuleFiles: true,
     },
     build: {
         nlrc: {
