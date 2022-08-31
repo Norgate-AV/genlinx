@@ -24,6 +24,10 @@ export const defaultAppConfig = {
         includeCompiledSourceFiles: true,
         includeCompiledModuleFiles: true,
         includeFilesNotInWorkspace: true,
+        extraFileLocations: [
+            "C:\\Program Files (x86)\\Common Files\\AMXShare",
+            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
+        ],
     },
     build: {
         nlrc: {
