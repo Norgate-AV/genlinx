@@ -38,17 +38,9 @@ export function cli(args) {
 
     program
         .command("archive")
-        .description("generate a NetLinx workspace archive")
-        .argument(
-            "APW File <string>",
-            "The APW file to generate the archive for",
-        )
-        .option(
-            "-d, --dir <string>",
-            "The root directory the archive should use",
-            ".",
-        )
-        .option("-o, --output <string>", "The output file", "project.zip")
+        .description("generate a NetLinx workspace zip archive")
+        .argument("apw file <string>", "apw file to generate the archive from")
+        .option("-o, --output-file <string>", "output file name")
         .action((apw, options) => archive.create(apw, options));
 
     program
