@@ -11,14 +11,11 @@ export const build = {
 
             const command = NLRC.getCfgBuildCommand(filePath, options);
 
-            const { executable } = options;
-            await execa(
-                executable.path,
-                [...executable.args, command.path, ...command.args],
-                {
-                    cwd: process.cwd(),
-                },
-            );
+            const { shell } = options;
+            execa(command.path, [...command.args], {
+                shell: shell.path,
+                windowsVerbatimArguments: true,
+            }).stdout.pipe(process.stdout);
         } catch (error) {
             console.error(error);
             process.exit(1);
