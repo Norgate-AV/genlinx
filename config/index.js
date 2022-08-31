@@ -27,7 +27,7 @@ export const defaultAppConfig = {
                 cfg: "-CFG",
             },
         },
-        executable: {
+        shell: {
             path: "C:\\Windows\\System32\\cmd.exe",
             args: ["/c"],
         },
