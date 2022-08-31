@@ -25,6 +25,10 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 -   [Installation :zap:](#installation-zap)
 -   [Usage :rocket:](#usage-rocket)
 -   [Command Line :man_technologist:](#command-line-man_technologist)
+    -   [cfg](#cfg)
+    -   [archive](#archive)
+    -   [build](#build)
+-   [Configuration :gear:](#configuration-gear)
 -   [Team :soccer:](#team-soccer)
 -   [Contributors :sparkles:](#contributors-sparkles)
 -   [LICENSE :balance_scale:](#license-balance_scale)
@@ -132,6 +136,51 @@ Options:
   -h, --help         display help for command
 ```
 
+## Configuration :gear:
+
+A configuration file will be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx.
+
+Options passed by via the CLI will override the configuration file where applicable. However, additional include, module and library file paths passed via the CLI in relation to the `cfg` command will be appended to the corresponding path lists from the configuration file.
+
+```json
+{
+    "cfg": {
+        "outputFile": "build.cfg",
+        "outputLogFile": "build.log",
+        "outputLogFileOption": "N",
+        "outputLogConsoleOption": true,
+        "buildWithDebugInformation": false,
+        "buildWithSource": false,
+        "includePath": [
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
+            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes"
+        ],
+        "modulePath": [
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
+            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
+            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
+            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
+            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx"
+        ],
+        "libraryPath": ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"]
+    },
+    "archive": {
+        "outputFile": "archive.zip"
+    },
+    "build": {
+        "nlrc": {
+            "path": "C:\\Program Files (x86)\\Common Files\\AMXShare\\COM\\NLRC.exe",
+            "option": {
+                "cfg": "-CFG"
+            }
+        },
+        "shell": {
+            "path": "C:\\Windows\\System32\\cmd.exe"
+        }
+    }
+}
+```
+
 <!-- ## Run with Docker :whale:
 
 If you don't want to install nodejs or any node packages, use this method to run the genlinx from within a Docker container.
@@ -185,7 +234,3 @@ Check out the [contributing guide](CONTRIBUTING.md) for more information.
 ## LICENSE :balance_scale:
 
 [MIT](LICENSE)
-
-```
-
-```
