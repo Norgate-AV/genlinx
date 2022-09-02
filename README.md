@@ -115,11 +115,15 @@ Usage: genlinx archive [options] <apw file <string>>
 generate a NetLinx workspace zip archive
 
 Arguments:
-  apw file <string>           apw file to generate the archive from
+  apw file <string>                       apw file to generate the archive from
 
 Options:
-  -o, --output-file <string>  output file name
-  -h, --help                  display help for command
+  -o, --output-file <string>              output file name
+  -S, --include-compiled-source-files     include compiled source files
+  -M, --include-compiled-module-files     include compiled module files
+  -N, --include-files-not-in-workspace    include files not in workspace
+  -l, --extra-file-locations <string...>  extra file locations
+  -h, --help                              display help for command
 ```
 
 ### build
