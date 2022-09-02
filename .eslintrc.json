@@ -26,6 +26,7 @@
         "no-global-assign": "off",
         "import/prefer-default-export": "off",
         "no-continue": "off",
-        "prefer-destructuring": "off"
+        "prefer-destructuring": "off",
+        "no-case-declarations": "off"
     }
 }
