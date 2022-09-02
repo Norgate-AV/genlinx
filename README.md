@@ -40,11 +40,11 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 Install genlinx globally with:
 
 ```bash
-npm install -g genlinx
+npm install -g @norgate-av/genlinx
 
 # or
 
-yarn global add genlinx
+yarn global add @norgate-av/genlinx
 ```
 
 ## Usage :rocket:
