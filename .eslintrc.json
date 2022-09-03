@@ -27,6 +27,7 @@
         "import/prefer-default-export": "off",
         "no-continue": "off",
         "prefer-destructuring": "off",
-        "no-case-declarations": "off"
+        "no-case-declarations": "off",
+        "import/no-cycle": "off"
     }
 }
