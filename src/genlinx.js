@@ -54,8 +54,8 @@ export function cli(args) {
             "include files not in workspace",
         )
         .option(
-            "-l, --extra-file-locations <string...>",
-            "extra file locations",
+            "-l, --extra-file-search-locations <string...>",
+            "extra file locations to search",
         )
         .action((apw, options) => archive.create(apw, options));
 
