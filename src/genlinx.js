@@ -57,6 +57,10 @@ export function cli(args) {
             "-l, --extra-file-search-locations <string...>",
             "extra file locations to search",
         )
+        .option(
+            "-p, --extra-file-archive-location <string>",
+            "location to place extra files in the archive",
+        )
         .action((apw, options) => archive.create(apw, options));
 
     program
