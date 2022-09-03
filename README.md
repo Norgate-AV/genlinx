@@ -170,7 +170,15 @@ Options passed by via the CLI will override the configuration file where applica
         "libraryPath": ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"]
     },
     "archive": {
-        "outputFile": "archive.zip"
+        "outputFile": "archive.zip",
+        "includeCompiledSourceFiles": true,
+        "includeCompiledModuleFiles": true,
+        "includeFilesNotInWorkspace": true,
+        "extraFileSearchLocations": [
+            "C:\\Program Files (x86)\\Common Files\\AMXShare",
+            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18"
+        ],
+        "extraFileArchiveLocation": ".genlinx"
     },
     "build": {
         "nlrc": {
