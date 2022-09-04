@@ -29,6 +29,10 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     -   [archive](#archive)
     -   [build](#build)
 -   [Configuration :gear:](#configuration-gear)
+    -   [Global](#global)
+    -   [Local](#local)
+        -   [Example](#example)
+    -   [Command Line](#command-line)
 -   [Team :soccer:](#team-soccer)
 -   [Contributors :sparkles:](#contributors-sparkles)
 -   [LICENSE :balance_scale:](#license-balance_scale)
@@ -143,9 +147,11 @@ Options:
 
 ## Configuration :gear:
 
-A configuration file will be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx.
+### Global
 
-Options passed by via the CLI will override the configuration file where applicable. However, additional include, module and library file paths passed via the CLI in relation to the `cfg` command will be appended to the corresponding path lists from the configuration file.
+A global configuration file will be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx. This file can be edited to change the default values for the commands options.
+
+If you would like to use a different location to store the global configuration file, you can set the `GENLINX_CONFIG_DIR` environment variable to the path of directory you would like to use. This directory must contain the `config.json` file.
 
 ```json
 {
@@ -193,6 +199,35 @@ Options passed by via the CLI will override the configuration file where applica
     }
 }
 ```
+
+### Local
+
+A local configuration file can be used to override parts of global configuration file. This file should be placed in the same directory as the `apw` file and should be named `.genlinxrc.json`. The local configuration file will override only the parts you define. You don't have to redefine the entire configuration.
+
+#### Example
+
+To override the global configuration and not include compiled source or module files in the archive for a particular project, create a `.genlinxrc.json` file in the same directory as the `apw` file and add the following:
+
+```json
+{
+    "archive": {
+        "includeCompiledSourceFiles": false,
+        "includeCompiledModuleFiles": false
+    }
+}
+```
+
+### Command Line
+
+Options passed by via the CLI have the highest precedence and will override any configuration file options. However, additional paths passed via the CLI will be appended to the configuration file paths.
+
+### Precedence
+
+The precedence of the configuration options is as follows:
+
+1. Command Line
+2. Local Configuration File
+3. Global Configuration File
 
 <!-- ## Run with Docker :whale:
 
