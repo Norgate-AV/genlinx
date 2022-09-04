@@ -1,4 +1,4 @@
-export const defaultAppConfig = {
+export const defaultGlobalAppConfig = {
     cfg: {
         outputFile: "build.cfg",
         outputLogFile: "build.log",
@@ -43,4 +43,4 @@ export const defaultAppConfig = {
     },
 };
 
-export default defaultAppConfig;
+export default defaultGlobalAppConfig;

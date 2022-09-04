@@ -1,13 +1,16 @@
 import execa from "execa";
 import { NLRC, Options } from "../../../lib";
-import { getAppConfig } from "../../../lib/utils";
+import { getGlobalAppConfig } from "../../../lib/utils";
 
 export const build = {
     async build(filePath, cliOptions) {
         try {
-            const config = getAppConfig();
+            const globalConfig = getGlobalAppConfig();
 
-            const options = Options.getBuildOptions(cliOptions, config.build);
+            const options = Options.getBuildOptions(
+                cliOptions,
+                globalConfig.build,
+            );
 
             const command = NLRC.getCfgBuildCommand(filePath, options);
 
