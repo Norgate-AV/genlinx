@@ -1,17 +1,19 @@
 import fs from "fs-extra";
 import { APW, CfgBuilder, Options } from "../../../lib";
-import { getGlobalAppConfig } from "../../../lib/utils";
+import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
 
 export const cfg = {
     async create(filePath, cliOptions) {
         try {
             const globalConfig = getGlobalAppConfig();
+            const localConfig = getLocalAppConfig(filePath);
 
             const apw = new APW(filePath);
 
             const options = Options.getCfgOptions(
                 apw,
                 cliOptions,
+                localConfig.cfg ? localConfig.cfg : {},
                 globalConfig.cfg,
             );
 

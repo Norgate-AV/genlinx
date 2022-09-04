@@ -1,16 +1,18 @@
 import { APW, ArchiveBuilder, Options } from "../../../lib";
-import { getGlobalAppConfig } from "../../../lib/utils";
+import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
 
 export const archive = {
     async create(filePath, cliOptions) {
         try {
             const globalConfig = getGlobalAppConfig();
+            const localConfig = getLocalAppConfig(filePath);
 
             const apw = new APW(filePath);
 
             const options = Options.getArchiveOptions(
                 apw,
                 cliOptions,
+                localConfig.archive ? localConfig.archive : {},
                 globalConfig.archive,
             );
 
