@@ -13,7 +13,7 @@ export const cfg = {
             const options = Options.getCfgOptions(
                 apw,
                 cliOptions,
-                localConfig.cfg ? localConfig.cfg : {},
+                localConfig.cfg,
                 globalConfig.cfg,
             );
 

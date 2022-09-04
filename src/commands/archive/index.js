@@ -12,7 +12,7 @@ export const archive = {
             const options = Options.getArchiveOptions(
                 apw,
                 cliOptions,
-                localConfig.archive ? localConfig.archive : {},
+                localConfig.archive,
                 globalConfig.archive,
             );
 

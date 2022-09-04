@@ -10,7 +10,7 @@ export const build = {
 
             const options = Options.getBuildOptions(
                 cliOptions,
-                localConfig.build ? localConfig.build : {},
+                localConfig.build,
                 globalConfig.build,
             );
 
