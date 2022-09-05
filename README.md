@@ -28,11 +28,13 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     -   [cfg](#cfg)
     -   [archive](#archive)
     -   [build](#build)
+    -   [config](#config)
 -   [Configuration :gear:](#configuration-gear)
     -   [Global](#global)
     -   [Local](#local)
         -   [Example](#example)
     -   [Command Line](#command-line)
+    -   [Precedence](#precedence)
 -   [Team :soccer:](#team-soccer)
 -   [Contributors :sparkles:](#contributors-sparkles)
 -   [LICENSE :balance_scale:](#license-balance_scale)
@@ -84,6 +86,7 @@ Commands:
   cfg [options] <apw file <string>>      generate a NetLinx build CFG file
   archive [options] <apw file <string>>  generate a NetLinx workspace zip archive
   build <cfg file <string>>              build a NetLinx project from a CFG file
+  config [options]                       edit configuration properties for genlinx
   help [command]                         display help for command
 ```
 
@@ -143,6 +146,19 @@ Arguments:
 
 Options:
   -h, --help         display help for command
+```
+
+### config
+
+```bash
+Usage: genlinx config [options]
+
+edit configuration properties for genlinx
+
+Options:
+  -g, --global  edit the global configuration
+  -l, --local   edit the local configuration
+  -h, --help    display help for command
 ```
 
 ## Configuration :gear:
