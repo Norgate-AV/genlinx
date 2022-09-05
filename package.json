@@ -5,6 +5,7 @@
     "license": "MIT",
     "main": "bin/genlinx",
     "files": [
+        "assets",
         "bin",
         "config",
         "lib",
