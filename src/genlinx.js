@@ -69,6 +69,12 @@ export function cli(args) {
         .argument("cfg file <string>", "cfg file to build from")
         .action((cfg, options) => build.build(cfg, options));
 
+    program
+        .command("config")
+        .description("edit configuration properties for genlinx")
+        .option("-g, --global", "edit the global configuration")
+        .option("-l, --local", "edit the local configuration");
+
     program.parse(args);
 
     if (!args[2]) {
