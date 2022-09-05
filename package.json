@@ -4,6 +4,13 @@
     "version": "0.0.0-development",
     "license": "MIT",
     "main": "bin/genlinx",
+    "files": [
+        "bin",
+        "config",
+        "lib",
+        "scripts",
+        "src"
+    ],
     "bin": {
         "genlinx": "bin/genlinx"
     },
