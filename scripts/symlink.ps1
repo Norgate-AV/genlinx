@@ -2,7 +2,7 @@ Clear-Host
 Set-Location -Path $PSScriptRoot
 
 try {
-    $files = Get-ChildItem *.axs, *.jar, *.tko, *.xdd -File -Recurse -ErrorAction Stop
+    $files = Get-ChildItem *.axi *.axs, *.jar, *.tko, *.xdd -File -Recurse -ErrorAction Stop
     if (!$files) { Write-Host "No files found"; exit }
 
     if (Test-Path -Path .\.env) {
