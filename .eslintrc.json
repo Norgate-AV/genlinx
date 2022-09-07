@@ -29,6 +29,7 @@
         "prefer-destructuring": "off",
         "no-case-declarations": "off",
         "import/no-cycle": "off",
-        "no-param-reassign": "off"
+        "no-param-reassign": "off",
+        "no-dupe-class-members": "off"
     }
 }
