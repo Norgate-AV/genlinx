@@ -26,8 +26,7 @@ export const build = {
             childProcess.stdout.pipe(process.stdout);
 
             const { stdout } = await childProcess;
-            if (stdout.test(/ERROR:/gm)) {
-                // An error occurred somewhere in the build process.
+            if (/ERROR:/gm.test(stdout)) {
                 const errorPattern = /(ERROR: (?<message>.+))/gm;
                 const errorMatches = stdout.matchAll(errorPattern);
 
