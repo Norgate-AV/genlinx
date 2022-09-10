@@ -25,9 +25,9 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 -   [Installation :zap:](#installation-zap)
 -   [Usage :rocket:](#usage-rocket)
 -   [Command Line :man_technologist:](#command-line-man_technologist)
-    -   [cfg](#cfg)
     -   [archive](#archive)
     -   [build](#build)
+    -   [cfg](#cfg)
     -   [config](#config)
 -   [Configuration :gear:](#configuration-gear)
     -   [Global](#global)
@@ -83,14 +83,54 @@ Options:
   -h, --help                             display help for command
 
 Commands:
-  cfg [options] <apw file <string>>      generate a NetLinx build CFG file
   archive [options] <apw file <string>>  generate a NetLinx workspace zip archive
   build <cfg file <string>>              build a NetLinx project from a CFG file
+  cfg [options] <apw file <string>>      generate NetLinx build CFG files
   config [options]                       edit configuration properties for genlinx
   help [command]                         display help for command
 ```
 
+### archive
+
+Generate a NetLinx workspace zip archive.
+
+```bash
+Usage: genlinx archive [options] <apw file <string>>
+
+generate a NetLinx workspace zip archive
+
+Arguments:
+  apw file <string>                              apw file to generate the archive from
+
+Options:
+  -o, --output-file <string>                     output file name
+  -S, --include-compiled-source-files            include compiled source files
+  -M, --include-compiled-module-files            include compiled module files
+  -N, --include-files-not-in-workspace           include files not in workspace
+  -l, --extra-file-search-locations <string...>  extra file locations to search
+  -p, --extra-file-archive-location <string>     location to place extra files in the archive
+  -h, --help                                     display help for command
+```
+
+### build
+
+Build a NetLinx project from a CFG file
+
+```bash
+Usage: genlinx build [options] <cfg file <string>>
+
+build a NetLinx project from a CFG file
+
+Arguments:
+  cfg file <string>  cfg file to build from
+
+Options:
+  -h, --help         display help for command
+```
+
 ### cfg
+
+Generate a NetLinx build CFG file
 
 ```bash
 Usage: genlinx cfg [options] <apw file <string>>
@@ -114,51 +154,24 @@ Options:
   -h, --help                             display help for command
 ```
 
-### archive
-
-```bash
-Usage: genlinx archive [options] <apw file <string>>
-
-generate a NetLinx workspace zip archive
-
-Arguments:
-  apw file <string>                              apw file to generate the archive from
-
-Options:
-  -o, --output-file <string>                     output file name
-  -S, --include-compiled-source-files            include compiled source files
-  -M, --include-compiled-module-files            include compiled module files
-  -N, --include-files-not-in-workspace           include files not in workspace
-  -l, --extra-file-search-locations <string...>  extra file locations to search
-  -p, --extra-file-archive-location <string>     location to place extra files in the archive
-  -h, --help                                     display help for command
-```
-
-### build
-
-```bash
-Usage: genlinx build [options] <cfg file <string>>
-
-build a NetLinx project from a CFG file
-
-Arguments:
-  cfg file <string>  cfg file to build from
-
-Options:
-  -h, --help         display help for command
-```
-
 ### config
 
+Edit configuration properties for genlinx
+
 ```bash
-Usage: genlinx config [options]
+Usage: genlinx config [options] [command]
 
 edit configuration properties for genlinx
 
 Options:
-  -g, --global  edit the global configuration
-  -l, --local   edit the local configuration
-  -h, --help    display help for command
+  -g, --global                               edit the global configuration
+  -l, --local                                edit the local configuration
+  -h, --help                                 display help for command
+
+Commands:
+  set <key <string>> <value(s) <string...>>  set configuration properties for genlinx
+  get <key <string>>                         get configuration properties for genlinx
+  help [command]                             display help for command
 ```
 
 ## Configuration :gear:
