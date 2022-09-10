@@ -45,6 +45,7 @@
         "@types/adm-zip": "^0.5.0",
         "@types/figlet": "^1.5.5",
         "@types/fs-extra": "^9.0.13",
+        "@types/inquirer": "^9.0.1",
         "@types/node": "^18.7.15",
         "all-contributors-cli": "^6.20.0",
         "cz-conventional-changelog": "3.3.0",
@@ -67,6 +68,8 @@
         "execa": "^5.1.1",
         "figlet": "^1.5.2",
         "fs-extra": "^10.1.0",
+        "inquirer": "^9.1.1",
+        "listr2": "^5.0.5",
         "node-jq": "^2.3.3",
         "string-builder": "^0.1.8",
         "which": "^2.0.2"
