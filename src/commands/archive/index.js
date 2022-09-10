@@ -1,28 +1,36 @@
-import { APW, ArchiveBuilder, Options } from "../../../lib";
-import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
+import { Command } from "commander";
+import { actions } from "../../actions";
 
-export const archive = {
-    async create(filePath, cliOptions) {
-        try {
-            const globalConfig = getGlobalAppConfig();
-            const localConfig = getLocalAppConfig(filePath);
+export function archive() {
+    const command = new Command("archive");
 
-            const apw = new APW(filePath);
+    command
+        .description("generate a NetLinx workspace zip archive")
+        .argument("apw file <string>", "apw file to generate the archive from")
+        .option("-o, --output-file <string>", "output file name")
+        .option(
+            "-S, --include-compiled-source-files",
+            "include compiled source files",
+        )
+        .option(
+            "-M, --include-compiled-module-files",
+            "include compiled module files",
+        )
+        .option(
+            "-N, --include-files-not-in-workspace",
+            "include files not in workspace",
+        )
+        .option(
+            "-l, --extra-file-search-locations <string...>",
+            "extra file locations to search",
+        )
+        .option(
+            "-p, --extra-file-archive-location <string>",
+            "location to place extra files in the archive",
+        )
+        .action((apw, options) => actions.archive.create(apw, options));
 
-            const options = Options.getArchiveOptions(
-                apw,
-                cliOptions,
-                localConfig.archive,
-                globalConfig.archive,
-            );
-
-            const builder = new ArchiveBuilder(apw, options);
-            builder.build();
-        } catch (error) {
-            console.error(error);
-            process.exit(1);
-        }
-    },
-};
+    return command;
+}
 
 export default archive;

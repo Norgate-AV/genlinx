@@ -1,31 +1,37 @@
-import fs from "fs-extra";
-import { APW, CfgBuilder, Options } from "../../../lib";
-import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
+import { Command, Option } from "commander";
+import { actions } from "../../actions";
 
-export const cfg = {
-    async create(filePath, cliOptions) {
-        try {
-            const globalConfig = getGlobalAppConfig();
-            const localConfig = getLocalAppConfig(filePath);
+export function cfg() {
+    const command = new Command("cfg");
 
-            const apw = new APW(filePath);
+    command
+        .description("generate NetLinx build CFG files")
+        .argument("apw file <string>", "apw file to generate the CFG from")
+        .option(
+            "-d, --root-directory <string>",
+            "root directory reference",
+            ".",
+        )
+        .option("-o, --output-file <string>", "output file name")
+        .option("-L, --output-log-file <string>", "output log file name")
+        .addOption(
+            new Option(
+                "-O, --output-log-file-option <string>",
+                "output log file option",
+            ).choices(["A", "N"]),
+        )
+        .option("-C, --output-log-console-option", "output log to console")
+        .option(
+            "-D, --build-with-debug-information",
+            "build with debug information",
+        )
+        .option("-S, --build-with-source", "build with source")
+        .option("-i, --include-path <string...>", "additional include paths")
+        .option("-m, --module-path <string...>", "additional module paths")
+        .option("-l, --library-path <string...>", "additional library paths")
+        .action((apw, options) => actions.cfg.create(apw, options));
 
-            const options = Options.getCfgOptions(
-                apw,
-                cliOptions,
-                localConfig.cfg,
-                globalConfig.cfg,
-            );
-
-            const cfgBuilder = new CfgBuilder(apw, options);
-            const cfg = cfgBuilder.build();
-
-            await fs.writeFile(options.outputFile, cfg);
-        } catch (error) {
-            console.error(error);
-            process.exit(1);
-        }
-    },
-};
+    return command;
+}
 
 export default cfg;
