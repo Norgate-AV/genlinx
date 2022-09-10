@@ -21,6 +21,7 @@ export const build = {
             const childProcess = execa(command.path, [...command.args], {
                 shell: shell.path,
                 windowsVerbatimArguments: true,
+                reject: false,
             });
 
             childProcess.stdout.pipe(process.stdout);
