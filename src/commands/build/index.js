@@ -3,6 +3,32 @@ import chalk from "chalk";
 import { NLRC, Options } from "../../../lib";
 import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
 
+function getErrorCount(data) {
+    const pattern = /(?<count>[1-9]+) error\(s\)/gm;
+    const matches = data.matchAll(pattern);
+
+    let count = 0;
+
+    for (const match of matches) {
+        count += Number(match.groups.count);
+    }
+
+    return count;
+}
+
+function getErrors(data) {
+    const pattern = /(ERROR: (?<message>.+))/gm;
+    const matches = data.matchAll(pattern);
+
+    const errors = [];
+
+    for (const match of matches) {
+        errors.push(match.groups.message);
+    }
+
+    return errors;
+}
+
 export const build = {
     async build(filePath, cliOptions) {
         try {
@@ -28,23 +54,16 @@ export const build = {
 
             const { stdout } = await childProcess;
             if (/ERROR:/gm.test(stdout)) {
-                const errorPattern = /(ERROR: (?<message>.+))/gm;
-                const errorMatches = stdout.matchAll(errorPattern);
+                const errorCount = getErrorCount(stdout);
+                console.log(
+                    chalk.red(`A total of ${errorCount} error(s) occurred.`),
+                );
 
-                for (const match of errorMatches) {
-                    console.log(chalk.red(match.groups.message));
+                const errors = getErrors(stdout);
+                for (const error of errors) {
+                    console.log(chalk.red(error));
                 }
 
-                const errorCountPattern = /(?<count>[1-9]+) error\(s\)/gm;
-                const errorCountMatches = stdout.matchAll(errorCountPattern);
-
-                let errorCount = 0;
-
-                for (const match of errorCountMatches) {
-                    errorCount += Number(match.groups.count);
-                }
-
-                console.log(chalk.red(`${errorCount} error(s)`));
                 throw new Error(
                     `The build process failed with a total of ${errorCount} error(s).`,
                 );
