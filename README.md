@@ -149,6 +149,7 @@ Options:
   -i, --include-path <string...>         additional include paths
   -m, --module-path <string...>          additional module paths
   -l, --library-path <string...>         additional library paths
+  -a, --all                              select all workspace files in current directory without prompting
   -h, --help                             display help for command
 ```
 
