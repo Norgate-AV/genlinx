@@ -4,7 +4,7 @@ import { APW, CfgBuilder, Options } from "../../../lib";
 import {
     getGlobalAppConfig,
     getLocalAppConfig,
-    getWorkspaceFiles,
+    getFilesByExtension,
 } from "../../../lib/utils";
 
 export const cfg = {
@@ -14,7 +14,11 @@ export const cfg = {
 
             if (!workspaceFiles.length) {
                 console.log(chalk.blue("Searching for workspace files..."));
-                workspaceFiles.push(...(await getWorkspaceFiles()));
+                workspaceFiles.push(
+                    ...(await getFilesByExtension(
+                        APW.fileExtensions[APW.fileType.workspace],
+                    )),
+                );
             }
 
             if (!workspaceFiles.length) {
