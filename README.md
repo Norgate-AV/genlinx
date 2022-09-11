@@ -133,15 +133,13 @@ Options:
 Generate a NetLinx build CFG file
 
 ```bash
-Usage: genlinx cfg [options] <apw file <string>>
+Usage: genlinx cfg [options]
 
-generate a NetLinx build CFG file
-
-Arguments:
-  apw file <string>                      apw file to generate the CFG from
+generate NetLinx build CFG files
 
 Options:
-  -d, --root-directory <string>          root directory reference (default: ".")
+  -w, --workspace-files <string...>      workspace file(s) to generate a CFG for (default: search for workspace files in current directory)
+  -d, --root-directory <string>          root directory reference (default: use current directory as root)
   -o, --output-file <string>             output file name
   -L, --output-log-file <string>         output log file name
   -O, --output-log-file-option <string>  output log file option (choices: "A", "N")
