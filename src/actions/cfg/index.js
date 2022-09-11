@@ -6,7 +6,12 @@ import {
     getLocalAppConfig,
     getFilesByExtension,
     printFiles,
+    selectFiles,
 } from "../../../lib/utils";
+
+function shouldPromptUser(options, files) {
+    return !options.all && files.length > 1;
+}
 
 export const cfg = {
     async create(cliOptions) {
@@ -29,6 +34,15 @@ export const cfg = {
             if (!workspaceFiles.length) {
                 console.log(chalk.red("No workspace files found."));
                 process.exit();
+            }
+
+            if (shouldPromptUser(cliOptions, workspaceFiles)) {
+                const selectedWorkspaceFiles = await selectFiles(
+                    workspaceFiles,
+                );
+
+                workspaceFiles.splice(0, workspaceFiles.length);
+                workspaceFiles.push(...selectedWorkspaceFiles);
             }
 
             const globalConfig = getGlobalAppConfig();
