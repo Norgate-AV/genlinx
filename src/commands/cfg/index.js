@@ -6,29 +6,62 @@ export function cfg() {
 
     command
         .description("generate NetLinx build CFG files")
-        .argument("apw file <string>", "apw file to generate the CFG from")
-        .option(
-            "-d, --root-directory <string>",
-            "root directory reference",
-            ".",
+        .addOption(
+            new Option(
+                "-w, --workspace-files <string...>",
+                "workspace file(s) to generate a CFG for",
+            ).default([], "search for workspace files in current directory"),
         )
-        .option("-o, --output-file <string>", "output file name")
-        .option("-L, --output-log-file <string>", "output log file name")
+        .addOption(
+            new Option(
+                "-d, --root-directory <string>",
+                "root directory reference",
+            ).default(".", "use current directory as root"),
+        )
+        .addOption(new Option("-o, --output-file <string>", "output file name"))
+        .addOption(
+            new Option(
+                "-L, --output-log-file <string>",
+                "output log file name",
+            ),
+        )
         .addOption(
             new Option(
                 "-O, --output-log-file-option <string>",
                 "output log file option",
             ).choices(["A", "N"]),
         )
-        .option("-C, --output-log-console-option", "output log to console")
-        .option(
-            "-D, --build-with-debug-information",
-            "build with debug information",
+        .addOption(
+            new Option(
+                "-C, --output-log-console-option",
+                "output log to console",
+            ),
         )
-        .option("-S, --build-with-source", "build with source")
-        .option("-i, --include-path <string...>", "additional include paths")
-        .option("-m, --module-path <string...>", "additional module paths")
-        .option("-l, --library-path <string...>", "additional library paths")
+        .addOption(
+            new Option(
+                "-D, --build-with-debug-information",
+                "build with debug information",
+            ),
+        )
+        .addOption(new Option("-S, --build-with-source", "build with source"))
+        .addOption(
+            new Option(
+                "-i, --include-path <string...>",
+                "additional include paths",
+            ),
+        )
+        .addOption(
+            new Option(
+                "-m, --module-path <string...>",
+                "additional module paths",
+            ),
+        )
+        .addOption(
+            new Option(
+                "-l, --library-path <string...>",
+                "additional library paths",
+            ),
+        )
         .action((apw, options) => actions.cfg.create(apw, options));
 
     return command;
