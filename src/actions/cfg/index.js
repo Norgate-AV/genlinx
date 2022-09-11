@@ -1,18 +1,11 @@
 import fs from "fs-extra";
-import path from "path";
 import chalk from "chalk";
 import { APW, CfgBuilder, Options } from "../../../lib";
-import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
-
-async function getWorkspaceFiles() {
-    const entities = await fs.readdir(process.cwd());
-    const workspaceFiles = entities.filter(
-        (entity) =>
-            path.extname(entity) === APW.fileExtensions[APW.fileType.workspace],
-    );
-
-    return workspaceFiles;
-}
+import {
+    getGlobalAppConfig,
+    getLocalAppConfig,
+    getWorkspaceFiles,
+} from "../../../lib/utils";
 
 export const cfg = {
     async create(cliOptions) {
