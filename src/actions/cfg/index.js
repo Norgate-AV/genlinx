@@ -1,26 +1,57 @@
 import fs from "fs-extra";
+import path from "path";
+import chalk from "chalk";
 import { APW, CfgBuilder, Options } from "../../../lib";
 import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
 
+async function getWorkspaceFiles() {
+    const entities = await fs.readdir(process.cwd());
+    const workspaceFiles = entities.filter(
+        (entity) =>
+            path.extname(entity) === APW.fileExtensions[APW.fileType.workspace],
+    );
+
+    return workspaceFiles;
+}
+
 export const cfg = {
-    async create(filePath, cliOptions) {
+    async create(cliOptions) {
         try {
+            const { workspaceFiles } = cliOptions;
+
+            if (!workspaceFiles.length) {
+                console.log(chalk.blue("Searching for workspace files..."));
+                workspaceFiles.push(...(await getWorkspaceFiles()));
+            }
+
+            if (!workspaceFiles.length) {
+                console.log(chalk.red("No workspace files found."));
+                process.exit();
+            }
+
             const globalConfig = getGlobalAppConfig();
-            const localConfig = getLocalAppConfig(filePath);
 
-            const apw = new APW(filePath);
+            for (const workspaceFile of workspaceFiles) {
+                console.log(
+                    chalk.blue(`Generating CFG for ${workspaceFile}...`),
+                );
 
-            const options = Options.getCfgOptions(
-                apw,
-                cliOptions,
-                localConfig.cfg,
-                globalConfig.cfg,
-            );
+                const localConfig = getLocalAppConfig(workspaceFile);
 
-            const cfgBuilder = new CfgBuilder(apw, options);
-            const cfg = cfgBuilder.build();
+                const apw = new APW(workspaceFile);
 
-            await fs.writeFile(options.outputFile, cfg);
+                const options = Options.getCfgOptions(
+                    apw,
+                    cliOptions,
+                    localConfig.cfg,
+                    globalConfig.cfg,
+                );
+
+                const cfgBuilder = new CfgBuilder(apw, options);
+                const cfg = cfgBuilder.build();
+
+                fs.writeFile(options.outputFile, cfg);
+            }
         } catch (error) {
             console.error(error);
             process.exit(1);
