@@ -5,6 +5,7 @@ import {
     getGlobalAppConfig,
     getLocalAppConfig,
     getFilesByExtension,
+    printFiles,
 } from "../../../lib/utils";
 
 export const cfg = {
@@ -19,6 +20,10 @@ export const cfg = {
                         APW.fileExtensions[APW.fileType.workspace],
                     )),
                 );
+
+                if (workspaceFiles.length) {
+                    printFiles(workspaceFiles);
+                }
             }
 
             if (!workspaceFiles.length) {
