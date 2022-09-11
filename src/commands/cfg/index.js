@@ -62,6 +62,12 @@ export function cfg() {
                 "additional library paths",
             ),
         )
+        .addOption(
+            new Option(
+                "-a, --all",
+                "select all workspace files in current directory without prompting",
+            ),
+        )
         .action((apw, options) => actions.cfg.create(apw, options));
 
     return command;
