@@ -2,9 +2,9 @@ import fs from "fs-extra";
 import chalk from "chalk";
 import { APW, CfgBuilder } from "../../../lib";
 import {
+    getFilesByExtension,
     getGlobalAppConfig,
     getLocalAppConfig,
-    getFilesByExtension,
     getOptions,
     printFiles,
     selectFiles,

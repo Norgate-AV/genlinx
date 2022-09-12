@@ -1,9 +1,9 @@
 import chalk from "chalk";
 import { APW, ArchiveBuilder } from "../../../lib";
 import {
+    getFilesByExtension,
     getGlobalAppConfig,
     getLocalAppConfig,
-    getFilesByExtension,
     getOptions,
     printFiles,
     selectFiles,
