@@ -70,6 +70,7 @@
         "fs-extra": "^10.1.0",
         "inquirer": "^8.2.3",
         "listr2": "^5.0.5",
+        "mergician": "^1.0.3",
         "node-jq": "^2.3.3",
         "string-builder": "^0.1.8",
         "which": "^2.0.2"

@@ -4205,6 +4205,11 @@ merge@^2.1.1:
   resolved "https://registry.yarnpkg.com/merge/-/merge-2.1.1.tgz#59ef4bf7e0b3e879186436e8481c06a6c162ca98"
   integrity sha512-jz+Cfrg9GWOZbQAnDQ4hlVnQky+341Yk5ru8bZSe6sIDTCIg8n9i/u7hSQGSVOF3C7lH6mGtqjkiT9G4wFLL0w==
 
+mergician@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/mergician/-/mergician-1.0.3.tgz#16400f74bd3ab401ac621c936a2303598a7be251"
+  integrity sha512-ScoIeKqQYj9DbNTiMdxlkanbt8i2tFirJfjoLrVGJx6zWTZWqcIh/ytD7CfNgwKOOZi/ewRiLdxLjBWEPuOBxg==
+
 micromark-extension-footnote@^0.3.0:
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/micromark-extension-footnote/-/micromark-extension-footnote-0.3.2.tgz#129b74ef4920ce96719b2c06102ee7abb2b88a20"
