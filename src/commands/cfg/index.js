@@ -18,11 +18,16 @@ export function cfg() {
                 "root directory reference",
             ).default(".", "use current directory as root"),
         )
-        .addOption(new Option("-o, --output-file <string>", "output file name"))
         .addOption(
             new Option(
-                "-L, --output-log-file <string>",
-                "output log file name",
+                "-o, --output-file-suffix <string>",
+                "output file suffix",
+            ),
+        )
+        .addOption(
+            new Option(
+                "-L, --output-log-file-suffix <string>",
+                "output log file suffix",
             ),
         )
         .addOption(

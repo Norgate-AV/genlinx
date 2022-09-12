@@ -12,7 +12,12 @@ export function archive() {
                 "workspace file(s) to generate archive(s) for",
             ).default([], "search for workspace files in current directory"),
         )
-        .addOption(new Option("-o, --output-file <string>", "output file name"))
+        .addOption(
+            new Option(
+                "-o, --output-file-suffix <string>",
+                "output file suffix",
+            ),
+        )
         .addOption(
             new Option(
                 "-S, --include-compiled-source-files",

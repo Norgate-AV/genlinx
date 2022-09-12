@@ -1,7 +1,7 @@
 export const defaultGlobalAppConfig = {
     cfg: {
-        outputFile: "build.cfg",
-        outputLogFile: "build.log",
+        outputFileSuffix: "build.cfg",
+        outputLogFileSuffix: "build.log",
         outputLogFileOption: "N",
         outputLogConsoleOption: true,
         buildWithDebugInformation: false,
@@ -20,7 +20,7 @@ export const defaultGlobalAppConfig = {
         libraryPath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"],
     },
     archive: {
-        outputFile: "archive.zip",
+        outputFileSuffix: "archive.zip",
         includeCompiledSourceFiles: true,
         includeCompiledModuleFiles: true,
         includeFilesNotInWorkspace: true,

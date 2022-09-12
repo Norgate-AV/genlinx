@@ -57,7 +57,6 @@ export const cfg = {
                 const apw = new APW(workspaceFile);
 
                 const options = Options.getCfgOptions(
-                    apw,
                     cliOptions,
                     localConfig.cfg,
                     globalConfig.cfg,
@@ -66,7 +65,8 @@ export const cfg = {
                 const cfgBuilder = new CfgBuilder(apw, options);
                 const cfg = cfgBuilder.build();
 
-                fs.writeFile(options.outputFile, cfg);
+                const outputFile = `${apw.id}.${options.outputFileSuffix}`;
+                fs.writeFile(outputFile, cfg);
             }
         } catch (error) {
             console.error(error);

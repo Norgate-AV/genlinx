@@ -56,13 +56,10 @@ export const archive = {
                 const apw = new APW(workspaceFile);
 
                 const options = Options.getArchiveOptions(
-                    apw,
                     cliOptions,
                     localConfig.archive,
                     globalConfig.archive,
                 );
-
-                console.log(`options: ${JSON.stringify(options, null, 4)}`);
 
                 const builder = new ArchiveBuilder(apw, options);
                 builder.build();
