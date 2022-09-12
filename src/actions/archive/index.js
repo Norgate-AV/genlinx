@@ -1,25 +1,72 @@
+import chalk from "chalk";
 import { APW, ArchiveBuilder, Options } from "../../../lib";
-import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
+import {
+    getGlobalAppConfig,
+    getLocalAppConfig,
+    getFilesByExtension,
+    printFiles,
+    selectFiles,
+} from "../../../lib/utils";
+
+function shouldPromptUser(options, files) {
+    return !options.all && files.length > 1;
+}
 
 export const archive = {
-    async create(filePath, cliOptions) {
+    async create(cliOptions) {
         try {
+            const { workspaceFiles } = cliOptions;
+
+            if (!workspaceFiles.length) {
+                console.log(chalk.blue("Searching for workspace files..."));
+                workspaceFiles.push(
+                    ...(await getFilesByExtension(
+                        APW.fileExtensions[APW.fileType.workspace],
+                    )),
+                );
+
+                if (workspaceFiles.length) {
+                    printFiles(workspaceFiles);
+                }
+            }
+
+            if (!workspaceFiles.length) {
+                console.log(chalk.red("No workspace files found."));
+                process.exit();
+            }
+
+            if (shouldPromptUser(cliOptions, workspaceFiles)) {
+                const selectedWorkspaceFiles = await selectFiles(
+                    workspaceFiles,
+                );
+
+                workspaceFiles.splice(0, workspaceFiles.length);
+                workspaceFiles.push(...selectedWorkspaceFiles);
+            }
+
             const globalConfig = getGlobalAppConfig();
-            const localConfig = getLocalAppConfig(filePath);
 
-            const apw = new APW(filePath);
+            for (const workspaceFile of workspaceFiles) {
+                console.log(
+                    chalk.blue(`Generating archive for ${workspaceFile}...`),
+                );
 
-            const options = Options.getArchiveOptions(
-                apw,
-                cliOptions,
-                localConfig.archive,
-                globalConfig.archive,
-            );
+                const localConfig = getLocalAppConfig(workspaceFile);
 
-            console.log(`options: ${JSON.stringify(options, null, 4)}`);
+                const apw = new APW(workspaceFile);
 
-            const builder = new ArchiveBuilder(apw, options);
-            builder.build();
+                const options = Options.getArchiveOptions(
+                    apw,
+                    cliOptions,
+                    localConfig.archive,
+                    globalConfig.archive,
+                );
+
+                console.log(`options: ${JSON.stringify(options, null, 4)}`);
+
+                const builder = new ArchiveBuilder(apw, options);
+                builder.build();
+            }
         } catch (error) {
             console.error(error);
             process.exit(1);

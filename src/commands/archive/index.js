@@ -1,4 +1,4 @@
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import { actions } from "../../actions";
 
 export function archive() {
@@ -6,7 +6,12 @@ export function archive() {
 
     command
         .description("generate a NetLinx workspace zip archive")
-        .argument("apw file <string>", "apw file to generate the archive from")
+        .addOption(
+            new Option(
+                "-w, --workspace-files <string...>",
+                "workspace file(s) to generate archive(s) for",
+            ).default([], "search for workspace files in current directory"),
+        )
         .option("-o, --output-file <string>", "output file name")
         .option(
             "-S, --include-compiled-source-files",
