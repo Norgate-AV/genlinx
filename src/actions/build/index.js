@@ -17,13 +17,14 @@ function getErrorCount(data) {
 }
 
 function getErrors(data) {
-    const pattern = /(ERROR: (?<message>.+))/gm;
+    const pattern = /(?<fullError>ERROR: (?<message>.+))/gm;
     const matches = data.matchAll(pattern);
 
     const errors = [];
 
     for (const match of matches) {
-        errors.push(match.groups.message);
+        const { fullError, message } = match.groups;
+        errors.push({ fullError, message });
     }
 
     return errors;
@@ -39,7 +40,7 @@ function catchErrors(data) {
 
     const errors = getErrors(data);
     for (const error of errors) {
-        console.log(chalk.red(error));
+        console.log(chalk.red(error.fullError));
     }
 
     throw new Error(
