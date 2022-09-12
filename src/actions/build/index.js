@@ -29,6 +29,24 @@ function getErrors(data) {
     return errors;
 }
 
+function catchErrors(data) {
+    if (!/ERROR:/gm.test(data)) {
+        return;
+    }
+
+    const errorCount = getErrorCount(data);
+    console.log(chalk.red(`A total of ${errorCount} error(s) occurred.`));
+
+    const errors = getErrors(data);
+    for (const error of errors) {
+        console.log(chalk.red(error));
+    }
+
+    throw new Error(
+        `The build process failed with a total of ${errorCount} error(s).`,
+    );
+}
+
 export const build = {
     async build(filePath, cliOptions) {
         try {
@@ -53,21 +71,7 @@ export const build = {
             childProcess.stdout.pipe(process.stdout);
 
             const { stdout } = await childProcess;
-            if (/ERROR:/gm.test(stdout)) {
-                const errorCount = getErrorCount(stdout);
-                console.log(
-                    chalk.red(`A total of ${errorCount} error(s) occurred.`),
-                );
-
-                const errors = getErrors(stdout);
-                for (const error of errors) {
-                    console.log(chalk.red(error));
-                }
-
-                throw new Error(
-                    `The build process failed with a total of ${errorCount} error(s).`,
-                );
-            }
+            catchErrors(stdout);
         } catch (error) {
             console.error(error);
             process.exit(1);
