@@ -12,26 +12,36 @@ export function archive() {
                 "workspace file(s) to generate archive(s) for",
             ).default([], "search for workspace files in current directory"),
         )
-        .option("-o, --output-file <string>", "output file name")
-        .option(
-            "-S, --include-compiled-source-files",
-            "include compiled source files",
+        .addOption(new Option("-o, --output-file <string>", "output file name"))
+        .addOption(
+            new Option(
+                "-S, --include-compiled-source-files",
+                "include compiled source files",
+            ),
         )
-        .option(
-            "-M, --include-compiled-module-files",
-            "include compiled module files",
+        .addOption(
+            new Option(
+                "-M, --include-compiled-module-files",
+                "include compiled module files",
+            ),
         )
-        .option(
-            "-N, --include-files-not-in-workspace",
-            "include files not in workspace",
+        .addOption(
+            new Option(
+                "-N, --include-files-not-in-workspace",
+                "include files not in workspace",
+            ),
         )
-        .option(
-            "-l, --extra-file-search-locations <string...>",
-            "extra file locations to search",
+        .addOption(
+            new Option(
+                "-l, --extra-file-search-locations <string...>",
+                "extra file locations to search",
+            ),
         )
-        .option(
-            "-p, --extra-file-archive-location <string>",
-            "location to place extra files in the archive",
+        .addOption(
+            new Option(
+                "-p, --extra-file-archive-location <string>",
+                "location to place extra files in the archive",
+            ),
         )
         .action((apw, options) => actions.archive.create(apw, options));
 
