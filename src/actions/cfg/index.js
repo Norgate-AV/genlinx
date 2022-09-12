@@ -1,10 +1,11 @@
 import fs from "fs-extra";
 import chalk from "chalk";
-import { APW, CfgBuilder, Options } from "../../../lib";
+import { APW, CfgBuilder } from "../../../lib";
 import {
     getGlobalAppConfig,
     getLocalAppConfig,
     getFilesByExtension,
+    getOptions,
     printFiles,
     selectFiles,
 } from "../../../lib/utils";
@@ -56,7 +57,7 @@ export const cfg = {
 
                 const apw = new APW(workspaceFile);
 
-                const options = Options.getCfgOptions(
+                const options = getOptions(
                     cliOptions,
                     localConfig.cfg,
                     globalConfig.cfg,

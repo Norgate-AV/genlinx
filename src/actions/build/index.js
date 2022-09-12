@@ -1,7 +1,11 @@
 import execa from "execa";
 import chalk from "chalk";
-import { NLRC, Options } from "../../../lib";
-import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
+import { NLRC } from "../../../lib";
+import {
+    getGlobalAppConfig,
+    getLocalAppConfig,
+    getOptions,
+} from "../../../lib/utils";
 
 function getErrorCount(data) {
     const pattern = /(?<count>[1-9]+) error\(s\)/gm;
@@ -54,7 +58,7 @@ export const build = {
             const globalConfig = getGlobalAppConfig();
             const localConfig = getLocalAppConfig(filePath);
 
-            const options = Options.getBuildOptions(
+            const options = getOptions(
                 cliOptions,
                 localConfig.build,
                 globalConfig.build,

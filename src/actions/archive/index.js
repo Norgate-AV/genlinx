@@ -1,9 +1,10 @@
 import chalk from "chalk";
-import { APW, ArchiveBuilder, Options } from "../../../lib";
+import { APW, ArchiveBuilder } from "../../../lib";
 import {
     getGlobalAppConfig,
     getLocalAppConfig,
     getFilesByExtension,
+    getOptions,
     printFiles,
     selectFiles,
 } from "../../../lib/utils";
@@ -55,7 +56,7 @@ export const archive = {
 
                 const apw = new APW(workspaceFile);
 
-                const options = Options.getArchiveOptions(
+                const options = getOptions(
                     cliOptions,
                     localConfig.archive,
                     globalConfig.archive,
