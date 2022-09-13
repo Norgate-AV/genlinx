@@ -73,7 +73,7 @@ export function cfg() {
                 "select all workspace files in current directory without prompting",
             ),
         )
-        .action((apw, options) => actions.cfg.create(apw, options));
+        .action((options) => actions.cfg.create(options));
 
     return command;
 }
