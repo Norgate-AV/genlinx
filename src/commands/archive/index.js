@@ -48,7 +48,7 @@ export function archive() {
                 "location to place extra files in the archive",
             ),
         )
-        .action((apw, options) => actions.archive.create(apw, options));
+        .action((options) => actions.archive.create(options));
 
     return command;
 }
