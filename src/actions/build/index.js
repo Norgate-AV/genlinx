@@ -53,7 +53,7 @@ function catchErrors(data) {
 }
 
 export const build = {
-    async build(filePath, cliOptions) {
+    async execute(filePath, cliOptions) {
         try {
             const globalConfig = getGlobalAppConfig();
             const localConfig = getLocalAppConfig(filePath);

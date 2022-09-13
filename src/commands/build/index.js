@@ -7,7 +7,7 @@ export function build() {
     command
         .description("build a NetLinx project from a CFG file")
         .argument("cfg file <string>", "cfg file to build from")
-        .action((cfg, options) => actions.build.build(cfg, options));
+        .action((cfg, options) => actions.build.execute(cfg, options));
 
     return command;
 }
