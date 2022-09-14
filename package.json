@@ -15,6 +15,9 @@
     "bin": {
         "genlinx": "bin/genlinx"
     },
+    "man": [
+        "docs/genlinx.1"
+    ],
     "repository": {
         "type": "git",
         "url": "https://github.com/Norgate-AV-Solutions-Ltd/genlinx.git"
