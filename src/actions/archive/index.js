@@ -18,7 +18,7 @@ export const archive = {
         try {
             const { workspaceFiles } = cliOptions;
 
-            if (!workspaceFiles.length) {
+            if (workspaceFiles.length === 0) {
                 console.log(chalk.blue("Searching for workspace files..."));
                 workspaceFiles.push(
                     ...(await getFilesByExtension(
@@ -31,7 +31,7 @@ export const archive = {
                 }
             }
 
-            if (!workspaceFiles.length) {
+            if (workspaceFiles.length === 0) {
                 console.log(chalk.red("No workspace files found."));
                 process.exit();
             }
