@@ -20,14 +20,14 @@ export const archive = {
 
             if (workspaceFiles.length === 0) {
                 console.log(chalk.blue("Searching for workspace files..."));
-                workspaceFiles.push(
-                    ...(await getFilesByExtension(
-                        APW.fileExtensions[APW.fileType.workspace],
-                    )),
+
+                const locatedWorkspaceFiles = await getFilesByExtension(
+                    APW.fileExtensions[APW.fileType.workspace],
                 );
 
-                if (workspaceFiles.length) {
-                    printFiles(workspaceFiles);
+                if (locatedWorkspaceFiles.length) {
+                    printFiles(locatedWorkspaceFiles);
+                    workspaceFiles.push(...locatedWorkspaceFiles);
                 }
             }
 
