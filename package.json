@@ -29,6 +29,7 @@
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
         "pretty:fix": "prettier --write .",
+        "test": "echo \"Tests are not yet implemented.\"",
         "commit": "git-cz",
         "prepare": "husky install",
         "doctoc": "doctoc --title '## Contents 📖' README.md",
