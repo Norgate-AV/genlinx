@@ -34,11 +34,12 @@ export function cli(args) {
         return builder.toString();
     });
 
-    program.parse(args);
-
     if (!args[2]) {
         program.outputHelp();
+        process.exit();
     }
+
+    program.parse(args);
 }
 
 export default cli;
