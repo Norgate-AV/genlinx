@@ -34,6 +34,18 @@ export function cli(args) {
         return builder.toString();
     });
 
+    program.addHelpText("afterAll", () => {
+        const builder = new StringBuilder();
+
+        builder
+            .appendLine("===================================================")
+            .appendLine()
+            .appendLine("For more help, make sure to check out the man page:")
+            .appendLine("    $ man genlinx");
+
+        return builder.toString();
+    });
+
     if (!args[2]) {
         program.outputHelp();
         process.exit();
