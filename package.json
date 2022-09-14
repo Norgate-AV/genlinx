@@ -46,7 +46,7 @@
         "@types/figlet": "^1.5.5",
         "@types/fs-extra": "^9.0.13",
         "@types/inquirer": "^9.0.1",
-        "@types/node": "^18.7.16",
+        "@types/node": "^18.7.18",
         "all-contributors-cli": "^6.20.4",
         "cz-conventional-changelog": "3.3.0",
         "doctoc": "^2.2.0",
