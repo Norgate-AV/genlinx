@@ -2,9 +2,12 @@ import execa from "execa";
 import chalk from "chalk";
 import { NLRC } from "../../../lib";
 import {
+    getFilesByExtension,
     getGlobalAppConfig,
     getLocalAppConfig,
     getOptions,
+    printFiles,
+    selectFiles,
 } from "../../../lib/utils";
 
 function getErrorCount(data) {
@@ -97,32 +100,91 @@ function printWarnings(data) {
     }
 }
 
+function shouldPromptUser(options, files) {
+    return !options.all && files.length > 1;
+}
+
+async function runBuildProcess(command, options) {
+    const { shell } = options;
+    const childProcess = execa(command.path, [...command.args], {
+        shell: shell.path,
+        windowsVerbatimArguments: true,
+        reject: false,
+    });
+
+    childProcess.stdout.pipe(process.stdout);
+
+    const { stdout } = await childProcess;
+    return stdout;
+}
+
 export const build = {
-    async execute(filePath, cliOptions) {
+    async execute(cliOptions) {
         try {
+            const { cfgFiles, sourceFile } = cliOptions;
+
             const globalConfig = getGlobalAppConfig();
-            const localConfig = getLocalAppConfig(filePath);
 
-            const options = getOptions(
-                cliOptions,
-                localConfig.build,
-                globalConfig.build,
-            );
+            if (sourceFile) {
+                console.log(chalk.blue(`Executing build for ${sourceFile}...`));
 
-            const command = NLRC.getCfgBuildCommand(filePath, options);
+                const localConfig = getLocalAppConfig(sourceFile);
 
-            const { shell } = options;
-            const childProcess = execa(command.path, [...command.args], {
-                shell: shell.path,
-                windowsVerbatimArguments: true,
-                reject: false,
-            });
+                const options = getOptions(
+                    cliOptions,
+                    localConfig.archive,
+                    globalConfig.archive,
+                );
 
-            childProcess.stdout.pipe(process.stdout);
+                const command = NLRC.getSourceBuildCommand(sourceFile, options);
 
-            const { stdout } = await childProcess;
-            printWarnings(stdout);
-            catchErrors(stdout);
+                const buildResult = await runBuildProcess(command, options);
+                printWarnings(buildResult);
+                catchErrors(buildResult);
+
+                process.exit();
+            }
+
+            if (cfgFiles.length === 0) {
+                console.log(chalk.blue("Searching for CFG files..."));
+
+                const locatedCfgFiles = await getFilesByExtension(".cfg");
+
+                if (locatedCfgFiles.length) {
+                    printFiles(locatedCfgFiles);
+                    cfgFiles.push(...locatedCfgFiles);
+                }
+            }
+
+            if (cfgFiles.length === 0) {
+                console.log(chalk.red("No CFG files found."));
+                process.exit();
+            }
+
+            if (shouldPromptUser(cliOptions, cfgFiles)) {
+                const selectedCfgFiles = await selectFiles(cfgFiles);
+
+                cfgFiles.splice(0, cfgFiles.length);
+                cfgFiles.push(...selectedCfgFiles);
+            }
+
+            for (const cfgFile of cfgFiles) {
+                console.log(chalk.blue(`Executing build for ${cfgFile}...`));
+
+                const localConfig = getLocalAppConfig(cfgFile);
+
+                const options = getOptions(
+                    cliOptions,
+                    localConfig.archive,
+                    globalConfig.archive,
+                );
+
+                const command = NLRC.getCfgBuildCommand(cfgFile, options);
+
+                const buildResult = await runBuildProcess(command, options);
+                printWarnings(buildResult);
+                catchErrors(buildResult);
+            }
         } catch (error) {
             console.error(error);
             process.exit(1);
