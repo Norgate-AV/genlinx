@@ -132,8 +132,8 @@ export const build = {
 
                 const options = getOptions(
                     cliOptions,
-                    localConfig.archive,
-                    globalConfig.archive,
+                    localConfig.build,
+                    globalConfig.build,
                 );
 
                 const command = NLRC.getSourceBuildCommand(sourceFile, options);
@@ -175,8 +175,8 @@ export const build = {
 
                 const options = getOptions(
                     cliOptions,
-                    localConfig.archive,
-                    globalConfig.archive,
+                    localConfig.build,
+                    globalConfig.build,
                 );
 
                 const command = NLRC.getCfgBuildCommand(cfgFile, options);
