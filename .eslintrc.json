@@ -30,6 +30,7 @@
         "no-case-declarations": "off",
         "import/no-cycle": "off",
         "no-param-reassign": "off",
-        "no-dupe-class-members": "off"
+        "no-dupe-class-members": "off",
+        "no-await-in-loop": "off"
     }
 }
