@@ -14,7 +14,7 @@ export function cfg() {
         )
         .addOption(
             new Option(
-                "-d, --root-directory <string>",
+                "-r, --root-directory <string>",
                 "root directory reference",
             ).default(".", "use current directory as root"),
         )
@@ -26,54 +26,113 @@ export function cfg() {
         )
         .addOption(
             new Option(
-                "-L, --output-log-file-suffix <string>",
+                "-f, --output-log-file-suffix <string>",
                 "output log file suffix",
             ),
         )
         .addOption(
             new Option(
-                "-O, --output-log-file-option <string>",
-                "output log file option",
+                "-k, --output-log-file-option <string>",
+                `
+output log file option
+A - append
+N - overwrite`,
             ).choices(["A", "N"]),
         )
         .addOption(
             new Option(
-                "-C, --output-log-console-option",
+                "-c, --output-log-console-option",
                 "output log to console",
             ),
         )
         .addOption(
             new Option(
-                "-D, --build-with-debug-information",
+                "-C, --no-output-log-console-option",
+                "do not output log to console",
+            ),
+        )
+        .addOption(
+            new Option(
+                "-d, --build-with-debug-information",
                 "build with debug information",
             ),
         )
-        .addOption(new Option("-S, --build-with-source", "build with source"))
+        .addOption(
+            new Option(
+                "-D, --no-build-with-debug-information",
+                "do not build with debug information",
+            ),
+        )
+        .addOption(new Option("-s, --build-with-source", "build with source"))
+        .addOption(
+            new Option(
+                "-S, --no-build-with-source",
+                "do not build with source",
+            ),
+        )
         .addOption(
             new Option(
                 "-i, --include-path <string...>",
-                "additional include paths",
+                "add additional include paths",
             ),
         )
         .addOption(
             new Option(
                 "-m, --module-path <string...>",
-                "additional module paths",
+                "add additional module paths",
             ),
         )
         .addOption(
             new Option(
                 "-l, --library-path <string...>",
-                "additional library paths",
+                "add additional library paths",
             ),
         )
         .addOption(
             new Option(
                 "-a, --all",
-                "select all workspace files in current directory without prompting",
+                `
+if no workspace files are specified with the -w option and more than one
+workspace file is found in the current directory, select all of them
+without prompting`,
             ),
         )
-        .action((options) => actions.cfg.create(options));
+        .addOption(
+            new Option(
+                "-A, --no-all",
+                `
+if no workspace files are specified with the -w option and more than one
+workspace file is found in the current directory, prompt to select which
+workspace files to use`,
+            ),
+        )
+        .action((options) => actions.cfg.create(options))
+        .addHelpText(
+            "after",
+            `
+the CFG file is used to configure the NetLinx Studio build process
+
+if an option is omitted, genlinx will:
+    1. look for a .genlinxrc.json file in the root directory of the project
+       if one is found, any options defined will be set to the value in the file
+    2. use the default values from the global config file for any remaining options
+
+the output file will be named the same as the workspace ID combined with the suffix.
+the default suffix is "build.cfg"
+
+for example, if the workspace ID is "SomeAwesomeProject", the output file will be
+"SomeAwesomeProject.build.cfg", unless the -o option is used to specify a suffix
+
+Examples:
+    $ genlinx cfg -w workspace.apw                                                      # generate CFG for workspace.apw
+    $ genlinx cfg -w workspace.apw -s                                                   # build with source
+    $ genlinx cfg -w workspace.apw -D                                                   # do not build with debug information
+    $ genlinx cfg -a                                                                    # search for and automatically select all workspace files
+    $ genlinx cfg -A                                                                    # search for and prompt to select workspace files
+    $ genlinx cfg -w workspace.apw -i \\path\\to\\includes \\path\\to\\more\\includes          # add additional include paths
+    $ genlinx cfg -w workspace.apw -m \\path\\to\\modules \\path\\to\\more\\modules            # add additional module paths
+    $ genlinx cfg -w workspace.apw -l \\path\\to\\libraries \\path\\to\\more\\libraries        # add additional library paths`,
+        );
 
     return command;
 }
