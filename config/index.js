@@ -31,6 +31,22 @@ export const defaultGlobalAppConfig = {
         ],
         extraFileArchiveLocation: ".genlinx",
         all: false,
+        ignoredFiles: [
+            "G4API.axi",
+            "NetLinx.axi",
+            "SNAPI.axi",
+            "UnicodeLib.axi",
+            "componentssdk.jar",
+            "componentssdkrt.jar",
+            "DeviceDriverEngine.jar",
+            "devicesdkrt.jar",
+            "jregex1.2_01-bundle.jar",
+            "js-14-bundle.jar",
+            "json-bundle.jar",
+            "picocontainer-1.3-bundle.jar",
+            "snapirouter.jar",
+            "snapirouter2.jar",
+        ],
     },
     build: {
         nlrc: {
