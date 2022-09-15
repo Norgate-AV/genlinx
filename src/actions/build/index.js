@@ -68,17 +68,17 @@ function getWarningCount(data) {
 
 function getWarnings(data) {
     const pattern =
-        /(?<log>WARNING: (?<path>.+)\((?<line>\d+)\): (?<code>.+): (?<message>.+))/gm;
+        /(?<log>WARNING: (?<path>.+)\((?<line>\d+)\)(?:\w+)?: (?:'(?<warning>.+)'$|((?<code>\w+\d+): (?<message>.+)$)))/gm;
     const matches = data.matchAll(pattern);
 
-    const errors = [];
+    const warnings = [];
 
     for (const match of matches) {
-        const { log, path, line, code, message } = match.groups;
-        errors.push({ log, path, line, code, message });
+        const { log, path, line, warning, code, message } = match.groups;
+        warnings.push({ log, path, line, warning, code, message });
     }
 
-    return errors;
+    return warnings;
 }
 
 function printWarnings(data) {
