@@ -21,14 +21,15 @@ function getErrorCount(data) {
 }
 
 function getErrors(data) {
-    const pattern = /(?<fullError>ERROR: (?<message>.+))/gm;
+    const pattern =
+        /(?<log>ERROR: (?<path>.+)\((?<line>\d+)\): (?<code>.+): (?<message>.+))/gm;
     const matches = data.matchAll(pattern);
 
     const errors = [];
 
     for (const match of matches) {
-        const { fullError, message } = match.groups;
-        errors.push({ fullError, message });
+        const { log, path, line, code, message } = match.groups;
+        errors.push({ log, path, line, code, message });
     }
 
     return errors;
@@ -44,12 +45,56 @@ function catchErrors(data) {
 
     const errors = getErrors(data);
     for (const error of errors) {
-        console.log(chalk.red(error.fullError));
+        console.log(chalk.red(error.log));
     }
 
     throw new Error(
         `The build process failed with a total of ${errorCount} error(s).`,
     );
+}
+
+function getWarningCount(data) {
+    const pattern = /(?<count>[1-9]+) warning\(s\)/gm;
+    const matches = data.matchAll(pattern);
+
+    let count = 0;
+
+    for (const match of matches) {
+        count += Number(match.groups.count);
+    }
+
+    return count;
+}
+
+function getWarnings(data) {
+    const pattern =
+        /(?<log>WARNING: (?<path>.+)\((?<line>\d+)\): (?<code>.+): (?<message>.+))/gm;
+    const matches = data.matchAll(pattern);
+
+    const errors = [];
+
+    for (const match of matches) {
+        const { log, path, line, code, message } = match.groups;
+        errors.push({ log, path, line, code, message });
+    }
+
+    return errors;
+}
+
+function printWarnings(data) {
+    if (!/WARNING:/gm.test(data)) {
+        return;
+    }
+
+    const warningCount = getWarningCount(data);
+    console.log(
+        chalk.yellow(`A total of ${warningCount} warning(s) occurred.`),
+    );
+
+    const warnings = getWarnings(data);
+    for (const warning of warnings) {
+        console.log(chalk.yellow(warning.log));
+    }
 }
 
 export const build = {
@@ -76,6 +121,7 @@ export const build = {
             childProcess.stdout.pipe(process.stdout);
 
             const { stdout } = await childProcess;
+            printWarnings(stdout);
             catchErrors(stdout);
         } catch (error) {
             console.error(error);
