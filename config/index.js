@@ -18,6 +18,7 @@ export const defaultGlobalAppConfig = {
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx",
         ],
         libraryPath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"],
+        all: false,
     },
     archive: {
         outputFileSuffix: "archive.zip",
@@ -29,6 +30,7 @@ export const defaultGlobalAppConfig = {
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
         ],
         extraFileArchiveLocation: ".genlinx",
+        all: false,
     },
     build: {
         nlrc: {
@@ -40,6 +42,7 @@ export const defaultGlobalAppConfig = {
         shell: {
             path: "C:\\Windows\\System32\\cmd.exe",
         },
+        all: false,
     },
 };
 
