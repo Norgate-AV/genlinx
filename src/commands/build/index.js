@@ -1,13 +1,71 @@
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import { actions } from "../../actions";
 
 export function build() {
     const command = new Command("build");
 
     command
-        .description("build a NetLinx project from a CFG file")
-        .argument("cfg file <string>", "cfg file to build from")
-        .action((cfg, options) => actions.build.execute(cfg, options));
+        .description("build a NetLinx project")
+        .addOption(
+            new Option(
+                "-c, --cfg-files <string...>",
+                "cfg file(s) to build from",
+            )
+                .default([], "search for CFG files in current directory")
+                .conflicts([
+                    "sourceFiles",
+                    "includePath",
+                    "modulePath",
+                    "libraryPath",
+                ]),
+        )
+        .addOption(
+            new Option(
+                "-s, --source-file <string>",
+                "axs source file to build",
+            ).conflicts(["cfgFiles"]),
+        )
+        .addOption(
+            new Option(
+                "-i, --include-path <string...>",
+                "add additional include paths",
+            ).conflicts(["cfgFiles"]),
+        )
+        .addOption(
+            new Option(
+                "-m, --module-path <string...>",
+                "add additional module paths",
+            ).conflicts(["cfgFiles"]),
+        )
+        .addOption(
+            new Option(
+                "-l, --library-path <string...>",
+                "add additional library paths",
+            ).conflicts(["cfgFiles"]),
+        )
+        .addOption(
+            new Option(
+                "-a, --all",
+                "select all cfg files without prompting",
+            ).conflicts([
+                "sourceFiles",
+                "includePath",
+                "modulePath",
+                "libraryPath",
+            ]),
+        )
+        .addOption(
+            new Option(
+                "-A, --no-all",
+                "select multiple cfg files with a prompt",
+            ).conflicts([
+                "sourceFiles",
+                "includePath",
+                "modulePath",
+                "libraryPath",
+            ]),
+        )
+        .action((options) => actions.build.execute(options));
 
     return command;
 }
