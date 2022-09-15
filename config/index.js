@@ -43,6 +43,7 @@ export const defaultGlobalAppConfig = {
             path: "C:\\Windows\\System32\\cmd.exe",
         },
         all: false,
+        createCfg: true,
     },
 };
 
