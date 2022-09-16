@@ -25,7 +25,7 @@ function getErrorCount(data) {
 
 function getErrors(data) {
     const pattern =
-        /(?<log>ERROR: (?<path>.+)\((?<line>\d+)\): (?<code>.+): (?<message>.+))/gm;
+        /(?<log>ERROR: (?<path>.+)\((?<line>\d+)\)(?:(?<error>[^:].+: .+$)|: (?:(?<code>\w+\d+): (?<message>.+)$)))/gm;
     const matches = data.matchAll(pattern);
 
     const errors = [];
