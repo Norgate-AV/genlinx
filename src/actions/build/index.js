@@ -10,19 +10,6 @@ import {
     selectFiles,
 } from "../../../lib/utils";
 
-function getErrorCount(data) {
-    const pattern = /(?<count>[1-9]+) error\(s\)/gm;
-    const matches = data.matchAll(pattern);
-
-    let count = 0;
-
-    for (const match of matches) {
-        count += Number(match.groups.count);
-    }
-
-    return count;
-}
-
 function getErrors(data) {
     const pattern = /(?<log>ERROR: .+)/gm;
     const matches = data.matchAll(pattern);
@@ -42,16 +29,16 @@ function catchErrors(data) {
         return;
     }
 
-    const errorCount = getErrorCount(data);
-    console.log(chalk.red(`A total of ${errorCount} error(s) occurred.`));
-
     const errors = getErrors(data);
+
+    console.log(chalk.red(`A total of ${errors.length} error(s) occurred.`));
+
     for (const error of errors) {
         console.log(chalk.red(error.log));
     }
 
     throw new Error(
-        `The build process failed with a total of ${errorCount} error(s).`,
+        `The build process failed with a total of ${errors.length} error(s).`,
     );
 }
 
