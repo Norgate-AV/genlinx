@@ -55,19 +55,6 @@ function catchErrors(data) {
     );
 }
 
-function getWarningCount(data) {
-    const pattern = /(?<count>[1-9]+) warning\(s\)/gm;
-    const matches = data.matchAll(pattern);
-
-    let count = 0;
-
-    for (const match of matches) {
-        count += Number(match.groups.count);
-    }
-
-    return count;
-}
-
 function getWarnings(data) {
     const pattern = /(?<log>WARNING: .+)/gm;
     const matches = data.matchAll(pattern);
@@ -87,12 +74,12 @@ function printWarnings(data) {
         return;
     }
 
-    const warningCount = getWarningCount(data);
+    const warnings = getWarnings(data);
+
     console.log(
-        chalk.yellow(`A total of ${warningCount} warning(s) occurred.`),
+        chalk.yellow(`A total of ${warnings.length} warning(s) occurred.`),
     );
 
-    const warnings = getWarnings(data);
     for (const warning of warnings) {
         console.log(chalk.yellow(warning.log));
     }
