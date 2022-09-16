@@ -24,15 +24,14 @@ function getErrorCount(data) {
 }
 
 function getErrors(data) {
-    const pattern =
-        /(?<log>ERROR: (?<path>.+)\((?<line>\d+)\)(?:(?<error>[^:].+: .+$)|: (?:(?<code>\w+\d+): (?<message>.+)$)))/gm;
+    const pattern = /(?<log>ERROR: .+)/gm;
     const matches = data.matchAll(pattern);
 
     const errors = [];
 
     for (const match of matches) {
-        const { log, path, line, code, message } = match.groups;
-        errors.push({ log, path, line, code, message });
+        const { log } = match.groups;
+        errors.push({ log });
     }
 
     return errors;
@@ -70,15 +69,14 @@ function getWarningCount(data) {
 }
 
 function getWarnings(data) {
-    const pattern =
-        /(?<log>WARNING: (?<path>.+)\((?<line>\d+)\)(?:\w+)?: (?:'(?<warning>.+)'$|((?<code>\w+\d+): (?<message>.+)$)))/gm;
+    const pattern = /(?<log>WARNING: .+)/gm;
     const matches = data.matchAll(pattern);
 
     const warnings = [];
 
     for (const match of matches) {
-        const { log, path, line, warning, code, message } = match.groups;
-        warnings.push({ log, path, line, warning, code, message });
+        const { log } = match.groups;
+        warnings.push({ log });
     }
 
     return warnings;
