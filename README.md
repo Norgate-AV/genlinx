@@ -74,20 +74,38 @@ genlinx will
 ## Command Line :man_technologist:
 
 ```bash
+                   _ _
+   __ _  ___ _ __ | (_)_ __ __  __
+  / _` |/ _ \ '_ \| | | '_ \\ \/ /
+ | (_| |  __/ | | | | | | | |>  <
+  \__, |\___|_| |_|_|_|_| |_/_/\_\
+  |___/
+
+Open source CLI tool for NetLinx projects
+Copyright (c) 2022, Norgate AV Solutions Ltd
+https://github.com/Norgate-AV-Solutions-Ltd/genlinx
+
+===================================================
+
 Usage: genlinx [options] [command]
 
 cli helper utility for NetLinx projects 🚀🚀🚀
 
 Options:
-  -v, --version                          output the version number
-  -h, --help                             display help for command
+  -v, --version      output the version number
+  -h, --help         display help for command
 
 Commands:
-  archive [options] <apw file <string>>  generate a NetLinx workspace zip archive
-  build <cfg file <string>>              build a NetLinx project from a CFG file
-  cfg [options] <apw file <string>>      generate NetLinx build CFG files
-  config [options]                       edit configuration properties for genlinx
-  help [command]                         display help for command
+  archive [options]  generate a NetLinx workspace zip archive
+  build [options]    build a NetLinx project
+  cfg [options]      generate NetLinx build CFG files
+  config [options]   edit configuration properties for genlinx
+  help [command]     display help for command
+
+===================================================
+
+For more help, make sure to check out the man page:
+    $ man genlinx
 ```
 
 ### archive
@@ -95,15 +113,13 @@ Commands:
 Generate a NetLinx workspace zip archive.
 
 ```bash
-Usage: genlinx archive [options] <apw file <string>>
+Usage: genlinx archive [options]
 
 generate a NetLinx workspace zip archive
 
-Arguments:
-  apw file <string>                              apw file to generate the archive from
-
 Options:
-  -o, --output-file <string>                     output file name
+  -w, --workspace-files <string...>              workspace file(s) to generate archive(s) for (default: search for workspace files in current directory)
+  -o, --output-file-suffix <string>              output file suffix
   -S, --include-compiled-source-files            include compiled source files
   -M, --include-compiled-module-files            include compiled module files
   -N, --include-files-not-in-workspace           include files not in workspace
@@ -117,15 +133,19 @@ Options:
 Build a NetLinx project from a CFG file
 
 ```bash
-Usage: genlinx build [options] <cfg file <string>>
+Usage: genlinx build [options]
 
-build a NetLinx project from a CFG file
-
-Arguments:
-  cfg file <string>  cfg file to build from
+build a NetLinx project
 
 Options:
-  -h, --help         display help for command
+  -c, --cfg-files <string...>     cfg file(s) to build from (default: search for CFG files in current directory)
+  -s, --source-file <string>      axs source file to build
+  -i, --include-path <string...>  add additional include paths
+  -m, --module-path <string...>   add additional module paths
+  -l, --library-path <string...>  add additional library paths
+  -a, --all                       select all cfg files without prompting
+  -A, --no-all                    select multiple cfg files with a prompt
+  -h, --help                      display help for command
 ```
 
 ### cfg
@@ -139,17 +159,27 @@ generate NetLinx build CFG files
 
 Options:
   -w, --workspace-files <string...>      workspace file(s) to generate a CFG for (default: search for workspace files in current directory)
-  -d, --root-directory <string>          root directory reference (default: use current directory as root)
-  -o, --output-file <string>             output file name
-  -L, --output-log-file <string>         output log file name
-  -O, --output-log-file-option <string>  output log file option (choices: "A", "N")
-  -C, --output-log-console-option        output log to console
-  -D, --build-with-debug-information     build with debug information
-  -S, --build-with-source                build with source
-  -i, --include-path <string...>         additional include paths
-  -m, --module-path <string...>          additional module paths
-  -l, --library-path <string...>         additional library paths
-  -a, --all                              select all workspace files in current directory without prompting
+  -r, --root-directory <string>          root directory reference (default: use current directory as root)
+  -o, --output-file-suffix <string>      output file suffix
+  -f, --output-log-file-suffix <string>  output log file suffix
+  -k, --output-log-file-option <string>  output log file option
+                                         A - append
+                                         N - overwrite (choices: "A", "N")
+  -c, --output-log-console-option        output log to console
+  -C, --no-output-log-console-option     do not output log to console
+  -d, --build-with-debug-information     build with debug information
+  -D, --no-build-with-debug-information  do not build with debug information
+  -s, --build-with-source                build with source
+  -S, --no-build-with-source             do not build with source
+  -i, --include-path <string...>         add additional include paths
+  -m, --module-path <string...>          add additional module paths
+  -l, --library-path <string...>         add additional library paths
+  -a, --all                              if no workspace files are specified with the -w option and more than one
+                                         workspace file is found in the current directory, select all of them
+                                         without prompting
+  -A, --no-all                           if no workspace files are specified with the -w option and more than one
+                                         workspace file is found in the current directory, prompt to select which
+                                         workspace files to use
   -h, --help                             display help for command
 ```
 
