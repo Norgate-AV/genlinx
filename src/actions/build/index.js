@@ -10,31 +10,32 @@ import {
     selectFiles,
 } from "../../../lib/utils";
 
-function getErrors(data) {
-    const pattern = /(?<log>ERROR: .+)/gm;
+function getBuildLogs(data) {
+    const pattern = /(?<log>(?<level>ERROR|WARNING): .+)/gm;
     const matches = data.matchAll(pattern);
 
-    const errors = [];
+    const logs = {
+        error: [],
+        warning: [],
+    };
 
     for (const match of matches) {
-        const { log } = match.groups;
-        errors.push({ log });
+        const { log, level } = match.groups;
+        logs[level.toLowerCase()].push(log);
     }
 
-    return errors;
+    return logs;
 }
 
-function catchErrors(data) {
-    if (!/ERROR:/gm.test(data)) {
+function catchAllErrors(errors) {
+    if (errors.length === 0) {
         return;
     }
-
-    const errors = getErrors(data);
 
     console.log(chalk.red(`A total of ${errors.length} error(s) occurred.`));
 
     for (const error of errors) {
-        console.log(chalk.red(error.log));
+        console.log(chalk.red(error));
     }
 
     throw new Error(
@@ -42,33 +43,17 @@ function catchErrors(data) {
     );
 }
 
-function getWarnings(data) {
-    const pattern = /(?<log>WARNING: .+)/gm;
-    const matches = data.matchAll(pattern);
-
-    const warnings = [];
-
-    for (const match of matches) {
-        const { log } = match.groups;
-        warnings.push({ log });
-    }
-
-    return warnings;
-}
-
-function printWarnings(data) {
-    if (!/WARNING:/gm.test(data)) {
+function printAllWarnings(warnings) {
+    if (warnings.length === 0) {
         return;
     }
-
-    const warnings = getWarnings(data);
 
     console.log(
         chalk.yellow(`A total of ${warnings.length} warning(s) occurred.`),
     );
 
     for (const warning of warnings) {
-        console.log(chalk.yellow(warning.log));
+        console.log(chalk.yellow(warning));
     }
 }
 
@@ -78,6 +63,7 @@ function shouldPromptUser(options, files) {
 
 async function runBuildProcess(command, options) {
     const { shell } = options;
+
     const childProcess = execa(command.path, [...command.args], {
         shell: shell.path,
         windowsVerbatimArguments: true,
@@ -90,6 +76,14 @@ async function runBuildProcess(command, options) {
     return stdout;
 }
 
+async function buildFile(file, command, options) {
+    console.log(chalk.blue(`Executing build for ${file}...`));
+
+    const buildResult = await runBuildProcess(command, options);
+
+    return buildResult;
+}
+
 export const build = {
     async execute(cliOptions) {
         try {
@@ -98,21 +92,24 @@ export const build = {
             const globalConfig = getGlobalAppConfig();
 
             if (sourceFile) {
-                console.log(chalk.blue(`Executing build for ${sourceFile}...`));
-
-                const localConfig = getLocalAppConfig(sourceFile);
-
                 const options = getOptions(
                     cliOptions,
-                    localConfig.build,
+                    getLocalAppConfig(sourceFile).build,
                     globalConfig.build,
                 );
 
                 const command = NLRC.getSourceBuildCommand(sourceFile, options);
 
-                const buildResult = await runBuildProcess(command, options);
-                printWarnings(buildResult);
-                catchErrors(buildResult);
+                const buildResult = await buildFile(
+                    sourceFile,
+                    command,
+                    options,
+                );
+
+                const logs = getBuildLogs(buildResult);
+
+                printAllWarnings(logs.warning);
+                catchAllErrors(logs.error);
 
                 process.exit();
             }
@@ -141,21 +138,20 @@ export const build = {
             }
 
             for (const cfgFile of cfgFiles) {
-                console.log(chalk.blue(`Executing build for ${cfgFile}...`));
-
-                const localConfig = getLocalAppConfig(cfgFile);
-
                 const options = getOptions(
                     cliOptions,
-                    localConfig.build,
+                    getLocalAppConfig(cfgFile).build,
                     globalConfig.build,
                 );
 
                 const command = NLRC.getCfgBuildCommand(cfgFile, options);
 
-                const buildResult = await runBuildProcess(command, options);
-                printWarnings(buildResult);
-                catchErrors(buildResult);
+                const buildResult = await buildFile(cfgFile, command, options);
+
+                const logs = getBuildLogs(buildResult);
+
+                printAllWarnings(logs.warning);
+                catchAllErrors(logs.error);
             }
         } catch (error) {
             console.error(error);
