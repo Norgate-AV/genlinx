@@ -46,7 +46,7 @@ export const cfg = {
                 workspaceFiles.push(...selectedWorkspaceFiles);
             }
 
-            const globalConfig = getGlobalAppConfig();
+            const globalConfig = await getGlobalAppConfig();
 
             for (const workspaceFile of workspaceFiles) {
                 console.log(

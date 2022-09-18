@@ -89,7 +89,7 @@ export const build = {
         try {
             const { cfgFiles, sourceFile } = cliOptions;
 
-            const globalConfig = getGlobalAppConfig();
+            const globalConfig = await getGlobalAppConfig();
 
             if (sourceFile) {
                 const localConfig = await getLocalAppConfig(sourceFile);
