@@ -15,7 +15,7 @@ export function build() {
             )
                 .default([], "search for CFG files in current directory")
                 .conflicts([
-                    "sourceFiles",
+                    "sourceFile",
                     "includePath",
                     "modulePath",
                     "libraryPath",
@@ -50,7 +50,7 @@ export function build() {
                 "-a, --all",
                 "select all cfg files without prompting",
             ).conflicts([
-                "sourceFiles",
+                "sourceFile",
                 "includePath",
                 "modulePath",
                 "libraryPath",
@@ -61,7 +61,7 @@ export function build() {
                 "-A, --no-all",
                 "select multiple cfg files with a prompt",
             ).conflicts([
-                "sourceFiles",
+                "sourceFile",
                 "includePath",
                 "modulePath",
                 "libraryPath",
