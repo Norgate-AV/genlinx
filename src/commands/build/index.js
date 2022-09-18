@@ -1,3 +1,5 @@
+import os from "os";
+import chalk from "chalk";
 import { Command, Option } from "commander";
 import { actions } from "../../actions";
 
@@ -65,7 +67,19 @@ export function build() {
                 "libraryPath",
             ]),
         )
-        .action((options) => actions.build.execute(options));
+        .action((options) => {
+            if (os.platform() !== "win32") {
+                console.log(
+                    chalk.red(
+                        "The build command is only supported on Windows.",
+                    ),
+                );
+
+                process.exit(1);
+            }
+
+            actions.build.execute(options);
+        });
 
     return command;
 }
