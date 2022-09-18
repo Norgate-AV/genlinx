@@ -6,6 +6,7 @@ import {
     getGlobalAppConfig,
     getLocalAppConfig,
     getOptions,
+    loadAPW,
     printFiles,
     selectFiles,
 } from "../../../lib/utils";
@@ -53,9 +54,9 @@ export const cfg = {
                     chalk.blue(`Generating CFG for ${workspaceFile}...`),
                 );
 
-                const localConfig = await getLocalAppConfig(workspaceFile);
+                const apw = await loadAPW(workspaceFile);
 
-                const apw = new APW(workspaceFile);
+                const localConfig = await getLocalAppConfig(workspaceFile);
 
                 const options = getOptions(
                     cliOptions,
