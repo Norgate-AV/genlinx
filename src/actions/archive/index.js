@@ -52,7 +52,7 @@ export const archive = {
                     chalk.blue(`Generating archive for ${workspaceFile}...`),
                 );
 
-                const localConfig = getLocalAppConfig(workspaceFile);
+                const localConfig = await getLocalAppConfig(workspaceFile);
 
                 const apw = new APW(workspaceFile);
 

@@ -53,7 +53,7 @@ export const cfg = {
                     chalk.blue(`Generating CFG for ${workspaceFile}...`),
                 );
 
-                const localConfig = getLocalAppConfig(workspaceFile);
+                const localConfig = await getLocalAppConfig(workspaceFile);
 
                 const apw = new APW(workspaceFile);
 
