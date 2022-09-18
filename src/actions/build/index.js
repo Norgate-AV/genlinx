@@ -92,9 +92,10 @@ export const build = {
             const globalConfig = getGlobalAppConfig();
 
             if (sourceFile) {
+                const localConfig = await getLocalAppConfig(sourceFile);
                 const options = getOptions(
                     cliOptions,
-                    getLocalAppConfig(sourceFile).build,
+                    localConfig.build,
                     globalConfig.build,
                 );
 
@@ -138,9 +139,10 @@ export const build = {
             }
 
             for (const cfgFile of cfgFiles) {
+                const localConfig = await getLocalAppConfig(cfgFile);
                 const options = getOptions(
                     cliOptions,
-                    getLocalAppConfig(cfgFile).build,
+                    localConfig.build,
                     globalConfig.build,
                 );
 
