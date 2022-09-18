@@ -16,7 +16,7 @@ export function cfg() {
             new Option(
                 "-r, --root-directory <string>",
                 "root directory reference",
-            ).default(".", "use current directory as root"),
+            ).default("", "use parent directory of workspace file as root"),
         )
         .addOption(
             new Option(
