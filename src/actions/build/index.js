@@ -143,8 +143,8 @@ export const build = {
 
                 const { build: options } = getOptions(
                     { build: cliOptions },
-                    localConfig,
-                    globalConfig,
+                    localConfig.store,
+                    globalConfig.store,
                 );
 
                 const command = NLRC.getCfgBuildCommand(cfgFile, options);

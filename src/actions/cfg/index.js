@@ -56,11 +56,9 @@ export const cfg = {
 
                 const { cfg: options } = getOptions(
                     { cfg: cliOptions },
-                    localConfig,
-                    globalConfig,
+                    localConfig.store,
+                    globalConfig.store,
                 );
-
-                console.log(options);
 
                 console.log(
                     chalk.blue(`Generating CFG for ${workspaceFile}...`),

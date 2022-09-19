@@ -55,8 +55,8 @@ export const archive = {
 
                 const { archive: options } = getOptions(
                     { archive: cliOptions },
-                    localConfig,
-                    globalConfig,
+                    localConfig.store,
+                    globalConfig.store,
                 );
 
                 console.log(
