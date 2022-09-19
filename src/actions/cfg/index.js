@@ -58,10 +58,10 @@ export const cfg = {
 
                 const localConfig = await getLocalAppConfig(workspaceFile);
 
-                const options = getOptions(
-                    cliOptions,
-                    localConfig.cfg,
-                    globalConfig.cfg,
+                const { cfg: options } = getOptions(
+                    { cfg: cliOptions },
+                    localConfig,
+                    globalConfig,
                 );
 
                 const cfgBuilder = new CfgBuilder(apw, options);

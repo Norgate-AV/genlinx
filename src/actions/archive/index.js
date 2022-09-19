@@ -57,10 +57,10 @@ export const archive = {
 
                 const localConfig = await getLocalAppConfig(workspaceFile);
 
-                const options = getOptions(
-                    cliOptions,
-                    localConfig.archive,
-                    globalConfig.archive,
+                const { archive: options } = getOptions(
+                    { archive: cliOptions },
+                    localConfig,
+                    globalConfig,
                 );
 
                 const builder = new ArchiveBuilder(apw, options);
