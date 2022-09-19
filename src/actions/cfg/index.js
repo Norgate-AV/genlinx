@@ -50,10 +50,6 @@ export const cfg = {
             const globalConfig = await getGlobalAppConfig();
 
             for (const workspaceFile of workspaceFiles) {
-                console.log(
-                    chalk.blue(`Generating CFG for ${workspaceFile}...`),
-                );
-
                 const apw = await loadAPW(workspaceFile);
 
                 const localConfig = await getLocalAppConfig(workspaceFile);
@@ -62,6 +58,12 @@ export const cfg = {
                     { cfg: cliOptions },
                     localConfig,
                     globalConfig,
+                );
+
+                console.log(options);
+
+                console.log(
+                    chalk.blue(`Generating CFG for ${workspaceFile}...`),
                 );
 
                 const cfgBuilder = new CfgBuilder(apw, options);

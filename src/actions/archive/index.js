@@ -49,10 +49,6 @@ export const archive = {
             const globalConfig = await getGlobalAppConfig();
 
             for (const workspaceFile of workspaceFiles) {
-                console.log(
-                    chalk.blue(`Generating archive for ${workspaceFile}...`),
-                );
-
                 const apw = await loadAPW(workspaceFile);
 
                 const localConfig = await getLocalAppConfig(workspaceFile);
@@ -61,6 +57,10 @@ export const archive = {
                     { archive: cliOptions },
                     localConfig,
                     globalConfig,
+                );
+
+                console.log(
+                    chalk.blue(`Generating archive for ${workspaceFile}...`),
                 );
 
                 const builder = new ArchiveBuilder(apw, options);
