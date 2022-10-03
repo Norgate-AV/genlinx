@@ -4590,10 +4590,10 @@ node-gyp@^9.0.0, node-gyp@^9.1.0:
     tar "^6.1.2"
     which "^2.0.2"
 
-node-jq@^2.3.3:
-  version "2.3.3"
-  resolved "https://registry.yarnpkg.com/node-jq/-/node-jq-2.3.3.tgz#2b179b49c400820829d2e197922fdabe8b9bec69"
-  integrity sha512-HFdQm3BvM8xSFKSZwRzweypMj/75jkjPfiifq4CJM7IWmoIjbVuj1lT9+wtRI5c1Y3Za8LPjiJQ1VfEv7VKluQ==
+node-jq@^2.3.4:
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/node-jq/-/node-jq-2.3.4.tgz#047b1717e86b269f3cd64fcc0b44ac8dbe21cd65"
+  integrity sha512-Zm0kJzDHUtVdS9a3Ypq07+rQfxJ9SdbUa5hEOP9Y+gwToLPme6onIptApQgsqIMByA1FIE7sw+EKZvrmIy1Jqw==
   dependencies:
     bin-build "^3.0.0"
     download "^8.0.0"
