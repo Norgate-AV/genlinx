@@ -33,6 +33,12 @@ export function config() {
         .addOption(new Option("--add", "add value(s) to an array"))
         .addOption(new Option("--remove", "remove value(s) from an array"))
         .addOption(new Option("-d, --delete", "delete the given key"))
+        .addOption(
+            new Option(
+                "-e, --edit",
+                "edit the configuration with default text editor",
+            ).conflicts("list"),
+        )
         .action(async (key, value, options) => {
             if (!key && !value) {
                 if (options.list) {
