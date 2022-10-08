@@ -26,10 +26,9 @@ export function config() {
             ),
         )
         .addOption(
-            new Option("-l, --list", "display the configuration").conflicts([
-                "[key]",
-                "[value]",
-            ]),
+            new Option("-l, --list", "display the configuration").conflicts(
+                "edit",
+            ),
         )
         // .addOption(new Option("--replace-all", "display the configuration"))
         .addOption(new Option("--add", "display the configuration"))
