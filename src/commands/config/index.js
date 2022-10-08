@@ -40,26 +40,7 @@ export function config() {
             ).conflicts("list"),
         )
         .action(async (key, value, options) => {
-            if (!key && !value) {
-                if (options.list) {
-                    actions.config.show(options);
-                    process.exit();
-                }
-
-                if (options.edit) {
-                    await actions.config.edit(options);
-                    process.exit();
-                }
-
-                process.exit();
-            }
-
-            if (!value) {
-                actions.config.get(key, options);
-                process.exit();
-            }
-
-            await actions.config.set(key, value, options);
+            await actions.config.process(key, value, options);
         });
 
     return command;
