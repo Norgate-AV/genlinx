@@ -11,7 +11,7 @@ export function config() {
         )
         .addArgument(
             new Argument(
-                "[value]",
+                "[value...]",
                 "the value to set the configuration property to",
             ),
         )
