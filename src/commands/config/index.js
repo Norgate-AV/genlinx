@@ -30,13 +30,8 @@ export function config() {
                 "edit",
             ),
         )
-        // .addOption(new Option("--replace-all", "display the configuration"))
-        .addOption(new Option("--add", "display the configuration"))
-        .addOption(new Option("--get", "get the value for the given key"))
-        // .addOption(new Option("--get-all", "display the configuration"))
-        .addOption(new Option("--unset", "display the configuration"))
-        // .addOption(new Option("--unset-all", "display the configuration"))
-        .addOption(new Option("-e, --edit", "display the configuration"))
+        .addOption(new Option("--add", "add value(s) to an array"))
+        .addOption(new Option("--remove", "remove value(s) from an array"))
         .action(async (key, value, options) => {
             if (!key && !value) {
                 if (options.list) {
