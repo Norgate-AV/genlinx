@@ -37,5 +37,17 @@ export const cfg = {
             type: "boolean",
         },
     },
+    required: [
+        "outputFileSuffix",
+        "outputLogFileSuffix",
+        "outputLogFileOption",
+        "outputLogConsoleOption",
+        "buildWithDebugInformation",
+        "buildWithSource",
+        "includePath",
+        "modulePath",
+        "libraryPath",
+        "all",
+    ],
     additionalProperties: false,
 };

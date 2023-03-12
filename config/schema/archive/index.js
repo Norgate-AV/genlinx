@@ -29,5 +29,15 @@ export const archive = {
             uniqueItems: true,
         },
     },
+    required: [
+        "outputFileSuffix",
+        "includeCompiledSourceFiles",
+        "includeCompiledModuleFiles",
+        "includeFilesNotInWorkspace",
+        "extraFileSearchLocations",
+        "extraFileArchiveLocation",
+        "all",
+        "ignoredFiles",
+    ],
     additionalProperties: false,
 };
