@@ -1,4 +1,7 @@
 export const defaultGlobalAppConfig = {
+    core: {
+        editor: "",
+    },
     cfg: {
         outputFileSuffix: "build.cfg",
         outputLogFileSuffix: "build.log",
