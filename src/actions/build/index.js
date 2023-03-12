@@ -84,6 +84,68 @@ async function buildFile(file, command, options) {
     return buildResult;
 }
 
+async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
+    const localConfig = await getLocalAppConfig(sourceFile);
+
+    const options = getOptions(
+        cliOptions,
+        localConfig.build,
+        globalConfig.build,
+    );
+
+    const command = NLRC.getSourceBuildCommand(sourceFile, options);
+
+    const buildResult = await buildFile(sourceFile, command, options);
+
+    const logs = getBuildLogs(buildResult);
+
+    printAllWarnings(logs.warning);
+    catchAllErrors(logs.error);
+}
+
+async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
+    if (cfgFiles.length === 0) {
+        console.log(chalk.blue("Searching for CFG files..."));
+
+        const locatedCfgFiles = await getFilesByExtension(".cfg");
+
+        if (locatedCfgFiles.length) {
+            printFiles(locatedCfgFiles);
+            cfgFiles.push(...locatedCfgFiles);
+        }
+    }
+
+    if (cfgFiles.length === 0) {
+        console.log(chalk.red("No CFG files found."));
+        process.exit();
+    }
+
+    if (shouldPromptUser(cliOptions, cfgFiles)) {
+        const selectedCfgFiles = await selectFiles(cfgFiles);
+
+        cfgFiles.splice(0, cfgFiles.length);
+        cfgFiles.push(...selectedCfgFiles);
+    }
+
+    for (const cfgFile of cfgFiles) {
+        const localConfig = await getLocalAppConfig(cfgFile);
+        const options = getOptions(
+            cliOptions,
+            localConfig.build,
+            globalConfig.build,
+        );
+
+        const command = NLRC.getCfgBuildCommand(cfgFile, options);
+
+        const buildResult = await buildFile(cfgFile, command, options);
+
+        const logs = getBuildLogs(buildResult);
+
+        printAllWarnings(logs.warning);
+        catchAllErrors(logs.error);
+    }
+}
+
 export const build = {
     async execute(cliOptions) {
         try {
@@ -92,69 +154,11 @@ export const build = {
             const globalConfig = await getGlobalAppConfig();
 
             if (sourceFile) {
-                const localConfig = await getLocalAppConfig(sourceFile);
-                const options = getOptions(
-                    cliOptions,
-                    localConfig.build,
-                    globalConfig.build,
-                );
-
-                const command = NLRC.getSourceBuildCommand(sourceFile, options);
-
-                const buildResult = await buildFile(
-                    sourceFile,
-                    command,
-                    options,
-                );
-
-                const logs = getBuildLogs(buildResult);
-
-                printAllWarnings(logs.warning);
-                catchAllErrors(logs.error);
-
+                await executeSourceBuild(sourceFile, cliOptions, globalConfig);
                 process.exit();
             }
 
-            if (cfgFiles.length === 0) {
-                console.log(chalk.blue("Searching for CFG files..."));
-
-                const locatedCfgFiles = await getFilesByExtension(".cfg");
-
-                if (locatedCfgFiles.length) {
-                    printFiles(locatedCfgFiles);
-                    cfgFiles.push(...locatedCfgFiles);
-                }
-            }
-
-            if (cfgFiles.length === 0) {
-                console.log(chalk.red("No CFG files found."));
-                process.exit();
-            }
-
-            if (shouldPromptUser(cliOptions, cfgFiles)) {
-                const selectedCfgFiles = await selectFiles(cfgFiles);
-
-                cfgFiles.splice(0, cfgFiles.length);
-                cfgFiles.push(...selectedCfgFiles);
-            }
-
-            for (const cfgFile of cfgFiles) {
-                const localConfig = await getLocalAppConfig(cfgFile);
-                const options = getOptions(
-                    cliOptions,
-                    localConfig.build,
-                    globalConfig.build,
-                );
-
-                const command = NLRC.getCfgBuildCommand(cfgFile, options);
-
-                const buildResult = await buildFile(cfgFile, command, options);
-
-                const logs = getBuildLogs(buildResult);
-
-                printAllWarnings(logs.warning);
-                catchAllErrors(logs.error);
-            }
+            await executeCfgBuild(cfgFiles, cliOptions, globalConfig);
         } catch (error) {
             console.error(error);
             process.exit(1);
