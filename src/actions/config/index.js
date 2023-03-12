@@ -78,6 +78,7 @@ async function editConfig(cliOptions) {
         }
 
         const globalConfig = getGlobalAppConfig();
+        console.log(JSON.stringify(globalConfig.store, null, 4));
         await openInEditor(globalConfig);
     } catch (error) {
         console.error(error);
@@ -88,19 +89,10 @@ async function editConfig(cliOptions) {
 export const config = {
     async process(key, value, cliOptions) {
         try {
-            const { global, local, list, edit } = cliOptions;
-
-            if (global) {
-                const globalConfig = getGlobalAppConfig();
-                globalConfig.set(key, value);
-            }
-
-            if (local) {
-                const localConfig = await getLocalAppConfig();
-                localConfig.set(key, value);
-            }
-
-            if (!key && !value) {
+            const { list, edit } = cliOptions;
+            console.log(key, value, cliOptions);
+            if (!key && value.length === 0) {
+                console.log("No key or value provided");
                 if (list) {
                     listConfig(cliOptions);
                 }
@@ -112,7 +104,7 @@ export const config = {
                 return;
             }
 
-            if (!value) {
+            if (value.length === 0) {
                 get(key, cliOptions);
             }
 
