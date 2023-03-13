@@ -1,3 +1,4 @@
+import path from "path";
 import chalk from "chalk";
 import { APW, ArchiveBuilder } from "../../../lib";
 import {
@@ -55,11 +56,13 @@ export const archive = {
 
                 const apw = await loadAPW(workspaceFile);
 
-                const localConfig = await getLocalAppConfig(workspaceFile);
+                const localConfig = await getLocalAppConfig(
+                    path.dirname(workspaceFile),
+                );
 
                 const options = getOptions(
                     cliOptions,
-                    localConfig.archive,
+                    localConfig.config.archive,
                     globalConfig.archive,
                 );
 

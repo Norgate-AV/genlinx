@@ -1,3 +1,4 @@
+import path from "path";
 import fs from "fs-extra";
 import chalk from "chalk";
 import { APW, CfgBuilder } from "../../../lib";
@@ -56,11 +57,13 @@ export const cfg = {
 
                 const apw = await loadAPW(workspaceFile);
 
-                const localConfig = await getLocalAppConfig(workspaceFile);
+                const localConfig = await getLocalAppConfig(
+                    path.dirname(workspaceFile),
+                );
 
                 const options = getOptions(
                     cliOptions,
-                    localConfig.cfg,
+                    localConfig.config.cfg,
                     globalConfig.cfg,
                 );
 

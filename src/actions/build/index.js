@@ -1,3 +1,4 @@
+import path from "path";
 import execa from "execa";
 import chalk from "chalk";
 import { NLRC } from "../../../lib";
@@ -85,11 +86,66 @@ async function buildFile(file, command, options) {
 }
 
 async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
-    const localConfig = await getLocalAppConfig(sourceFile);
+    const localConfig = await getLocalAppConfig(path.dirname(sourceFile));
+
+    // Resolve relative paths in the local config file
+    if (localConfig.config.build.nlrc.includePath) {
+        for (
+            let i = 0;
+            i < localConfig.config.build.nlrc.includePath.length;
+            // eslint-disable-next-line no-plusplus
+            i++
+        ) {
+            if (path.isAbsolute(localConfig.config.build.nlrc.includePath[i])) {
+                continue;
+            }
+
+            localConfig.config.build.nlrc.includePath[i] = path.resolve(
+                path.dirname(localConfig.path),
+                localConfig.config.build.nlrc.includePath[i],
+            );
+        }
+    }
+
+    if (localConfig.config.build.nlrc.modulePath) {
+        for (
+            let i = 0;
+            i < localConfig.config.build.nlrc.modulePath.length;
+            // eslint-disable-next-line no-plusplus
+            i++
+        ) {
+            if (path.isAbsolute(localConfig.config.build.nlrc.modulePath[i])) {
+                continue;
+            }
+
+            localConfig.config.build.nlrc.modulePath[i] = path.resolve(
+                path.dirname(localConfig.path),
+                localConfig.config.build.nlrc.modulePath[i],
+            );
+        }
+    }
+
+    if (localConfig.config.build.nlrc.libraryPath) {
+        for (
+            let i = 0;
+            i < localConfig.config.build.nlrc.libraryPath.length;
+            // eslint-disable-next-line no-plusplus
+            i++
+        ) {
+            if (path.isAbsolute(localConfig.config.build.nlrc.libraryPath[i])) {
+                continue;
+            }
+
+            localConfig.config.build.nlrc.libraryPath[i] = path.resolve(
+                path.dirname(localConfig.path),
+                localConfig.config.build.nlrc.libraryPath[i],
+            );
+        }
+    }
 
     const options = getOptions(
         cliOptions,
-        localConfig.build,
+        localConfig.config.build,
         globalConfig.build,
     );
 
@@ -128,10 +184,10 @@ async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
     }
 
     for (const cfgFile of cfgFiles) {
-        const localConfig = await getLocalAppConfig(cfgFile);
+        const localConfig = await getLocalAppConfig(path.dirname(cfgFile));
         const options = getOptions(
             cliOptions,
-            localConfig.build,
+            localConfig.config.build,
             globalConfig.build,
         );
 
