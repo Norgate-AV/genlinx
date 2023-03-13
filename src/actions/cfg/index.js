@@ -9,6 +9,7 @@ import {
     getOptions,
     loadAPW,
     printFiles,
+    resolvePaths,
     selectFiles,
 } from "../../../lib/utils";
 
@@ -59,6 +60,21 @@ export const cfg = {
 
                 const localConfig = await getLocalAppConfig(
                     path.dirname(workspaceFile),
+                );
+
+                localConfig.config.cfg.includePath = resolvePaths(
+                    path.dirname(localConfig.path),
+                    localConfig.config.cfg.includePath,
+                );
+
+                localConfig.config.cfg.modulePath = resolvePaths(
+                    path.dirname(localConfig.path),
+                    localConfig.config.cfg.modulePath,
+                );
+
+                localConfig.config.cfg.libraryPath = resolvePaths(
+                    path.dirname(localConfig.path),
+                    localConfig.config.cfg.libraryPath,
                 );
 
                 const options = getOptions(
