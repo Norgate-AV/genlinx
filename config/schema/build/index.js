@@ -37,6 +37,13 @@ export const build = {
                     uniqueItems: true,
                 },
             },
+            required: [
+                "path",
+                "option",
+                "includePath",
+                "modulePath",
+                "libraryPath",
+            ],
         },
         shell: {
             type: "object",
@@ -45,6 +52,7 @@ export const build = {
                     type: "string",
                 },
             },
+            required: ["path"],
         },
         all: {
             type: "boolean",
@@ -53,5 +61,6 @@ export const build = {
             type: "boolean",
         },
     },
+    required: ["nlrc", "shell", "all", "createCfg"],
     additionalProperties: false,
 };
