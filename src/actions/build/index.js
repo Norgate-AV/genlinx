@@ -8,6 +8,7 @@ import {
     getLocalAppConfig,
     getOptions,
     printFiles,
+    resolvePaths,
     selectFiles,
 } from "../../../lib/utils";
 
@@ -88,60 +89,20 @@ async function buildFile(file, command, options) {
 async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
     const localConfig = await getLocalAppConfig(path.dirname(sourceFile));
 
-    // Resolve relative paths in the local config file
-    if (localConfig.config.build.nlrc.includePath) {
-        for (
-            let i = 0;
-            i < localConfig.config.build.nlrc.includePath.length;
-            // eslint-disable-next-line no-plusplus
-            i++
-        ) {
-            if (path.isAbsolute(localConfig.config.build.nlrc.includePath[i])) {
-                continue;
-            }
+    localConfig.config.build.nlrc.includePath = resolvePaths(
+        path.dirname(localConfig.path),
+        localConfig.config.build.nlrc.includePath,
+    );
 
-            localConfig.config.build.nlrc.includePath[i] = path.resolve(
-                path.dirname(localConfig.path),
-                localConfig.config.build.nlrc.includePath[i],
-            );
-        }
-    }
+    localConfig.config.build.nlrc.modulePath = resolvePaths(
+        path.dirname(localConfig.path),
+        localConfig.config.build.nlrc.modulePath,
+    );
 
-    if (localConfig.config.build.nlrc.modulePath) {
-        for (
-            let i = 0;
-            i < localConfig.config.build.nlrc.modulePath.length;
-            // eslint-disable-next-line no-plusplus
-            i++
-        ) {
-            if (path.isAbsolute(localConfig.config.build.nlrc.modulePath[i])) {
-                continue;
-            }
-
-            localConfig.config.build.nlrc.modulePath[i] = path.resolve(
-                path.dirname(localConfig.path),
-                localConfig.config.build.nlrc.modulePath[i],
-            );
-        }
-    }
-
-    if (localConfig.config.build.nlrc.libraryPath) {
-        for (
-            let i = 0;
-            i < localConfig.config.build.nlrc.libraryPath.length;
-            // eslint-disable-next-line no-plusplus
-            i++
-        ) {
-            if (path.isAbsolute(localConfig.config.build.nlrc.libraryPath[i])) {
-                continue;
-            }
-
-            localConfig.config.build.nlrc.libraryPath[i] = path.resolve(
-                path.dirname(localConfig.path),
-                localConfig.config.build.nlrc.libraryPath[i],
-            );
-        }
-    }
+    localConfig.config.build.nlrc.libraryPath = resolvePaths(
+        path.dirname(localConfig.path),
+        localConfig.config.build.nlrc.libraryPath,
+    );
 
     const options = getOptions(
         cliOptions,
