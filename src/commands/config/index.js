@@ -32,7 +32,6 @@ export function config() {
         )
         .addOption(new Option("--add", "add value(s) to an array"))
         .addOption(new Option("--remove", "remove value(s) from an array"))
-        .addOption(new Option("-d, --delete", "delete the given key"))
         .addOption(
             new Option(
                 "-e, --edit",
