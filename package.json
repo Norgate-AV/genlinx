@@ -48,9 +48,9 @@
         "@semantic-release/git": "^10.0.1",
         "@types/adm-zip": "^0.5.0",
         "@types/figlet": "^1.5.5",
-        "@types/fs-extra": "^9.0.13",
+        "@types/fs-extra": "^11.0.1",
         "@types/inquirer": "^9.0.3",
-        "@types/node": "^18.15.0",
+        "@types/node": "^18.15.3",
         "all-contributors-cli": "^6.24.0",
         "cz-conventional-changelog": "3.3.0",
         "doctoc": "^2.2.0",
@@ -60,7 +60,7 @@
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-prettier": "^4.0.0",
         "husky": "^8.0.3",
-        "jsdoc": "^3.6.11",
+        "jsdoc": "^4.0.2",
         "lint-staged": "^13.2.0",
         "prettier": "^2.8.4",
         "semantic-release": "^19.0.5"
@@ -68,17 +68,17 @@
     "dependencies": {
         "adm-zip": "^0.5.10",
         "chalk": "^4.1.2",
-        "commander": "^9.4.0",
+        "commander": "^10.0.0",
         "conf": "^10.2.0",
         "esm": "^3.2.25",
         "execa": "^5.1.1",
         "figlet": "^1.5.2",
         "find-up": "5.0.0",
-        "fs-extra": "^10.1.0",
+        "fs-extra": "^11.1.0",
         "inquirer": "^8.2.3",
         "listr2": "^5.0.8",
         "mergician": "^1.1.0",
         "string-builder": "^0.1.8",
-        "which": "^2.0.2"
+        "which": "^3.0.0"
     }
 }
