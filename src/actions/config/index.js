@@ -95,9 +95,12 @@ export const config = {
     async process(key, value, cliOptions) {
         try {
             const { list, edit } = cliOptions;
+
             console.log(key, value, cliOptions);
+
             if (!key && value.length === 0) {
                 console.log("No key or value provided");
+
                 if (list) {
                     listConfig(cliOptions);
                 }
