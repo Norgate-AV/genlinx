@@ -18,12 +18,12 @@ async function set(key, value, cliOptions) {
 
         if (global) {
             const globalConfig = getGlobalAppConfig();
-            globalConfig.set(key, value);
+            globalConfig.set(key, value[0]);
         }
 
         if (local) {
             const localConfig = await getLocalAppConfig();
-            localConfig.set(key, value);
+            localConfig.set(key, value[0]);
         }
     } catch (error) {
         console.error(error);
