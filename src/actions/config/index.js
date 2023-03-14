@@ -79,11 +79,11 @@ async function editConfig(cliOptions) {
         if (local) {
             const localConfig = await getLocalAppConfig();
             await openInEditor(localConfig);
+
             return;
         }
 
         const globalConfig = getGlobalAppConfig();
-        console.log(JSON.stringify(globalConfig.store, null, 4));
         await openInEditor(globalConfig);
     } catch (error) {
         console.error(error);
