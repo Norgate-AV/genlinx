@@ -114,6 +114,7 @@ export const config = {
 
             if (value.length === 0) {
                 get(key, cliOptions);
+                return;
             }
 
             await set(key, value, cliOptions);
