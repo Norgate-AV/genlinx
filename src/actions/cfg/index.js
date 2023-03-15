@@ -1,3 +1,4 @@
+import path from "path";
 import fs from "fs-extra";
 import chalk from "chalk";
 import { APW, CfgBuilder } from "../../../lib";
@@ -8,6 +9,7 @@ import {
     getOptions,
     loadAPW,
     printFiles,
+    resolvePaths,
     selectFiles,
 } from "../../../lib/utils";
 
@@ -52,11 +54,28 @@ export const cfg = {
             for (const workspaceFile of workspaceFiles) {
                 const apw = await loadAPW(workspaceFile);
 
-                const localConfig = await getLocalAppConfig(workspaceFile);
+                const localConfig = await getLocalAppConfig(
+                    path.dirname(workspaceFile),
+                );
+
+                localConfig.config.cfg.includePath = resolvePaths(
+                    path.dirname(localConfig.path),
+                    localConfig.config.cfg.includePath,
+                );
+
+                localConfig.config.cfg.modulePath = resolvePaths(
+                    path.dirname(localConfig.path),
+                    localConfig.config.cfg.modulePath,
+                );
+
+                localConfig.config.cfg.libraryPath = resolvePaths(
+                    path.dirname(localConfig.path),
+                    localConfig.config.cfg.libraryPath,
+                );
 
                 const { cfg: options } = getOptions(
                     { cfg: cliOptions },
-                    localConfig.store,
+                    localConfig.config.store,
                     globalConfig.store,
                 );
 

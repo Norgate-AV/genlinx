@@ -148,11 +148,11 @@ async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
     }
 
     for (const cfgFile of cfgFiles) {
-        const localConfig = await getLocalAppConfig(cfgFile);
+        const localConfig = await getLocalAppConfig(path.dirname(cfgFile));
 
         const { build: options } = getOptions(
             { build: cliOptions },
-            localConfig.store,
+            localConfig.config.store,
             globalConfig.store,
         );
 
