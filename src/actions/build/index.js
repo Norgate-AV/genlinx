@@ -24,7 +24,10 @@ function getBuildLogs(data) {
         logs[level.toLowerCase()].push(log);
     }
 
-    return logs;
+    return {
+        error: [...new Set(logs.error)],
+        warning: [...new Set(logs.warning)],
+    };
 }
 
 function catchAllErrors(errors) {
