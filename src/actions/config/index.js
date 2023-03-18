@@ -23,7 +23,7 @@ async function set(key, value, cliOptions) {
 
         if (local) {
             const localConfig = await getLocalAppConfig();
-            localConfig.set(key, value[0]);
+            localConfig.config.set(key, value[0]);
         }
     } catch (error) {
         console.error(error);
@@ -42,7 +42,7 @@ async function get(key, cliOptions) {
 
         if (local) {
             const localConfig = await getLocalAppConfig();
-            console.log(localConfig.get(key));
+            console.log(localConfig.config.get(key));
         }
     } catch (error) {
         console.error(error);
