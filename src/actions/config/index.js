@@ -1,5 +1,5 @@
 import execa from "execa";
-import chalk from "chalk";
+import util from "util";
 import { getGlobalAppConfig, getLocalAppConfig } from "../../../lib/utils";
 
 async function openInEditor(config) {
@@ -58,14 +58,19 @@ async function listConfig(cliOptions) {
             const localConfig = await getLocalAppConfig();
 
             console.log(
-                chalk.green(JSON.stringify(localConfig.store, null, 4)),
+                util.inspect(localConfig.config.store, {
+                    depth: null,
+                    colors: true,
+                }),
             );
 
             return;
         }
 
         const globalConfig = getGlobalAppConfig();
-        console.log(chalk.green(JSON.stringify(globalConfig.store, null, 4)));
+        console.log(
+            util.inspect(globalConfig.store, { depth: null, colors: true }),
+        );
     } catch (error) {
         console.error(error);
         process.exit(1);
