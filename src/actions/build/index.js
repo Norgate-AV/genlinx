@@ -149,10 +149,11 @@ async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
 
     for (const cfgFile of cfgFiles) {
         const localConfig = await getLocalAppConfig(path.dirname(cfgFile));
-        const options = getOptions(
-            cliOptions,
-            localConfig.config.build,
-            globalConfig.build,
+
+        const { build: options } = getOptions(
+            { build: cliOptions },
+            localConfig.config.store,
+            globalConfig.store,
         );
 
         const command = NLRC.getCfgBuildCommand(cfgFile, options);

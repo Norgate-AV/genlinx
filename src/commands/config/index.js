@@ -1,4 +1,4 @@
-import { Command } from "commander";
+import { Command, Argument, Option } from "commander";
 import { actions } from "../../actions";
 
 export function config() {
@@ -6,21 +6,41 @@ export function config() {
 
     command
         .description("edit configuration properties for genlinx")
-        .option("-g, --global", "edit the global configuration")
-        .option("-l, --local", "edit the local configuration");
-
-    command
-        .command("set")
-        .argument("key <string>", "key to set")
-        .argument("value(s) <string...>", "value(s) to set")
-        .description("set configuration properties for genlinx")
-        .action(() => actions.config.set());
-
-    command
-        .command("get")
-        .argument("key <string>", "key to get")
-        .description("get configuration properties for genlinx")
-        .action(() => actions.config.get());
+        .addArgument(
+            new Argument("[key]", "the configuration property to edit"),
+        )
+        .addArgument(
+            new Argument(
+                "[value...]",
+                "the value to set the configuration property to",
+            ),
+        )
+        .addOption(
+            new Option("--global", "edit the global configuration").conflicts(
+                "local",
+            ),
+        )
+        .addOption(
+            new Option("--local", "edit the local configuration").conflicts(
+                "global",
+            ),
+        )
+        .addOption(
+            new Option("-l, --list", "display the configuration").conflicts(
+                "edit",
+            ),
+        )
+        .addOption(new Option("--add", "add value(s) to an array"))
+        .addOption(new Option("--remove", "remove value(s) from an array"))
+        .addOption(
+            new Option(
+                "-e, --edit",
+                "edit the configuration with default text editor",
+            ).conflicts("list"),
+        )
+        .action(async (key, value, options) => {
+            await actions.config.process(key, value, options);
+        });
 
     return command;
 }

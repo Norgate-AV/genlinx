@@ -1,11 +1,6 @@
 export const defaultGlobalAppConfig = {
-    cfg: {
-        outputFileSuffix: "build.cfg",
-        outputLogFileSuffix: "build.log",
-        outputLogFileOption: "N",
-        outputLogConsoleOption: true,
-        buildWithDebugInformation: false,
-        buildWithSource: false,
+    core: {
+        editor: "",
         includePath: [
             "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes",
@@ -18,6 +13,14 @@ export const defaultGlobalAppConfig = {
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx",
         ],
         libraryPath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"],
+    },
+    cfg: {
+        outputFileSuffix: "build.cfg",
+        outputLogFileSuffix: "build.log",
+        outputLogFileOption: "N",
+        outputLogConsoleOption: true,
+        buildWithDebugInformation: false,
+        buildWithSource: false,
         all: false,
     },
     archive: {
@@ -57,20 +60,6 @@ export const defaultGlobalAppConfig = {
                 modulePath: "-M",
                 libraryPath: "-L",
             },
-            includePath: [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes",
-            ],
-            modulePath: [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx",
-            ],
-            libraryPath: [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs",
-            ],
         },
         shell: {
             path: "C:\\Windows\\System32\\cmd.exe",
