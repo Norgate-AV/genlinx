@@ -7,7 +7,7 @@ export function build() {
     const command = new Command("build");
 
     command
-        .description("build a NetLinx project")
+        .description("build a NetLinx workspace or individual source file")
         .addOption(
             new Option(
                 "-c, --cfg-files <string...>",
