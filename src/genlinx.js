@@ -2,7 +2,7 @@ import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
 import { version } from "../package.json";
-import { archive, build, cfg, config } from "./commands";
+import { archive, build, cfg } from "./commands";
 
 export function cli(args) {
     const program = new Command();
@@ -12,11 +12,7 @@ export function cli(args) {
         .description("cli helper utility for NetLinx projects 🚀🚀🚀")
         .version(version, "-v, --version");
 
-    program
-        .addCommand(archive())
-        .addCommand(build())
-        .addCommand(cfg())
-        .addCommand(config());
+    program.addCommand(archive()).addCommand(build()).addCommand(cfg());
 
     program.addHelpText("beforeAll", () => {
         const builder = new StringBuilder();

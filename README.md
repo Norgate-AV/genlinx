@@ -28,7 +28,6 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     -   [archive](#archive)
     -   [build](#build)
     -   [cfg](#cfg)
-    -   [config](#config)
 -   [Configuration :gear:](#configuration-gear)
     -   [Global](#global)
     -   [Local](#local)
@@ -99,7 +98,6 @@ Commands:
   archive [options]  generate a NetLinx workspace zip archive
   build [options]    build a NetLinx project
   cfg [options]      generate NetLinx build CFG files
-  config [options]   edit configuration properties for genlinx
   help [command]     display help for command
 
 ===================================================
@@ -183,7 +181,7 @@ Options:
   -h, --help                             display help for command
 ```
 
-### config
+<!-- ### config
 
 Edit configuration properties for genlinx
 
@@ -201,7 +199,7 @@ Commands:
   set <key <string>> <value(s) <string...>>  set configuration properties for genlinx
   get <key <string>>                         get configuration properties for genlinx
   help [command]                             display help for command
-```
+``` -->
 
 ## Configuration :gear:
 
