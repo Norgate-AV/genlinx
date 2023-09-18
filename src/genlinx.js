@@ -25,8 +25,8 @@ export function cli(args) {
             .appendLine(figlet.textSync("genlinx"))
             .appendLine()
             .appendLine("Open source CLI tool for NetLinx projects")
-            .appendLine("Copyright (c) 2022, Norgate AV Solutions Ltd")
-            .appendLine("https://github.com/Norgate-AV-Solutions-Ltd/genlinx")
+            .appendLine("Copyright (c) 2023, Norgate AV Services Limited")
+            .appendLine("https://github.com/Norgate-AV/genlinx")
             .appendLine()
             .appendLine("===================================================")
             .appendLine();

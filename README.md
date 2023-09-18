@@ -6,10 +6,10 @@
 
 ---
 
-[![CI](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/actions/workflows/main.yml/badge.svg)](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/actions)
+[![CI](https://github.com/Norgate-AV/genlinx/actions/workflows/main.yml/badge.svg)](https://github.com/Norgate-AV/genlinx/actions)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-[![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV-Solutions-Ltd/genlinx)](#contributors)
+[![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV/genlinx)](#contributors)
 [![NPM](https://img.shields.io/npm/v/genlinx.svg)](https://www.npmjs.com/package/genlinx)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -82,8 +82,8 @@ genlinx will
   |___/
 
 Open source CLI tool for NetLinx projects
-Copyright (c) 2022, Norgate AV Solutions Ltd
-https://github.com/Norgate-AV-Solutions-Ltd/genlinx
+Copyright (c) 2022, Norgate AV Services Limited
+https://github.com/Norgate-AV/genlinx
 
 ===================================================
 
@@ -305,7 +305,7 @@ genlinx
 
 ## Team :soccer:
 
-This project is maintained by the following person(s) and a bunch of [awesome contributors](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/graphs/contributors).
+This project is maintained by the following person(s) and a bunch of [awesome contributors](https://github.com/Norgate-AV/genlinx/graphs/contributors).
 
 <table>
   <tr>
