@@ -36,3 +36,23 @@ jobs:
 
       - name: Test
         run: yarn test
+
+  release:
+    name: Run Semantic Release
+
+    runs-on: ubuntu-latest
+
+    if: ${{ github.ref == 'refs/heads/master' }}
+
+    needs: [build]
+
+    steps:
+      - name: Release
+        run: pnpm semantic-release
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: ${{ secrets.SEMANTIC_RELEASE_GIT_NAME }}
+          GIT_AUTHOR_EMAIL: ${{ secrets.SEMANTIC_RELEASE_GIT_EMAIL }}
+          GIT_COMMITTER_NAME: ${{ secrets.SEMANTIC_RELEASE_GIT_NAME }}
+          GIT_COMMITTER_EMAIL: ${{ secrets.SEMANTIC_RELEASE_GIT_EMAIL }}
