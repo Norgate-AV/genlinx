@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0](https://github.com/Norgate-AV/genlinx/compare/v1.0.0...v1.1.0) (2023-09-20)
+
+### Features
+
+-   add man page file ([957da87](https://github.com/Norgate-AV/genlinx/commit/957da87737d71f487c54d0e93e791c47d385e410))
+
 ## 1.0.0 (2023-09-18)
 
 ### Features
