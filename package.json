@@ -10,7 +10,8 @@
         "config",
         "lib",
         "scripts",
-        "src"
+        "src",
+        "docs"
     ],
     "bin": {
         "genlinx": "bin/genlinx"
