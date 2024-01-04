@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2](https://github.com/Norgate-AV/genlinx/compare/v1.1.1...v1.1.2) (2024-01-04)
+
+### Bug Fixes
+
+-   **build:** add empty arrays to localconfig ([f54d80b](https://github.com/Norgate-AV/genlinx/commit/f54d80b846156397e9113b44dce998d992cb7b73))
+
 ## [1.1.1](https://github.com/Norgate-AV/genlinx/compare/v1.1.0...v1.1.1) (2024-01-04)
 
 ### Bug Fixes
