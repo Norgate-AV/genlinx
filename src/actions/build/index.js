@@ -90,22 +90,32 @@ async function buildFile(file, command, options) {
 }
 
 async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
-    const localConfig = await getLocalAppConfig(path.dirname(sourceFile));
+    let localConfig = await getLocalAppConfig(path.dirname(sourceFile));
 
-    localConfig.config.build.nlrc.includePath = resolvePaths(
-        path.dirname(localConfig.path),
-        localConfig.config.build.nlrc.includePath,
-    );
+    if (localConfig) {
+        localConfig.config.build.nlrc.includePath = resolvePaths(
+            path.dirname(localConfig.path),
+            localConfig.config.build.nlrc.includePath,
+        );
 
-    localConfig.config.build.nlrc.modulePath = resolvePaths(
-        path.dirname(localConfig.path),
-        localConfig.config.build.nlrc.modulePath,
-    );
+        localConfig.config.build.nlrc.modulePath = resolvePaths(
+            path.dirname(localConfig.path),
+            localConfig.config.build.nlrc.modulePath,
+        );
 
-    localConfig.config.build.nlrc.libraryPath = resolvePaths(
-        path.dirname(localConfig.path),
-        localConfig.config.build.nlrc.libraryPath,
-    );
+        localConfig.config.build.nlrc.libraryPath = resolvePaths(
+            path.dirname(localConfig.path),
+            localConfig.config.build.nlrc.libraryPath,
+        );
+    }
+
+    if (!localConfig) {
+        localConfig = {
+            config: {
+                build: {},
+            },
+        };
+    }
 
     const options = getOptions(
         cliOptions,
