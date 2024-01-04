@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1](https://github.com/Norgate-AV/genlinx/compare/v1.1.0...v1.1.1) (2024-01-04)
+
+### Bug Fixes
+
+-   **build:** quick and dirty fix for local config issue ([d7cbf0f](https://github.com/Norgate-AV/genlinx/commit/d7cbf0fdb1f04db536fdcd167eff0384b4a25782))
+
 ## [1.1.0](https://github.com/Norgate-AV/genlinx/compare/v1.0.0...v1.1.0) (2023-09-20)
 
 ### Features
