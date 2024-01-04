@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3](https://github.com/Norgate-AV/genlinx/compare/v1.1.2...v1.1.3) (2024-01-04)
+
+### Bug Fixes
+
+-   **build:** filter out falsy props from options ([e105abe](https://github.com/Norgate-AV/genlinx/commit/e105abe536ffe37c74ea299124835113ec11d067))
+
 ## [1.1.2](https://github.com/Norgate-AV/genlinx/compare/v1.1.1...v1.1.2) (2024-01-04)
 
 ### Bug Fixes
