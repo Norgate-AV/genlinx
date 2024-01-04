@@ -112,7 +112,13 @@ async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
     if (!localConfig) {
         localConfig = {
             config: {
-                build: {},
+                build: {
+                    nlrc: {
+                        includePath: [],
+                        modulePath: [],
+                        libraryPath: [],
+                    },
+                },
             },
         };
     }
