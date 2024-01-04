@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4](https://github.com/Norgate-AV/genlinx/compare/v1.1.3...v1.1.4) (2024-01-04)
+
+### Bug Fixes
+
+-   **build:** remove accidental console.log ([a71b27e](https://github.com/Norgate-AV/genlinx/commit/a71b27e628f95d10d2fb1d8501a25fa71b3e313c))
+
 ## [1.1.3](https://github.com/Norgate-AV/genlinx/compare/v1.1.2...v1.1.3) (2024-01-04)
 
 ### Bug Fixes
