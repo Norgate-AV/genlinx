@@ -90,7 +90,8 @@ async function buildFile(file, command, options) {
 }
 
 async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
-    let localConfig = await getLocalAppConfig(path.dirname(sourceFile));
+    const localConfig = await getLocalAppConfig(path.dirname(sourceFile));
+    let options;
 
     if (localConfig) {
         localConfig.config.build.nlrc.includePath = resolvePaths(
@@ -107,27 +108,15 @@ async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
             path.dirname(localConfig.path),
             localConfig.config.build.nlrc.libraryPath,
         );
-    }
 
-    if (!localConfig) {
-        localConfig = {
-            config: {
-                build: {
-                    nlrc: {
-                        includePath: [],
-                        modulePath: [],
-                        libraryPath: [],
-                    },
-                },
-            },
-        };
+        options = getOptions(
+            cliOptions,
+            localConfig.config.build,
+            globalConfig.build,
+        );
+    } else {
+        options = getOptions(cliOptions, {}, globalConfig.build);
     }
-
-    const options = getOptions(
-        cliOptions,
-        localConfig.config.build,
-        globalConfig.build,
-    );
 
     const command = NLRC.getSourceBuildCommand(sourceFile, options);
 
