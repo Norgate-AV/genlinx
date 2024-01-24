@@ -2,29 +2,34 @@ import fs from "fs-extra";
 import path from "path";
 import StringBuilder from "string-builder";
 import figlet from "figlet";
+import APW from "../APW";
+import { CfgConfig } from "../@types";
 
 export class CfgBuilder {
-    constructor(apw, options) {
+    private readonly apw: APW;
+    private readonly options: CfgConfig;
+    private readonly builder = new StringBuilder();
+
+    public constructor(apw: APW, options: CfgConfig) {
         this.apw = apw;
         this.options = options;
-        this.builder = new StringBuilder();
     }
 
-    #convertToComment(comment) {
+    private convertToComment(comment: string): string {
         const lines = comment.split("\n");
         return lines.map((line) => (line ? `; ${line}` : ";")).join("\n");
     }
 
-    #addBanner(banner) {
+    private addBanner(banner: string): this {
         const { builder } = this;
 
         const figletBanner = figlet.textSync(banner);
-        builder.appendLine(this.#convertToComment(figletBanner));
+        builder.appendLine(this.convertToComment(figletBanner));
 
         return this;
     }
 
-    #addLicense() {
+    private addLicense(): this {
         const { builder } = this;
 
         try {
@@ -35,7 +40,7 @@ export class CfgBuilder {
                 },
             );
 
-            builder.appendLine(this.#convertToComment(license));
+            builder.appendLine(this.convertToComment(license));
         } catch (error) {
             console.error(error);
         }
@@ -43,7 +48,7 @@ export class CfgBuilder {
         return this;
     }
 
-    #addHeader(contentLines) {
+    private addHeader(contentLines: Array<string>): this {
         const { builder } = this;
 
         builder.appendLine(
@@ -61,11 +66,11 @@ export class CfgBuilder {
         return this;
     }
 
-    #addMainRootDirectory() {
+    private addMainRootDirectory(): this {
         const { builder, options } = this;
 
         // prettier-ignore
-        this.#addHeader([
+        this.addHeader([
             ";",
             ";  Main AXS Root Directory Reference",
             ";"
@@ -82,7 +87,7 @@ export class CfgBuilder {
         return this;
     }
 
-    #addAxsFiles(files) {
+    private addAxsFiles(files: Array<string>): this {
         const { builder } = this;
 
         for (const file of files) {
@@ -93,25 +98,25 @@ export class CfgBuilder {
         return this;
     }
 
-    #addSourceFiles() {
+    private addSourceFiles(): this {
         const { apw } = this;
 
-        this.#addHeader([
+        this.addHeader([
             ";",
             "; AXS files when specifying the MainAXSRootDirectory key above. You can have more",
             "; than one, order of the compile is as written.",
             ";",
         ])
-            .#addAxsFiles(apw.moduleFiles)
-            .#addAxsFiles(apw.masterSrcFiles);
+            .addAxsFiles(apw.moduleFiles)
+            .addAxsFiles(apw.masterSrcFiles);
 
         return this;
     }
 
-    #addLogFileOptions() {
+    private addLogFileOptions(): this {
         const { builder, apw, options } = this;
 
-        this.#addHeader([
+        this.addHeader([
             ";",
             "; Output Log File and Log File Options.",
             ";",
@@ -150,10 +155,10 @@ export class CfgBuilder {
         return this;
     }
 
-    #addCompilerOptionOverrides() {
+    private addCompilerOptionOverrides(): this {
         const { builder, options } = this;
 
-        this.#addHeader([
+        this.addHeader([
             ";",
             "; NetLinx Compiler Option Overrides",
             ";",
@@ -178,7 +183,7 @@ export class CfgBuilder {
         return this;
     }
 
-    #addAdditionalIncludePaths() {
+    private addAdditionalIncludePaths(): this {
         const { builder, apw, options } = this;
 
         options.includePath.push(...apw.includePath);
@@ -193,7 +198,7 @@ export class CfgBuilder {
         return this;
     }
 
-    #addAdditionalModulePaths() {
+    private addAdditionalModulePaths(): this {
         const { builder, apw, options } = this;
 
         options.modulePath.push(...apw.modulePath);
@@ -208,7 +213,7 @@ export class CfgBuilder {
         return this;
     }
 
-    #addAdditionalLibraryPaths() {
+    private addAdditionalLibraryPaths(): this {
         const { builder, options } = this;
 
         if (options.libraryPath) {
@@ -221,8 +226,8 @@ export class CfgBuilder {
         return this;
     }
 
-    #addAdditionalPaths() {
-        this.#addHeader([
+    private addAdditionalPaths(): this {
+        this.addHeader([
             "; Additional Paths",
             ";",
             "; If you need to specify additional paths for the NetLinx compiler, you can add",
@@ -235,27 +240,27 @@ export class CfgBuilder {
             "; You can specify upto 50 additional paths for each type (one directory per",
             "; key upto 50 keys per type).  No quotes are needed for the directory names.",
         ])
-            .#addAdditionalIncludePaths()
-            .#addAdditionalModulePaths()
-            .#addAdditionalLibraryPaths();
+            .addAdditionalIncludePaths()
+            .addAdditionalModulePaths()
+            .addAdditionalLibraryPaths();
 
         return this;
     }
 
-    build() {
+    public build(): string {
         const { builder } = this;
 
-        this.#addBanner("NorgateAV");
+        this.addBanner("NorgateAV");
         builder.appendLine(";");
 
-        this.#addLicense();
+        this.addLicense();
         builder
             .appendLine(
                 "; This file was generated by genlinx, https://github.com/Norgate-AV/genlinx",
             )
             .appendLine(";");
 
-        this.#addHeader([
+        this.addHeader([
             "; Used by the NetLinx Compiler Console program (NLRC.EXE) that specifies",
             "; how to invoke the the NetLinx Compiler with a configuration file via a",
             "; command console window.",
@@ -263,11 +268,11 @@ export class CfgBuilder {
             ';   > NLRC -C"C:\\AMX Projects\\build.cfg"',
             ";",
         ])
-            .#addMainRootDirectory()
-            .#addSourceFiles()
-            .#addLogFileOptions()
-            .#addCompilerOptionOverrides()
-            .#addAdditionalPaths();
+            .addMainRootDirectory()
+            .addSourceFiles()
+            .addLogFileOptions()
+            .addCompilerOptionOverrides()
+            .addAdditionalPaths();
 
         return builder.toString();
     }

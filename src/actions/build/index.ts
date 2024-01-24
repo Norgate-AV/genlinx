@@ -1,29 +1,39 @@
-import path from "path";
 import execa from "execa";
 import chalk from "chalk";
 import { NLRC } from "../../../lib";
 import {
     getFilesByExtension,
-    getGlobalAppConfig,
-    getLocalAppConfig,
-    getOptions,
+    getAppConfig,
     printFiles,
-    resolvePaths,
     selectFiles,
 } from "../../../lib/utils";
+import { BuildConfig, Config } from "../../../lib/@types";
 
-function getBuildLogs(data) {
+export type ShellCommand = {
+    path: string;
+    args: Array<string>;
+};
+
+export type BuildLogs = {
+    [key: string]: Array<string>;
+};
+
+function getBuildLogs(data: string): BuildLogs {
     const pattern = /(?<log>(?<level>ERROR|WARNING): .+)/gm;
     const matches = data.matchAll(pattern);
 
-    const logs = {
+    const logs: BuildLogs = {
         error: [],
         warning: [],
     };
 
     for (const match of matches) {
+        if (!match.groups) {
+            continue;
+        }
+
         const { log, level } = match.groups;
-        logs[level.toLowerCase()].push(log);
+        logs[level?.toLowerCase()].push(log);
     }
 
     return {
@@ -32,7 +42,7 @@ function getBuildLogs(data) {
     };
 }
 
-function catchAllErrors(errors) {
+function catchAllErrors(errors: Array<string>) {
     if (errors.length === 0) {
         return;
     }
@@ -48,7 +58,7 @@ function catchAllErrors(errors) {
     );
 }
 
-function printAllWarnings(warnings) {
+function printAllWarnings(warnings: Array<string>) {
     if (warnings.length === 0) {
         return;
     }
@@ -62,11 +72,14 @@ function printAllWarnings(warnings) {
     }
 }
 
-function shouldPromptUser(options, files) {
+function shouldPromptUser(options: BuildConfig, files: Array<string>): boolean {
     return !options.all && files.length > 1;
 }
 
-async function runBuildProcess(command, options) {
+async function runBuildProcess(
+    command: { path: string; args: string[] },
+    options: BuildConfig,
+): Promise<string> {
     const { shell } = options;
 
     const childProcess = execa(command.path, [...command.args], {
@@ -75,13 +88,17 @@ async function runBuildProcess(command, options) {
         reject: false,
     });
 
-    childProcess.stdout.pipe(process.stdout);
+    childProcess.stdout?.pipe(process.stdout);
 
     const { stdout } = await childProcess;
     return stdout;
 }
 
-async function buildFile(file, command, options) {
+async function buildFile(
+    file: string,
+    command: { path: string; args: string[] },
+    options: BuildConfig,
+): Promise<string> {
     console.log(chalk.blue(`Executing build for ${file}...`));
 
     const buildResult = await runBuildProcess(command, options);
@@ -89,38 +106,13 @@ async function buildFile(file, command, options) {
     return buildResult;
 }
 
-async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
-    const localConfig = await getLocalAppConfig(path.dirname(sourceFile));
-    let options;
+async function executeSourceBuild(
+    sourceFile: string,
+    config: Config,
+): Promise<void> {
+    const command = NLRC.getSourceBuildCommand(sourceFile, config.build);
 
-    if (localConfig) {
-        localConfig.config.build.nlrc.includePath = resolvePaths(
-            path.dirname(localConfig.path),
-            localConfig.config.build.nlrc.includePath,
-        );
-
-        localConfig.config.build.nlrc.modulePath = resolvePaths(
-            path.dirname(localConfig.path),
-            localConfig.config.build.nlrc.modulePath,
-        );
-
-        localConfig.config.build.nlrc.libraryPath = resolvePaths(
-            path.dirname(localConfig.path),
-            localConfig.config.build.nlrc.libraryPath,
-        );
-
-        options = getOptions(
-            cliOptions,
-            localConfig.config.build,
-            globalConfig.build,
-        );
-    } else {
-        options = getOptions(cliOptions, {}, globalConfig.build);
-    }
-
-    const command = NLRC.getSourceBuildCommand(sourceFile, options);
-
-    const buildResult = await buildFile(sourceFile, command, options);
+    const buildResult = await buildFile(sourceFile, command, config.build);
 
     const logs = getBuildLogs(buildResult);
 
@@ -128,7 +120,10 @@ async function executeSourceBuild(sourceFile, cliOptions, globalConfig) {
     catchAllErrors(logs.error);
 }
 
-async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
+async function executeCfgBuild(
+    cfgFiles: Array<string>,
+    config: Config,
+): Promise<void> {
     if (cfgFiles.length === 0) {
         console.log(chalk.blue("Searching for CFG files..."));
 
@@ -145,7 +140,7 @@ async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
         process.exit();
     }
 
-    if (shouldPromptUser(cliOptions, cfgFiles)) {
+    if (shouldPromptUser(config.build, cfgFiles)) {
         const selectedCfgFiles = await selectFiles(cfgFiles);
 
         cfgFiles.splice(0, cfgFiles.length);
@@ -153,16 +148,9 @@ async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
     }
 
     for (const cfgFile of cfgFiles) {
-        const localConfig = await getLocalAppConfig(path.dirname(cfgFile));
-        const options = getOptions(
-            cliOptions,
-            localConfig.config.build,
-            globalConfig.build,
-        );
+        const command = NLRC.getCfgBuildCommand(cfgFile, config.build);
 
-        const command = NLRC.getCfgBuildCommand(cfgFile, options);
-
-        const buildResult = await buildFile(cfgFile, command, options);
+        const buildResult = await buildFile(cfgFile, command, config.build);
 
         const logs = getBuildLogs(buildResult);
 
@@ -172,18 +160,18 @@ async function executeCfgBuild(cfgFiles, cliOptions, globalConfig) {
 }
 
 export const build = {
-    async execute(cliOptions) {
+    async execute(cliOptions: any): Promise<void> {
         try {
             const { cfgFiles, sourceFile } = cliOptions;
 
-            const globalConfig = await getGlobalAppConfig();
+            const config = await getAppConfig(cliOptions);
 
             if (sourceFile) {
-                await executeSourceBuild(sourceFile, cliOptions, globalConfig);
+                await executeSourceBuild(sourceFile, config);
                 process.exit();
             }
 
-            await executeCfgBuild(cfgFiles, cliOptions, globalConfig);
+            await executeCfgBuild(cfgFiles, config);
         } catch (error) {
             console.error(error);
             process.exit(1);

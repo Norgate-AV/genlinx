@@ -2,8 +2,8 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 
-export async function getFilesByExtension(extension) {
-    const files = [];
+export async function getFilesByExtension(extension: string) {
+    const files: Array<string> = [];
 
     try {
         const entities = await fs.readdir(process.cwd());

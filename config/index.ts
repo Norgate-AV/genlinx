@@ -1,4 +1,5 @@
-export const defaultGlobalAppConfig = {
+import { Config } from "../lib/@types";
+export const defaultGlobalAppConfig: Config = {
     cfg: {
         outputFileSuffix: "build.cfg",
         outputLogFileSuffix: "build.log",

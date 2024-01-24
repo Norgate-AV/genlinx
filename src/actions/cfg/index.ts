@@ -1,11 +1,9 @@
-import path from "path";
+import fs from "fs-extra";
 import chalk from "chalk";
-import { APW, ArchiveBuilder } from "../../../lib";
+import { APW, CfgBuilder } from "../../../lib";
 import {
     getFilesByExtension,
-    getGlobalAppConfig,
-    getLocalAppConfig,
-    getOptions,
+    getAppConfig,
     loadAPW,
     printFiles,
     selectFiles,
@@ -15,7 +13,7 @@ function shouldPromptUser(options, files) {
     return !options.all && files.length > 1;
 }
 
-export const archive = {
+export const cfg = {
     async create(cliOptions) {
         try {
             const { workspaceFiles } = cliOptions;
@@ -39,35 +37,27 @@ export const archive = {
             }
 
             if (shouldPromptUser(cliOptions, workspaceFiles)) {
-                const selectedWorkspaceFiles = await selectFiles(
-                    workspaceFiles,
-                );
+                const selectedWorkspaceFiles =
+                    await selectFiles(workspaceFiles);
 
                 workspaceFiles.splice(0, workspaceFiles.length);
                 workspaceFiles.push(...selectedWorkspaceFiles);
             }
 
-            const globalConfig = await getGlobalAppConfig();
+            const config = await getAppConfig(cliOptions);
 
             for (const workspaceFile of workspaceFiles) {
                 console.log(
-                    chalk.blue(`Generating archive for ${workspaceFile}...`),
+                    chalk.blue(`Generating CFG for ${workspaceFile}...`),
                 );
 
                 const apw = await loadAPW(workspaceFile);
 
-                const localConfig = await getLocalAppConfig(
-                    path.dirname(workspaceFile),
-                );
+                const cfgBuilder = new CfgBuilder(apw, config.cfg);
+                const cfg = cfgBuilder.build();
 
-                const options = getOptions(
-                    cliOptions,
-                    localConfig.config.archive,
-                    globalConfig.archive,
-                );
-
-                const builder = new ArchiveBuilder(apw, options);
-                builder.build();
+                const outputFile = `${apw.id}.${config.cfg.outputFileSuffix}`;
+                fs.writeFile(outputFile, cfg);
             }
         } catch (error) {
             console.error(error);
@@ -76,4 +66,4 @@ export const archive = {
     },
 };
 
-export default archive;
+export default cfg;

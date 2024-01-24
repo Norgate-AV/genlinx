@@ -1,7 +1,9 @@
 import inquirer from "inquirer";
 
-export async function selectWorkspaceFiles(files) {
-    const { selectedWorkspaceFiles } = await inquirer.prompt([
+export async function selectWorkspaceFiles(files: Array<string>) {
+    const {
+        selectedWorkspaceFiles,
+    }: { selectedWorkspaceFiles: Array<string> } = await inquirer.prompt([
         {
             type: files.length > 1 ? "checkbox" : "confirm",
             name: "selectedWorkspaceFiles",

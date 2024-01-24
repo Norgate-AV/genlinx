@@ -1,7 +1,8 @@
 import path from "path";
+import { BuildConfig } from "../@types";
 
 export class NLRC {
-    static getCfgBuildCommand(file, options) {
+    static getCfgBuildCommand(file: string, options: BuildConfig) {
         const filePath = path.isAbsolute(file)
             ? file
             : path.resolve(process.cwd(), file);
@@ -14,7 +15,7 @@ export class NLRC {
         };
     }
 
-    static getSourceBuildCommand(file, options) {
+    static getSourceBuildCommand(file: string, options: BuildConfig) {
         const filePath = path.isAbsolute(file)
             ? file
             : path.resolve(process.cwd(), file);

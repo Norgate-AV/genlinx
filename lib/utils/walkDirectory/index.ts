@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 
-function ignoreEntity(entity) {
+function ignoreEntity(entity: string) {
     return (
         entity.includes("node_modules") ||
         entity.includes(".git") ||
@@ -10,9 +10,9 @@ function ignoreEntity(entity) {
     );
 }
 
-export async function walkDirectory(directory) {
-    const files = [];
-    let entities;
+export async function walkDirectory(directory: string): Promise<Array<string>> {
+    const files: Array<string> = [];
+    let entities: Array<string>;
 
     try {
         entities = await fs.readdir(directory);

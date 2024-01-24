@@ -3,7 +3,7 @@ import chalk from "chalk";
 import { Command, Option } from "commander";
 import { actions } from "../../actions";
 
-export function build() {
+export function build(): Command {
     const command = new Command("build");
 
     command
