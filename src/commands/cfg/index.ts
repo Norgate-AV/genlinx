@@ -1,7 +1,7 @@
 import { Command, Option } from "commander";
 import { actions } from "../../actions";
 
-export function cfg() {
+export function cfg(): Command {
     const command = new Command("cfg");
 
     command

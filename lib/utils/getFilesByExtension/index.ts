@@ -2,7 +2,9 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 
-export async function getFilesByExtension(extension: string) {
+export async function getFilesByExtension(
+    extension: string,
+): Promise<Array<string>> {
     const files: Array<string> = [];
 
     try {
@@ -13,7 +15,7 @@ export async function getFilesByExtension(extension: string) {
         );
 
         return files;
-    } catch (error) {
+    } catch (error: any) {
         console.log(chalk.red(error.message));
     }
 

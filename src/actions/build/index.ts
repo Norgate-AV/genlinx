@@ -7,22 +7,21 @@ import {
     printFiles,
     selectFiles,
 } from "../../../lib/utils";
-import { BuildConfig, Config } from "../../../lib/@types";
+import {
+    BuildConfig,
+    Config,
+    CliBuildOptions,
+    BuildLog,
+    BuildLogCollection,
+    BuildLogCollectionKey,
+    ShellCommand,
+} from "../../../lib/@types";
 
-export type ShellCommand = {
-    path: string;
-    args: Array<string>;
-};
-
-export type BuildLogs = {
-    [key: string]: Array<string>;
-};
-
-function getBuildLogs(data: string): BuildLogs {
+function getBuildLogs(data: string): BuildLogCollection {
     const pattern = /(?<log>(?<level>ERROR|WARNING): .+)/gm;
     const matches = data.matchAll(pattern);
 
-    const logs: BuildLogs = {
+    const logs: BuildLogCollection = {
         error: [],
         warning: [],
     };
@@ -32,8 +31,8 @@ function getBuildLogs(data: string): BuildLogs {
             continue;
         }
 
-        const { log, level } = match.groups;
-        logs[level?.toLowerCase()].push(log);
+        const { log, level } = match.groups as BuildLog;
+        logs[level.toLowerCase() as BuildLogCollectionKey].push(log);
     }
 
     return {
@@ -77,7 +76,7 @@ function shouldPromptUser(options: BuildConfig, files: Array<string>): boolean {
 }
 
 async function runBuildProcess(
-    command: { path: string; args: string[] },
+    command: ShellCommand,
     options: BuildConfig,
 ): Promise<string> {
     const { shell } = options;
@@ -96,7 +95,7 @@ async function runBuildProcess(
 
 async function buildFile(
     file: string,
-    command: { path: string; args: string[] },
+    command: ShellCommand,
     options: BuildConfig,
 ): Promise<string> {
     console.log(chalk.blue(`Executing build for ${file}...`));
@@ -160,7 +159,7 @@ async function executeCfgBuild(
 }
 
 export const build = {
-    async execute(cliOptions: any): Promise<void> {
+    async execute(cliOptions: CliBuildOptions): Promise<void> {
         try {
             const { cfgFiles, sourceFile } = cliOptions;
 
@@ -171,8 +170,13 @@ export const build = {
                 process.exit();
             }
 
-            await executeCfgBuild(cfgFiles, config);
-        } catch (error) {
+            if (cfgFiles.length > 0) {
+                await executeCfgBuild(cfgFiles, config);
+                process.exit();
+            }
+
+            console.log(chalk.red("No source or CFG files specified."));
+        } catch (error: any) {
             console.error(error);
             process.exit(1);
         }

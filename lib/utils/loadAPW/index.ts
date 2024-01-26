@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { APW } from "../..";
 
-export async function loadAPW(filePath: string) {
+export async function loadAPW(filePath: string): Promise<APW> {
     const apw = new APW(filePath);
 
     await apw.load();

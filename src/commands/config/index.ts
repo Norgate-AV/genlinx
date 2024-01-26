@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { actions } from "../../actions";
 
-export function config() {
+export function config(): Command {
     const command = new Command("config");
 
     command

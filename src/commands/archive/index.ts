@@ -1,7 +1,7 @@
 import { Command, Option } from "commander";
 import { actions } from "../../actions";
 
-export function archive() {
+export function archive(): Command {
     const command = new Command("archive");
 
     command

@@ -1,53 +1,13 @@
-export type CfgConfig = {
-    outputFileSuffix: string;
-    outputLogFileSuffix: string;
-    outputLogFileOption: "N" | "Y";
-    outputLogConsoleOption: boolean;
-    buildWithDebugInformation: boolean;
-    buildWithSource: boolean;
-    includePath: Array<string>;
-    modulePath: Array<string>;
-    libraryPath: Array<string>;
-    all: boolean;
-};
-
-export type ArchiveConfig = {
-    outputFileSuffix: string;
-    includeCompiledSourceFiles: boolean;
-    includeCompiledModuleFiles: boolean;
-    includeFilesNotInWorkspace: boolean;
-    extraFileSearchLocations: Array<string>;
-    extraFileArchiveLocation: string;
-    all: boolean;
-    ignoredFiles: Array<string>;
-};
-
-export type BuildConfig = {
-    nlrc: {
-        path: string;
-        option: {
-            cfg: "-CFG";
-            includePath: "-I";
-            modulePath: "-M";
-            libraryPath: "-L";
-        };
-        includePath: Array<string>;
-        modulePath: Array<string>;
-        libraryPath: Array<string>;
-    };
-    shell: {
-        path: string;
-    };
-    all: boolean;
-    createCfg: boolean;
-};
+import { CliArchiveOptions, CliBuildOptions, CliCfgOptions } from ".";
+import { ArchiveConfig } from "./ArchiveConfig";
+import { BuildConfig } from "./BuildConfig";
+import { CfgConfig } from "./CfgConfig";
 
 export type Config = {
-    cfg: CfgConfig;
-    archive: ArchiveConfig;
-    build: BuildConfig;
+    cfg: CfgConfig & CliCfgOptions;
+    archive: ArchiveConfig & CliArchiveOptions;
+    build: BuildConfig & CliBuildOptions;
 };
 
 export type GlobalConfig = Partial<Config>;
 export type LocalConfig = Partial<Config>;
-export type CliConfig = Partial<Config>;

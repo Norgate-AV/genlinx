@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 
-function ignoreEntity(entity: string) {
+function ignoreEntity(entity: string): boolean {
     return (
         entity.includes("node_modules") ||
         entity.includes(".git") ||
@@ -16,7 +16,7 @@ export async function walkDirectory(directory: string): Promise<Array<string>> {
 
     try {
         entities = await fs.readdir(directory);
-    } catch (error) {
+    } catch (error: any) {
         console.log(chalk.red(error.message));
         return files;
     }
@@ -36,7 +36,7 @@ export async function walkDirectory(directory: string): Promise<Array<string>> {
             } else {
                 files.push(entityPath);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.log(chalk.red(error.message));
         }
     }

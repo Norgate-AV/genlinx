@@ -5,9 +5,17 @@ import mergician from "mergician";
 import findUp from "find-up";
 import pkg from "../../../package.json";
 import defaultConfig from "../../../config";
-import { Config, GlobalConfig, LocalConfig } from "../../@types";
+import {
+    CliArchiveOptions,
+    CliBuildOptions,
+    CliCfgOptions,
+    CliConfig,
+    Config,
+    GlobalConfig,
+    LocalConfig,
+} from "../../@types";
 
-function getGlobalAppConfigFilePath() {
+function getGlobalAppConfigFilePath(): string {
     const file = "config.json";
     const directory =
         process.env.GENLINX_CONFIG_DIR ||
@@ -97,7 +105,9 @@ async function getLocalAppConfig(): Promise<LocalConfig> {
     return config || {};
 }
 
-export async function getAppConfig(cliOptions = {}): Promise<Config> {
+export async function getAppConfig(
+    cliOptions: CliCfgOptions | CliArchiveOptions | CliBuildOptions = {},
+): Promise<Config> {
     console.log("GLOBAL-----------------------------------------------");
     const global = await getGlobalAppConfig();
     console.log(global);

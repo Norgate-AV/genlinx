@@ -1,16 +1,11 @@
 import fs from "fs-extra";
 import path from "path";
-import { FileType } from "./FileType";
+import { FileType } from "../@types/FileType";
+import { FileReference } from "../@types/FileReference";
+import { File } from "../@types/File";
+import { FileId } from "../@types/FileId";
 
-export type FileReference = {
-    type: string;
-    id: string;
-    path: string;
-    exists?: boolean;
-    extra?: boolean;
-};
-
-const extensions: Record<string, string> = {
+export const extensions: Record<FileType, string> = {
     [FileType.Workspace]: ".apw",
     [FileType.Module]: ".axs",
     [FileType.MasterSrc]: ".axs",
@@ -22,36 +17,48 @@ const extensions: Record<string, string> = {
     [FileType.TPD]: ".tpd",
     [FileType.Duet]: ".jar",
     [FileType.XDD]: ".xdd",
+    [FileType.KPD]: ".kpd",
+    [FileType.AXB]: ".axb",
+    [FileType.TKO]: ".tko",
+    [FileType.IRDB]: ".irdb",
+    [FileType.IRNDB]: ".irndb",
+    [FileType.TOK]: ".tok",
+    [FileType.TKN]: ".tkn",
+    [FileType.KPB]: ".kpb",
+    [FileType.Other]: "",
 };
 
-const compiledExtensions: Record<string, string> = {
+export const compiledExtensions: Record<FileType, string> = {
+    [FileType.Workspace]: ".apw",
     [FileType.Module]: ".tko",
     [FileType.MasterSrc]: ".tkn",
     [FileType.Source]: ".tkn",
-};
-
-const fileTypeFromExtension: Record<string, string> = {
-    [extensions[FileType.Module]]: FileType.Module,
-    [extensions[FileType.Include]]: FileType.Include,
-    [extensions[FileType.Duet]]: FileType.Duet,
-    [extensions[FileType.XDD]]: FileType.XDD,
-    [extensions[FileType.Workspace]]: FileType.Workspace,
-    [extensions[FileType.IR]]: FileType.IR,
-    [extensions[FileType.TP4]]: FileType.TP4,
-    [extensions[FileType.TP5]]: FileType.TP5,
-    [extensions[FileType.TPD]]: FileType.TPD,
-    [compiledExtensions[FileType.Module]]: FileType.Module,
-    [compiledExtensions[FileType.Source]]: FileType.Source,
+    [FileType.Include]: ".tkn",
+    [FileType.IR]: ".irl",
+    [FileType.TP4]: ".tp4",
+    [FileType.TP5]: ".tp5",
+    [FileType.TPD]: ".tpd",
+    [FileType.Duet]: ".jar",
+    [FileType.XDD]: ".xdd",
+    [FileType.KPD]: ".kpd",
+    [FileType.AXB]: ".axb",
+    [FileType.TKO]: ".tko",
+    [FileType.IRDB]: ".irdb",
+    [FileType.IRNDB]: ".irndb",
+    [FileType.TOK]: ".tok",
+    [FileType.TKN]: ".tkn",
+    [FileType.KPB]: ".kpb",
+    [FileType.Other]: "",
 };
 
 export class APW {
-    private _filePath: string;
+    private _filePath: string | null = null;
 
-    private _id: string;
+    private _id: string | null = null;
 
-    private fileReferences: Array<FileReference> = [];
+    private fileReferences: Array<File> = [];
 
-    private uniqueFileReferences: Array<FileReference> = [];
+    private uniqueFileReferences: Array<File> = [];
 
     public constructor(filePath: string) {
         this.filePath = path.isAbsolute(filePath)
@@ -66,7 +73,7 @@ export class APW {
             this.id = APW.getId(data);
             this.fileReferences = await this.getFileReferences(data);
             this.uniqueFileReferences = this.getUniqueFileReferences();
-        } catch (error) {
+        } catch (error: any) {
             throw new Error(`Failed to load APW file: ${error.message}`);
         }
     }
@@ -93,7 +100,7 @@ export class APW {
 
     private static getId(data: string): string {
         const pattern = /<Workspace.+\r?\n?.*?<Identifier>(?<id>.+)<.+>/m;
-        const match = data.match(pattern)?.groups;
+        const match = data.match(pattern)?.groups as FileId;
 
         if (!match) {
             throw new Error("No Workspace ID found");
@@ -102,20 +109,18 @@ export class APW {
         return match.id;
     }
 
-    private async getFileReferences(
-        data: string,
-    ): Promise<Array<FileReference>> {
+    private async getFileReferences(data: string): Promise<Array<File>> {
         const pattern =
             /<File.+Type="(?<type>.+)".+\r?\n?.*?<Identifier>(?<id>.+)<\/Identifier>\r?\n?.*?>(?<path>.+)<.+\r?\n?.*?\r?\n?.*?(?:<DeviceMap.+\r?\n?.*?\r?\n?.*?\r?\n?)?.*?<\/File>/gm;
         const matches = data.matchAll(pattern);
 
-        const fileReferences: Array<FileReference> = [];
+        const fileReferences: Array<File> = [];
         for (const match of matches) {
             if (!match.groups) {
                 continue;
             }
 
-            const { type, id, path } = match.groups;
+            const { type, id, path } = match.groups as FileReference;
 
             const exists = await fs.pathExists(path);
 
@@ -124,14 +129,14 @@ export class APW {
                 id,
                 path,
                 exists,
-                extra: false,
+                isExtra: false,
             });
         }
 
         return fileReferences.sort(APW.sortFileReferences);
     }
 
-    private getUniqueFileReferences(): Array<FileReference> {
+    private getUniqueFileReferences(): Array<File> {
         return [
             ...new Map(
                 this.fileReferences.map((file) => [file.path, file]),
@@ -166,7 +171,7 @@ export class APW {
                 continue;
             }
 
-            const { id } = match.groups;
+            const { id } = match.groups as FileId;
 
             if (this.isInWorkspace(id)) {
                 continue;
@@ -178,8 +183,16 @@ export class APW {
         return [...new Set(fileReferences)];
     }
 
-    public static getFileType(file: string): string {
-        return fileTypeFromExtension[path.extname(file)];
+    public static getFileType(file: string): FileType | null {
+        if (!(path.extname(file) in extensions)) {
+            return null;
+        }
+
+        const fileType = Object.keys(extensions).find(
+            (key) => extensions[key as FileType] === path.extname(file),
+        );
+
+        return fileType as FileType;
     }
 
     public static fileIsReadable(file: string): boolean {
@@ -238,7 +251,7 @@ export class APW {
         );
     }
 
-    get allFiles(): Array<FileReference> {
+    get allFiles(): Array<File> {
         return [
             ...this.uniqueFileReferences,
             {
@@ -246,7 +259,7 @@ export class APW {
                 id: this.id,
                 path: this.filePath,
                 exists: true,
-                extra: false,
+                isExtra: false,
             },
         ];
     }

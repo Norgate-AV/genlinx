@@ -3,14 +3,14 @@ import path from "path";
 import StringBuilder from "string-builder";
 import figlet from "figlet";
 import APW from "../APW";
-import { CfgConfig } from "../@types";
+import { CfgConfig, CliCfgOptions, FileReference } from "../@types";
 
 export class CfgBuilder {
     private readonly apw: APW;
-    private readonly options: CfgConfig;
+    private readonly options: CfgConfig & CliCfgOptions;
     private readonly builder = new StringBuilder();
 
-    public constructor(apw: APW, options: CfgConfig) {
+    public constructor(apw: APW, options: CfgConfig & CliCfgOptions) {
         this.apw = apw;
         this.options = options;
     }
@@ -41,7 +41,7 @@ export class CfgBuilder {
             );
 
             builder.appendLine(this.convertToComment(license));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
         }
 
@@ -87,7 +87,7 @@ export class CfgBuilder {
         return this;
     }
 
-    private addAxsFiles(files: Array<string>): this {
+    private addAxsFiles(files: Array<FileReference>): this {
         const { builder } = this;
 
         for (const file of files) {

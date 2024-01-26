@@ -1,9 +1,24 @@
 import path from "path";
 import chalk from "chalk";
 import { APW } from "../..";
+import { extensions, compiledExtensions } from "../../APW";
+import { ArchiveItem } from "../../@types/ArchiveItem";
+import { FileReference } from "../../@types/FileReference";
+import AdmZip from "adm-zip";
+import { ArchiveConfig } from "../../@types/ArchiveConfig";
+import { FileType } from "../../@types/FileType";
 
-export class SourceItem {
-    constructor(builder, file, options) {
+export class SourceItem implements ArchiveItem {
+    private readonly file: FileReference;
+    private readonly builder: AdmZip;
+    private readonly options: ArchiveConfig;
+    private readonly archivePath: string;
+
+    public constructor(
+        builder: AdmZip,
+        file: FileReference,
+        options: ArchiveConfig,
+    ) {
         this.file = file;
         this.builder = builder;
         this.options = options;
@@ -12,17 +27,17 @@ export class SourceItem {
             : path.dirname(file.path);
     }
 
-    #addItem(file) {
+    private addItem(file: FileReference): void {
         const { builder, archivePath } = this;
 
         builder.addLocalFile(file.path, archivePath);
         console.log(chalk.green(`Added file: ${file.path}`));
     }
 
-    static #getCompiledFile(file) {
+    private static getCompiledFile(file: FileReference): FileReference {
         const compiledFilePath = file.path.replace(
-            APW.fileExtensions[APW.fileType.source],
-            APW.compiledFileExtensions[APW.fileType.source],
+            extensions[FileType.Source],
+            compiledExtensions[FileType.Source],
         );
 
         return {
@@ -31,18 +46,18 @@ export class SourceItem {
         };
     }
 
-    addToArchive() {
+    public addToArchive(): void {
         const { file } = this;
         const { includeCompiledSourceFiles } = this.options;
 
-        this.#addItem(file);
+        this.addItem(file);
 
         if (!includeCompiledSourceFiles) {
             return;
         }
 
-        const compiledFile = SourceItem.#getCompiledFile(file);
-        this.#addItem(compiledFile);
+        const compiledFile = SourceItem.getCompiledFile(file);
+        this.addItem(compiledFile);
     }
 }
 export default SourceItem;

@@ -1,6 +1,8 @@
 import inquirer from "inquirer";
 
-export async function selectFiles(files: Array<string>) {
+export async function selectFiles(
+    files: Array<string>,
+): Promise<Array<string>> {
     const { selectedFiles }: { selectedFiles: Array<string> } =
         await inquirer.prompt([
             {

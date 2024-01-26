@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import chalk from "chalk";
-import { APW, CfgBuilder } from "../../../lib";
+import { CfgBuilder } from "../../../lib";
+import { extensions } from "../../../lib/APW";
 import {
     getFilesByExtension,
     getAppConfig,
@@ -8,21 +9,24 @@ import {
     printFiles,
     selectFiles,
 } from "../../../lib/utils";
+import { CfgConfig, CliCfgOptions, FileType } from "../../../lib/@types";
 
-function shouldPromptUser(options, files) {
+function shouldPromptUser(options: CfgConfig, files: Array<string>): boolean {
     return !options.all && files.length > 1;
 }
 
 export const cfg = {
-    async create(cliOptions) {
+    async create(cliOptions: CliCfgOptions): Promise<void> {
         try {
             const { workspaceFiles } = cliOptions;
+
+            const config = await getAppConfig(cliOptions);
 
             if (workspaceFiles.length === 0) {
                 console.log(chalk.blue("Searching for workspace files..."));
 
                 const locatedWorkspaceFiles = await getFilesByExtension(
-                    APW.fileExtensions[APW.fileType.workspace],
+                    extensions[FileType.Workspace],
                 );
 
                 if (locatedWorkspaceFiles.length) {
@@ -36,15 +40,13 @@ export const cfg = {
                 process.exit();
             }
 
-            if (shouldPromptUser(cliOptions, workspaceFiles)) {
+            if (shouldPromptUser(config.cfg, workspaceFiles)) {
                 const selectedWorkspaceFiles =
                     await selectFiles(workspaceFiles);
 
                 workspaceFiles.splice(0, workspaceFiles.length);
                 workspaceFiles.push(...selectedWorkspaceFiles);
             }
-
-            const config = await getAppConfig(cliOptions);
 
             for (const workspaceFile of workspaceFiles) {
                 console.log(
@@ -59,7 +61,7 @@ export const cfg = {
                 const outputFile = `${apw.id}.${config.cfg.outputFileSuffix}`;
                 fs.writeFile(outputFile, cfg);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             process.exit(1);
         }

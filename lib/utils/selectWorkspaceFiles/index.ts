@@ -1,6 +1,8 @@
 import inquirer from "inquirer";
 
-export async function selectWorkspaceFiles(files: Array<string>) {
+export async function selectWorkspaceFiles(
+    files: Array<string>,
+): Promise<Array<string>> {
     const {
         selectedWorkspaceFiles,
     }: { selectedWorkspaceFiles: Array<string> } = await inquirer.prompt([

@@ -1,7 +1,8 @@
 import { APW } from "../../APW";
+import { FileType as ApwFileType } from "../../@types/FileType";
 
 export const FileType = {
-    apw: APW.fileType,
+    apw: ApwFileType,
     script: "Script",
     env: "Env",
 };

@@ -2,7 +2,8 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
-import { APW, FileReference } from "../APW";
+import { APW, extensions } from "../APW";
+import { FileReference } from "../@types/FileReference";
 import { walkDirectory } from "../utils";
 import { ArchiveItemFactory, FileType } from "../ArchiveItems";
 import { ArchiveConfig } from "../@types";
@@ -12,8 +13,8 @@ export class ArchiveBuilder {
     private options: ArchiveConfig;
     private builder = new AdmZip();
     private extraFilesOnDisk: Array<string> = [];
-    private extraFileReferences: Array<string> = [];
-    private locatedExtraFileReferences: Array<string> = [];
+    private extraFileReferences: Array<FileReference> = [];
+    private locatedExtraFileReferences: Array<FileReference> = [];
 
     public constructor(apw: APW, options: ArchiveConfig) {
         this.apw = apw;
@@ -22,10 +23,10 @@ export class ArchiveBuilder {
 
     private static fileIsOfInterest(file: string) {
         return (
-            path.extname(file) === APW.fileExtensions[FileType.apw.module] ||
-            path.extname(file) === APW.fileExtensions[FileType.apw.include] ||
-            path.extname(file) === APW.fileExtensions[FileType.apw.duet] ||
-            path.extname(file) === APW.fileExtensions[FileType.apw.xdd]
+            path.extname(file) === extensions[FileType.apw.Module] ||
+            path.extname(file) === extensions[FileType.apw.Include] ||
+            path.extname(file) === extensions[FileType.apw.Duet] ||
+            path.extname(file) === extensions[FileType.apw.XDD]
         );
     }
 
@@ -85,7 +86,7 @@ export class ArchiveBuilder {
 
         try {
             this.addItem(file);
-        } catch (error) {
+        } catch (error: any) {
             console.log(chalk.red(error.message));
         }
 
@@ -107,14 +108,14 @@ export class ArchiveBuilder {
         const scripts = await fs.readdir(scriptsPath);
 
         for (const script of scripts) {
-            const file = {
+            const file: Partial<FileReference> = {
                 path: path.join(scriptsPath, script),
                 extra: true,
             };
 
             try {
                 this.addItem(file);
-            } catch (error) {
+            } catch (error: any) {
                 console.log(chalk.red(error.message));
                 continue;
             }
@@ -242,7 +243,7 @@ export class ArchiveBuilder {
         for (const reference of locatedExtraFileReferences) {
             const fileType = APW.getFileType(reference);
 
-            const file = {
+            const file: FileReference = {
                 type: fileType,
                 path: reference,
                 extra: true,
@@ -250,7 +251,7 @@ export class ArchiveBuilder {
 
             try {
                 this.addItem(file);
-            } catch (error) {
+            } catch (error: any) {
                 console.log(chalk.red(error.message));
                 continue;
             }
@@ -268,7 +269,7 @@ export class ArchiveBuilder {
         for (const file of apw.allFiles) {
             try {
                 this.addItem(file);
-            } catch (error) {
+            } catch (error: any) {
                 console.log(chalk.red(error.message));
                 continue;
             }

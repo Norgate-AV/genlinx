@@ -4,16 +4,24 @@ import { GeneralItem } from "../GeneralItem";
 import { ModuleItem } from "../ModuleItem";
 import { SourceItem } from "../SourceItem";
 import { WorkspaceItem } from "../WorkspaceItem";
+import { ArchiveItem } from "../../@types/ArchiveItem";
+import AdmZip from "adm-zip";
+import { FileReference } from "../../@types/FileReference";
+import { ArchiveConfig } from "../../@types/ArchiveConfig";
 
 export class ArchiveItemFactory {
-    static create(builder, file, options) {
+    public static create(
+        builder: AdmZip,
+        file: FileReference,
+        options: ArchiveConfig,
+    ): ArchiveItem {
         switch (file.type) {
-            case FileType.apw.workspace:
+            case FileType.apw.Workspace:
                 return new WorkspaceItem(builder, file, options);
-            case FileType.apw.module:
+            case FileType.apw.Module:
                 return new ModuleItem(builder, file, options);
-            case FileType.apw.source:
-            case FileType.apw.masterSrc:
+            case FileType.apw.Source:
+            case FileType.apw.MasterSrc:
                 return new SourceItem(builder, file, options);
             case FileType.env:
                 return new EnvItem(builder, file, options);
