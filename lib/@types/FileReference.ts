@@ -1,4 +1,4 @@
-import { FileId } from "./FileId";
+import { FileId } from "./index.js";
 
 export type FileReference = FileId & {
     type: string;

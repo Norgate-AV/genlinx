@@ -1,4 +1,5 @@
-import { Config } from "../lib/@types";
+import { Config } from "../lib/@types/index.js";
+
 export const defaultGlobalAppConfig: Config = {
     cfg: {
         outputFileSuffix: "build.cfg",

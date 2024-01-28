@@ -1,7 +1,7 @@
-import { archive } from "./archive";
-import { build } from "./build";
-import { cfg } from "./cfg";
-import { config } from "./config";
+import { archive } from "./archive.js";
+import { build } from "./build.js";
+import { cfg } from "./cfg.js";
+import { config } from "./config.js";
 
 export const actions = {
     archive,

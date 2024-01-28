@@ -1,4 +1,4 @@
-import { FileReference } from "./FileReference";
+import { FileReference } from "./index.js";
 
 export type File = FileReference & {
     exists: boolean;

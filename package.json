@@ -3,7 +3,14 @@
     "description": "A CLI utility for NetLinx projects 🚀🚀🚀",
     "version": "1.1.4",
     "license": "MIT",
-    "main": "bin/genlinx",
+    "main": "dist/app.js",
+    "typings": "dist/app.d.ts",
+    "type": "module",
+    "keywords": [
+        "netlinx",
+        "amx",
+        "genlinx"
+    ],
     "files": [
         "assets",
         "bin",
@@ -14,7 +21,7 @@
         "docs"
     ],
     "bin": {
-        "genlinx": "bin/genlinx"
+        "genlinx": "dist/app.js"
     },
     "man": [
         "docs/genlinx.1"
@@ -37,8 +44,8 @@
         "prebuild": "pnpm clean",
         "build": "tsup",
         "prestart": "pnpm lint && pnpm build",
-        "start": "cross-env NODE_ENV=production node dist/index.js",
-        "dev": "nodemon --exec ts-node --files src/index.ts",
+        "start": "cross-env NODE_ENV=production node dist/app.js",
+        "dev": "nodemon --exec ts-node --files src/app.ts",
         "doctoc": "doctoc --title '## Contents 📖' README.md",
         "semantic-release": "semantic-release",
         "contrib:add": "all-contributors add",
@@ -52,18 +59,19 @@
         "@semantic-release/changelog": "^6.0.2",
         "@semantic-release/git": "^10.0.1",
         "@types/adm-zip": "^0.5.5",
+        "@types/config": "^3.3.1",
         "@types/figlet": "^1.5.8",
         "@types/fs-extra": "^11.0.4",
         "@types/inquirer": "^9.0.7",
-        "@types/node": "^20.11.6",
+        "@types/node": "^20.11.9",
         "@types/nodemon": "^1.19.6",
         "all-contributors-cli": "^6.24.0",
         "commitizen": "^4.3.0",
         "cross-env": "^7.0.3",
         "cz-conventional-changelog": "3.3.0",
         "doctoc": "^2.2.1",
-        "husky": "^8.0.3",
-        "jsdoc": "^3.6.11",
+        "husky": "^9.0.6",
+        "jsdoc": "^4.0.2",
         "lint-staged": "^15.2.0",
         "nodemon": "^3.0.3",
         "prettier": "^3.2.4",
@@ -76,17 +84,20 @@
     },
     "dependencies": {
         "adm-zip": "^0.5.10",
-        "chalk": "^4.1.2",
-        "commander": "^9.4.1",
+        "chalk": "^5.3.0",
+        "commander": "^11.1.0",
+        "config": "^3.3.9",
+        "dotenv": "^16.3.1",
+        "envalid": "^8.0.0",
         "execa": "^8.0.1",
         "figlet": "^1.7.0",
-        "find-up": "5.0.0",
-        "fs-extra": "^10.1.0",
-        "inquirer": "^8.2.3",
-        "listr2": "^5.0.8",
-        "mergician": "^1.1.0",
-        "node-jq": "^2.3.5",
+        "find-up": "7.0.0",
+        "fs-extra": "^11.2.0",
+        "inquirer": "^9.2.13",
+        "listr2": "^8.0.2",
+        "mergician": "^2.0.0",
+        "node-jq": "^4.3.0",
         "string-builder": "^0.1.8",
-        "which": "^2.0.2"
+        "which": "^4.0.0"
     }
 }

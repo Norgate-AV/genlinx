@@ -106,4 +106,4 @@ dist
 # Local history
 .history/
 
-src/tests
+tests/

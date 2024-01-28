@@ -1,7 +1,11 @@
-import { CliArchiveOptions, CliBuildOptions, CliCfgOptions } from ".";
-import { ArchiveConfig } from "./ArchiveConfig";
-import { BuildConfig } from "./BuildConfig";
-import { CfgConfig } from "./CfgConfig";
+import {
+    ArchiveConfig,
+    BuildConfig,
+    CfgConfig,
+    CliArchiveOptions,
+    CliBuildOptions,
+    CliCfgOptions,
+} from "./index.js";
 
 export type Config = {
     cfg: CfgConfig & CliCfgOptions;

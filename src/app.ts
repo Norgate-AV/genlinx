@@ -4,7 +4,7 @@ import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
 import { version } from "../package.json";
-import { archive, build, cfg } from "./commands";
+import { archive, build, cfg } from "./commands/index.js";
 
 const args = process.argv;
 const program = new Command();
