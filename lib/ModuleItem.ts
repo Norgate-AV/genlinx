@@ -1,44 +1,40 @@
 import path from "path";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
-import { extensions, compiledExtensions } from "./index.js";
+import { AmxExtensions, AmxCompiledExtensions } from "./index.js";
 import {
     ArchiveConfig,
     ArchiveItem,
-    FileReference,
-    FileType,
+    ArchiveFileType as FileType,
+    File,
 } from "./@types/index.js";
 
 export class ModuleItem implements ArchiveItem {
-    private readonly file: FileReference;
+    private readonly file: File;
     private readonly builder: AdmZip;
     private readonly options: ArchiveConfig;
     private readonly archivePath: string;
 
-    public constructor(
-        builder: AdmZip,
-        file: FileReference,
-        options: ArchiveConfig,
-    ) {
+    public constructor(builder: AdmZip, file: File, options: ArchiveConfig) {
         this.file = file;
         this.builder = builder;
         this.options = options;
-        this.archivePath = file.extra
+        this.archivePath = file.isExtra
             ? options.extraFileArchiveLocation
             : path.dirname(file.path);
     }
 
-    private addItem(file: FileReference): void {
+    private addItem(file: File): void {
         const { builder, archivePath } = this;
 
         builder.addLocalFile(file.path, archivePath);
         console.log(chalk.green(`Added file: ${file.path}`));
     }
 
-    private static getCompiledFile(file: FileReference): FileReference {
+    private static getCompiledFile(file: File): File {
         const compiledFilePath = file.path.replace(
-            extensions[FileType.Module],
-            compiledExtensions[FileType.Module],
+            AmxExtensions[FileType.APW.Module],
+            AmxCompiledExtensions[FileType.APW.Module],
         );
 
         return {

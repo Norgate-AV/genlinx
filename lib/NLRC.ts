@@ -1,8 +1,11 @@
 import path from "path";
-import { BuildConfig } from "./@types/index.js";
+import { BuildConfig, ShellCommand } from "./@types/index.js";
 
 export class NLRC {
-    static getCfgBuildCommand(file: string, options: BuildConfig) {
+    static getCfgBuildCommand(
+        file: string,
+        options: BuildConfig,
+    ): ShellCommand {
         const filePath = path.isAbsolute(file)
             ? file
             : path.resolve(process.cwd(), file);
@@ -15,7 +18,10 @@ export class NLRC {
         };
     }
 
-    static getSourceBuildCommand(file: string, options: BuildConfig) {
+    static getSourceBuildCommand(
+        file: string,
+        options: BuildConfig,
+    ): ShellCommand {
         const filePath = path.isAbsolute(file)
             ? file
             : path.resolve(process.cwd(), file);
@@ -24,23 +30,17 @@ export class NLRC {
 
         const args = [`"${filePath}"`];
 
-        if (nlrc.includePath) {
-            args.push(
-                `${nlrc.option.includePath}"${nlrc.includePath.join(";")}"`,
-            );
-        }
+        // if (nlrc.includePath) {
+        args.push(`${nlrc.option.includePath}"${nlrc.includePath.join(";")}"`);
+        // }
 
-        if (nlrc.modulePath) {
-            args.push(
-                `${nlrc.option.modulePath}"${nlrc.modulePath.join(";")}"`,
-            );
-        }
+        // if (nlrc.modulePath) {
+        args.push(`${nlrc.option.modulePath}"${nlrc.modulePath.join(";")}"`);
+        // }
 
-        if (nlrc.libraryPath) {
-            args.push(
-                `${nlrc.option.libraryPath}"${nlrc.libraryPath.join(";")}"`,
-            );
-        }
+        // if (nlrc.libraryPath) {
+        args.push(`${nlrc.option.libraryPath}"${nlrc.libraryPath.join(";")}"`);
+        // }
 
         return {
             path: `"${nlrc.path}"`,

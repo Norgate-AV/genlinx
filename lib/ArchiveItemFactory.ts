@@ -1,29 +1,33 @@
 import AdmZip from "adm-zip";
 import {
     EnvItem,
-    FileType,
     GeneralItem,
     ModuleItem,
     SourceItem,
     WorkspaceItem,
 } from "./index.js";
-import { ArchiveConfig, ArchiveItem, FileReference } from "./@types/index.js";
+import {
+    ArchiveConfig,
+    ArchiveFileType as FileType,
+    ArchiveItem,
+    File,
+} from "./@types/index.js";
 
 export class ArchiveItemFactory {
     public static create(
         builder: AdmZip,
-        file: FileReference,
+        file: File,
         options: ArchiveConfig,
     ): ArchiveItem {
         switch (file.type) {
-            case FileType.apw.Workspace:
+            case FileType.APW.Workspace:
                 return new WorkspaceItem(builder, file, options);
-            case FileType.apw.Module:
+            case FileType.APW.Module:
                 return new ModuleItem(builder, file, options);
-            case FileType.apw.Source:
-            case FileType.apw.MasterSrc:
+            case FileType.APW.Source:
+            case FileType.APW.MasterSrc:
                 return new SourceItem(builder, file, options);
-            case FileType.env:
+            case FileType.Env:
                 return new EnvItem(builder, file, options);
             default:
                 return new GeneralItem(builder, file, options);

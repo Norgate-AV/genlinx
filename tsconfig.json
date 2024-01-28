@@ -17,4 +17,7 @@
         "allowSyntheticDefaultImports": true,
     },
     "include": ["src/**/*", "lib/**/*", "config/**/*"],
+    "ts-node": {
+        "esm": true,
+    },
 }

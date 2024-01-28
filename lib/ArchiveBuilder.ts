@@ -3,16 +3,20 @@ import path from "path";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
 import { walkDirectory } from "./utils/index.js";
-import { APW, ArchiveItemFactory, extensions } from "./index.js";
-import { ArchiveConfig, FileReference, FileType } from "./@types/index.js";
+import { APW, ArchiveItemFactory, AmxExtensions } from "./index.js";
+import {
+    ArchiveConfig,
+    ArchiveFileType as FileType,
+    File,
+} from "./@types/index.js";
 
 export class ArchiveBuilder {
     private apw: APW;
     private options: ArchiveConfig;
     private builder = new AdmZip();
     private extraFilesOnDisk: Array<string> = [];
-    private extraFileReferences: Array<FileReference> = [];
-    private locatedExtraFileReferences: Array<FileReference> = [];
+    private extraFileReferences: Array<string> = [];
+    private locatedExtraFileReferences: Array<string> = [];
 
     public constructor(apw: APW, options: ArchiveConfig) {
         this.apw = apw;
@@ -21,14 +25,14 @@ export class ArchiveBuilder {
 
     private static fileIsOfInterest(file: string) {
         return (
-            path.extname(file) === extensions[FileType.Module] ||
-            path.extname(file) === extensions[FileType.Include] ||
-            path.extname(file) === extensions[FileType.Duet] ||
-            path.extname(file) === extensions[FileType.XDD]
+            path.extname(file) === AmxExtensions[FileType.APW.Module] ||
+            path.extname(file) === AmxExtensions[FileType.APW.Include] ||
+            path.extname(file) === AmxExtensions[FileType.APW.Duet] ||
+            path.extname(file) === AmxExtensions[FileType.APW.XDD]
         );
     }
 
-    private addItem(file: FileReference): this {
+    private addItem(file: File): this {
         const { builder, options } = this;
 
         ArchiveItemFactory.create(builder, file, options).addToArchive();
@@ -46,11 +50,10 @@ export class ArchiveBuilder {
             files.push(...(await walkDirectory(location)));
         }
 
-        const filteredFiles = files.filter((file) =>
+        this.extraFilesOnDisk = files.filter((file) =>
             ArchiveBuilder.fileIsOfInterest(file),
         );
 
-        this.extraFilesOnDisk = filteredFiles;
         return this;
     }
 
@@ -69,6 +72,10 @@ export class ArchiveBuilder {
     private addEnvFile(): this {
         const { apw } = this;
 
+        if (!apw.masterSrcPath[0]) {
+            return this;
+        }
+
         console.log(chalk.blue("Adding env file to the archive..."));
 
         const masterSrcPath = path.join(
@@ -76,9 +83,12 @@ export class ArchiveBuilder {
             path.basename(apw.masterSrcPath[0]),
         );
 
-        const file = {
-            type: FileType.env,
+        const file: File = {
+            id: "",
+            type: FileType.Env,
             path: ".env",
+            exists: true,
+            isExtra: true,
             content: `SOURCE_DIRECTORY_RELATIVE_PATH=${masterSrcPath}`,
         };
 
@@ -106,9 +116,12 @@ export class ArchiveBuilder {
         const scripts = await fs.readdir(scriptsPath);
 
         for (const script of scripts) {
-            const file: Partial<FileReference> = {
+            const file: File = {
+                id: "",
+                type: FileType.Script,
                 path: path.join(scriptsPath, script),
-                extra: true,
+                exists: true,
+                isExtra: true,
             };
 
             try {
@@ -241,10 +254,20 @@ export class ArchiveBuilder {
         for (const reference of locatedExtraFileReferences) {
             const fileType = APW.getFileType(reference);
 
-            const file: FileReference = {
+            if (!fileType) {
+                console.log(
+                    chalk.red(`Could not determine file type for ${reference}`),
+                );
+
+                continue;
+            }
+
+            const file: File = {
+                id: "",
                 type: fileType,
                 path: reference,
-                extra: true,
+                exists: true,
+                isExtra: true,
             };
 
             try {

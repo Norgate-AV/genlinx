@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import chalk from "chalk";
-import { CfgBuilder, extensions } from "../../lib/index.js";
+import { CfgBuilder, AmxExtensions } from "../../lib/index.js";
 import {
     getFilesByExtension,
     getAppConfig,
@@ -9,7 +9,10 @@ import {
     selectFiles,
     shouldPromptUser,
 } from "../../lib/utils/index.js";
-import { CliCfgOptions, FileType } from "../../lib/@types/index.js";
+import {
+    CliCfgOptions,
+    AmxFileType as FileType,
+} from "../../lib/@types/index.js";
 
 export const cfg = {
     async create(cliOptions: CliCfgOptions): Promise<void> {
@@ -22,7 +25,7 @@ export const cfg = {
                 console.log(chalk.blue("Searching for workspace files..."));
 
                 const locatedWorkspaceFiles = await getFilesByExtension(
-                    extensions[FileType.Workspace],
+                    AmxExtensions[FileType.Workspace],
                 );
 
                 if (locatedWorkspaceFiles.length) {

@@ -1,4 +1,6 @@
+export * from "./AmxFileType.js";
 export * from "./ArchiveConfig.js";
+export * from "./ArchiveFileType.js";
 export * from "./ArchiveItem.js";
 export * from "./BuildConfig.js";
 export * from "./BuildLog.js";
@@ -11,6 +13,6 @@ export * from "./CliConfig.js";
 export * from "./Config.js";
 export * from "./File.js";
 export * from "./FileId.js";
-export * from "./FileType.js";
 export * from "./FileReference.js";
+export * from "./ObjectTypes.js";
 export * from "./ShellCommand.js";

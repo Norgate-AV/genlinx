@@ -1,24 +1,20 @@
 import path from "path";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
-import { ArchiveConfig, ArchiveItem, FileReference } from "./@types/index.js";
+import { ArchiveConfig, ArchiveItem, File } from "./@types/index.js";
 
 export class WorkspaceItem implements ArchiveItem {
-    private readonly file: FileReference;
+    private readonly file: File;
     private readonly builder: AdmZip;
     private readonly options: ArchiveConfig;
 
-    public constructor(
-        builder: AdmZip,
-        file: FileReference,
-        options: ArchiveConfig,
-    ) {
+    public constructor(builder: AdmZip, file: File, options: ArchiveConfig) {
         this.file = file;
         this.builder = builder;
         this.options = options;
     }
 
-    private addItem(file: FileReference): void {
+    private addItem(file: File): void {
         const { builder } = this;
 
         builder.addLocalFile(file.path);

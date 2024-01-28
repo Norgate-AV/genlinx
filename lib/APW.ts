@@ -1,52 +1,12 @@
 import fs from "fs-extra";
 import path from "path";
-import { File, FileId, FileReference, FileType } from "./@types/index.js";
-
-export const extensions: Record<FileType, string> = {
-    [FileType.Workspace]: ".apw",
-    [FileType.Module]: ".axs",
-    [FileType.MasterSrc]: ".axs",
-    [FileType.Source]: ".axs",
-    [FileType.Include]: ".axi",
-    [FileType.IR]: ".irl",
-    [FileType.TP4]: ".tp4",
-    [FileType.TP5]: ".tp5",
-    [FileType.TPD]: ".tpd",
-    [FileType.Duet]: ".jar",
-    [FileType.XDD]: ".xdd",
-    [FileType.KPD]: ".kpd",
-    [FileType.AXB]: ".axb",
-    [FileType.TKO]: ".tko",
-    [FileType.IRDB]: ".irdb",
-    [FileType.IRNDB]: ".irndb",
-    [FileType.TOK]: ".tok",
-    [FileType.TKN]: ".tkn",
-    [FileType.KPB]: ".kpb",
-    [FileType.Other]: "",
-};
-
-export const compiledExtensions: Record<FileType, string> = {
-    [FileType.Workspace]: ".apw",
-    [FileType.Module]: ".tko",
-    [FileType.MasterSrc]: ".tkn",
-    [FileType.Source]: ".tkn",
-    [FileType.Include]: ".tkn",
-    [FileType.IR]: ".irl",
-    [FileType.TP4]: ".tp4",
-    [FileType.TP5]: ".tp5",
-    [FileType.TPD]: ".tpd",
-    [FileType.Duet]: ".jar",
-    [FileType.XDD]: ".xdd",
-    [FileType.KPD]: ".kpd",
-    [FileType.AXB]: ".axb",
-    [FileType.TKO]: ".tko",
-    [FileType.IRDB]: ".irdb",
-    [FileType.IRNDB]: ".irndb",
-    [FileType.TOK]: ".tok",
-    [FileType.TKN]: ".tkn",
-    [FileType.KPB]: ".kpb",
-    [FileType.Other]: "",
-};
+import {
+    File,
+    FileId,
+    FileReference,
+    AmxFileType as FileType,
+} from "./@types/index.js";
+import { AmxExtensions } from "./index.js";
 
 export class APW {
     private _filePath: string | null = null;
@@ -181,12 +141,12 @@ export class APW {
     }
 
     public static getFileType(file: string): FileType | null {
-        if (!(path.extname(file) in extensions)) {
+        if (!(path.extname(file) in AmxExtensions)) {
             return null;
         }
 
-        const fileType = Object.keys(extensions).find(
-            (key) => extensions[key as FileType] === path.extname(file),
+        const fileType = Object.keys(AmxExtensions).find(
+            (key) => AmxExtensions[key as FileType] === path.extname(file),
         );
 
         return fileType as FileType;
@@ -220,7 +180,7 @@ export class APW {
         return [...new Set(extraFiles)];
     }
 
-    public async getExtraFileReferences(): Promise<Array<String>> {
+    public async getExtraFileReferences(): Promise<Array<string>> {
         const extraFiles: Array<string> = [];
 
         for (const file of this.uniqueFileReferences) {
@@ -261,7 +221,7 @@ export class APW {
         ];
     }
 
-    private getFileDirectories(files: Array<FileReference>): Array<string> {
+    private getFileDirectories(files: Array<File>): Array<string> {
         const directories = files.map((file) => {
             const rootDirectory = path.dirname(this.filePath);
             const absoluteFilePath = path.join(rootDirectory, file.path);
@@ -299,7 +259,7 @@ export class APW {
     }
 
     get id(): string {
-        return this._id.replace(" ", "-");
+        return this._id ? this._id.replace(" ", "-") : "";
     }
 
     set id(id: string) {
@@ -319,7 +279,7 @@ export class APW {
     }
 
     get filePath(): string {
-        return this._filePath;
+        return this._filePath ? this._filePath : "";
     }
 
     set filePath(filePath: string) {

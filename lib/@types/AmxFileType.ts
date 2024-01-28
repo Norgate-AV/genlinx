@@ -1,4 +1,6 @@
-export const FileType = {
+import { ObjectTypes } from "./index.js";
+
+export const AmxFileType = {
     Workspace: "Workspace",
     Module: "Module",
     MasterSrc: "MasterSrc",
@@ -21,6 +23,4 @@ export const FileType = {
     Other: "Other",
 } as const;
 
-type ObjectTypes<T> = T[keyof T];
-
-export type FileType = ObjectTypes<typeof FileType>;
+export type AmxFileType = ObjectTypes<typeof AmxFileType>;

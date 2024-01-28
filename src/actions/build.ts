@@ -1,3 +1,4 @@
+import util from "util";
 import chalk from "chalk";
 import { NLRC } from "../../lib/index.js";
 import {
@@ -161,6 +162,15 @@ export const build = {
             const { cfgFiles, sourceFile } = cliOptions;
 
             const config = await getAppConfig(cliOptions);
+
+            // console.log("MERGED CONFIG---------------------------------------");
+            // console.log(
+            //     util.inspect(config, {
+            //         showHidden: false,
+            //         depth: null,
+            //         colors: true,
+            //     }),
+            // );
 
             if (sourceFile) {
                 await executeSourceBuild(sourceFile, config);
