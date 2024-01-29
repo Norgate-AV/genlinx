@@ -1,15 +1,12 @@
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
-import util from "util";
 import { mergician } from "mergician";
 import { findUp } from "find-up";
 import pkg from "../../package.json";
 import defaultConfig from "../../config/index.js";
 import {
-    CliArchiveOptions,
-    CliBuildOptions,
-    CliCfgOptions,
+    CliConfig,
     Config,
     GlobalConfig,
     LocalConfig,
@@ -105,20 +102,9 @@ async function getLocalAppConfig(): Promise<LocalConfig> {
     return config || {};
 }
 
-export async function getAppConfig(
-    cliOptions: CliCfgOptions | CliArchiveOptions | CliBuildOptions,
-): Promise<Config> {
-    // console.log("GLOBAL-----------------------------------------------");
+export async function getAppConfig(cliOptions: CliConfig): Promise<Config> {
     const global = await getGlobalAppConfig();
-    // console.log(
-    //     util.inspect(global, { showHidden: false, depth: null, colors: true }),
-    // );
-
-    // console.log("LOCAL-----------------------------------------------");
     const local = await getLocalAppConfig();
-    // console.log(
-    //     util.inspect(local, { showHidden: false, depth: null, colors: true }),
-    // );
 
     const config = {
         default: defaultConfig,
@@ -126,11 +112,6 @@ export async function getAppConfig(
         local: local || {},
         cli: cliOptions || {},
     };
-
-    // console.log("FULL CONFIG-----------------------------------------");
-    // console.log(
-    //     util.inspect(config, { showHidden: false, depth: null, colors: true }),
-    // );
 
     return mergician({
         appendArrays: true,

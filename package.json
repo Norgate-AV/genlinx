@@ -13,12 +13,10 @@
     ],
     "files": [
         "assets",
-        "bin",
         "config",
-        "lib",
-        "scripts",
-        "src",
-        "docs"
+        "dist",
+        "docs",
+        "scripts"
     ],
     "bin": {
         "genlinx": "dist/app.js"
@@ -34,18 +32,18 @@
         "url": "https://github.com/Norgate-AV/genlinx/issues"
     },
     "engines": {
-        "node": ">=16"
+        "node": ">=18"
     },
     "scripts": {
         "commit": "git-cz",
         "clean": "rimraf dist",
-        "lint": "tsc --noEmit",
+        "lint": "tsc",
         "pretty:fix": "prettier --write .",
         "prebuild": "pnpm clean",
         "build": "tsup",
         "prestart": "pnpm lint && pnpm build",
         "start": "cross-env NODE_ENV=production node dist/app.js",
-        "dev": "nodemon --exec ts-node --files src/app.ts",
+        "dev": "nodemon --exec ts-node src/app.ts",
         "doctoc": "doctoc --title '## Contents 📖' README.md",
         "semantic-release": "semantic-release",
         "contrib:add": "all-contributors add",
@@ -63,14 +61,14 @@
         "@types/figlet": "^1.5.8",
         "@types/fs-extra": "^11.0.4",
         "@types/inquirer": "^9.0.7",
-        "@types/node": "^20.11.9",
+        "@types/node": "^20.11.10",
         "@types/nodemon": "^1.19.6",
         "all-contributors-cli": "^6.24.0",
         "commitizen": "^4.3.0",
         "cross-env": "^7.0.3",
         "cz-conventional-changelog": "3.3.0",
         "doctoc": "^2.2.1",
-        "husky": "^9.0.6",
+        "husky": "^9.0.7",
         "jsdoc": "^4.0.2",
         "lint-staged": "^15.2.0",
         "nodemon": "^3.0.3",

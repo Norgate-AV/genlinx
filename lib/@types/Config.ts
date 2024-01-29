@@ -12,6 +12,3 @@ export type Config = {
     archive: ArchiveConfig & CliArchiveOptions;
     build: BuildConfig & CliBuildOptions;
 };
-
-export type GlobalConfig = Partial<Config>;
-export type LocalConfig = Partial<Config>;

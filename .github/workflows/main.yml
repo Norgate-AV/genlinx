@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x]
+        node-version: [18.x, 20.x]
 
     steps:
       - name: Checkout
@@ -18,7 +18,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v2
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
         with:
           version: 8
 
@@ -32,10 +33,7 @@ jobs:
         run: pnpm install
 
       - name: Lint
-        run: yarn lint
-
-      - name: Test
-        run: yarn test
+        run: pnpm lint
 
   release:
     name: Run Semantic Release
@@ -65,6 +63,9 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install
+
+      - name: Build
+        run: pnpm build
 
       - name: Release
         run: pnpm semantic-release

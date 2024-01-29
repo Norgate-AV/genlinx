@@ -159,18 +159,13 @@ async function executeCfgBuild(
 export const build = {
     async execute(cliOptions: CliBuildOptions): Promise<void> {
         try {
-            const { cfgFiles, sourceFile } = cliOptions;
+            const config = await getAppConfig({
+                build: {
+                    ...cliOptions,
+                },
+            });
 
-            const config = await getAppConfig(cliOptions);
-
-            // console.log("MERGED CONFIG---------------------------------------");
-            // console.log(
-            //     util.inspect(config, {
-            //         showHidden: false,
-            //         depth: null,
-            //         colors: true,
-            //     }),
-            // );
+            const { cfgFiles, sourceFile } = config.build;
 
             if (sourceFile) {
                 await executeSourceBuild(sourceFile, config);

@@ -14,10 +14,14 @@
         "noUncheckedIndexedAccess": true,
         "resolveJsonModule": true,
         "types": ["node"],
+        "typeRoots": ["lib/@types", "node_modules/@types"],
         "allowSyntheticDefaultImports": true,
+        "noEmit": true,
     },
     "include": ["src/**/*", "lib/**/*", "config/**/*"],
     "ts-node": {
         "esm": true,
+        "files": true,
+        "transpileOnly": true,
     },
 }

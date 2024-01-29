@@ -1,3 +1,5 @@
+import { CliArchiveOptions } from "./index.js";
+
 export type ArchiveConfig = {
     outputFileSuffix: string;
     includeCompiledSourceFiles: boolean;
@@ -8,3 +10,5 @@ export type ArchiveConfig = {
     all: boolean;
     ignoredFiles: Array<string>;
 };
+
+export type ArchiveOptions = ArchiveConfig & CliArchiveOptions;

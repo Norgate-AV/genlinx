@@ -5,20 +5,20 @@ import AdmZip from "adm-zip";
 import { walkDirectory } from "./utils/index.js";
 import { APW, ArchiveItemFactory, AmxExtensions } from "./index.js";
 import {
-    ArchiveConfig,
+    ArchiveOptions,
     ArchiveFileType as FileType,
     File,
 } from "./@types/index.js";
 
 export class ArchiveBuilder {
     private apw: APW;
-    private options: ArchiveConfig;
+    private options: ArchiveOptions;
     private builder = new AdmZip();
     private extraFilesOnDisk: Array<string> = [];
     private extraFileReferences: Array<string> = [];
     private locatedExtraFileReferences: Array<string> = [];
 
-    public constructor(apw: APW, options: ArchiveConfig) {
+    public constructor(apw: APW, options: ArchiveOptions) {
         this.apw = apw;
         this.options = options;
     }

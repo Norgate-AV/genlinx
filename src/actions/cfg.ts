@@ -17,9 +17,13 @@ import {
 export const cfg = {
     async create(cliOptions: CliCfgOptions): Promise<void> {
         try {
-            const { workspaceFiles } = cliOptions;
+            const config = await getAppConfig({
+                cfg: {
+                    ...cliOptions,
+                },
+            });
 
-            const config = await getAppConfig(cliOptions);
+            const { workspaceFiles } = config.cfg;
 
             if (workspaceFiles.length === 0) {
                 console.log(chalk.blue("Searching for workspace files..."));

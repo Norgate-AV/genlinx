@@ -3,14 +3,14 @@ import path from "path";
 import StringBuilder from "string-builder";
 import figlet from "figlet";
 import { APW } from "./index.js";
-import { CfgConfig, FileReference } from "./@types/index.js";
+import { CfgOptions, FileReference } from "./@types/index.js";
 
 export class CfgBuilder {
     private readonly apw: APW;
-    private readonly options: CfgConfig;
+    private readonly options: CfgOptions;
     private readonly builder = new StringBuilder();
 
-    public constructor(apw: APW, options: CfgConfig) {
+    public constructor(apw: APW, options: CfgOptions) {
         this.apw = apw;
         this.options = options;
     }
