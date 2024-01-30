@@ -10,12 +10,13 @@ import {
     shouldPromptUser,
 } from "../../lib/utils/index.js";
 import {
-    CliCfgOptions,
+    CfgOptions,
+    CfgCliArgs,
     AmxFileType as FileType,
 } from "../../lib/@types/index.js";
 
 export const cfg = {
-    async create(cliOptions: CliCfgOptions): Promise<void> {
+    async create(cliOptions: CfgCliArgs): Promise<void> {
         try {
             const config = await getAppConfig({
                 cfg: {
@@ -23,7 +24,7 @@ export const cfg = {
                 },
             });
 
-            const { workspaceFiles } = config.cfg;
+            const { workspaceFiles } = config.cfg as CfgOptions;
 
             if (workspaceFiles.length === 0) {
                 console.log(chalk.blue("Searching for workspace files..."));
@@ -43,7 +44,7 @@ export const cfg = {
                 process.exit();
             }
 
-            if (shouldPromptUser(config.cfg, workspaceFiles)) {
+            if (shouldPromptUser(config.cfg as CfgOptions, workspaceFiles)) {
                 const selectedWorkspaceFiles =
                     await selectFiles(workspaceFiles);
 
@@ -58,11 +59,12 @@ export const cfg = {
 
                 const apw = await loadAPW(workspaceFile);
 
-                const cfgBuilder = new CfgBuilder(apw, config.cfg);
-                const cfg = cfgBuilder.build();
+                const builder = new CfgBuilder(apw, config.cfg as CfgOptions);
 
-                const outputFile = `${apw.id}.${config.cfg.outputFileSuffix}`;
-                fs.writeFile(outputFile, cfg);
+                const cfg = builder.build();
+
+                const file = `${apw.id}.${config.cfg.outputFileSuffix}`;
+                fs.writeFile(file, cfg);
             }
         } catch (error: any) {
             console.error(error);

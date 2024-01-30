@@ -1,5 +1,3 @@
-import { CliCfgOptions } from "./index.js";
-
 export type CfgConfig = {
     outputFileSuffix: string;
     outputLogFileSuffix: string;
@@ -12,5 +10,3 @@ export type CfgConfig = {
     libraryPath: Array<string>;
     all: boolean;
 };
-
-export type CfgOptions = CfgConfig & CliCfgOptions;

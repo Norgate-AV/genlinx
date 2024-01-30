@@ -1,14 +1,14 @@
 import path from "path";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
-import { ArchiveConfig, ArchiveItem, File } from "./@types/index.js";
+import { ArchiveOptions, ArchiveItem, File } from "./@types/index.js";
 
 export class EnvItem implements ArchiveItem {
     private readonly file: File;
     private readonly builder: AdmZip;
-    private readonly options: ArchiveConfig;
+    private readonly options: ArchiveOptions;
 
-    public constructor(builder: AdmZip, file: File, options: ArchiveConfig) {
+    public constructor(builder: AdmZip, file: File, options: ArchiveOptions) {
         this.file = file;
         this.builder = builder;
         this.options = options;

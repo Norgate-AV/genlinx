@@ -30,17 +30,9 @@ export class NLRC {
 
         const args = [`"${filePath}"`];
 
-        // if (nlrc.includePath) {
         args.push(`${nlrc.option.includePath}"${nlrc.includePath.join(";")}"`);
-        // }
-
-        // if (nlrc.modulePath) {
         args.push(`${nlrc.option.modulePath}"${nlrc.modulePath.join(";")}"`);
-        // }
-
-        // if (nlrc.libraryPath) {
         args.push(`${nlrc.option.libraryPath}"${nlrc.libraryPath.join(";")}"`);
-        // }
 
         return {
             path: `"${nlrc.path}"`,

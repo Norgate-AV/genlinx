@@ -1,4 +1,3 @@
-import util from "util";
 import chalk from "chalk";
 import { NLRC } from "../../lib/index.js";
 import {
@@ -11,11 +10,12 @@ import {
 import {
     BuildConfig,
     Config,
-    CliBuildOptions,
+    BuildCliArgs,
     BuildLog,
     BuildLogCollection,
     BuildLogCollectionKey,
     ShellCommand,
+    BuildOptions,
 } from "../../lib/@types/index.js";
 
 function getBuildLogs(data: string): BuildLogCollection {
@@ -37,8 +37,8 @@ function getBuildLogs(data: string): BuildLogCollection {
     }
 
     return {
-        error: [...new Set(logs.error)],
-        warning: [...new Set(logs.warning)],
+        error: [...new Set<string>(logs.error)],
+        warning: [...new Set<string>(logs.warning)],
     };
 }
 
@@ -98,9 +98,7 @@ async function buildFile(
 ): Promise<string> {
     console.log(chalk.blue(`Executing build for ${file}...`));
 
-    const buildResult = await runBuildProcess(command, options);
-
-    return buildResult;
+    return await runBuildProcess(command, options);
 }
 
 async function executeSourceBuild(
@@ -137,7 +135,7 @@ async function executeCfgBuild(
         process.exit();
     }
 
-    if (shouldPromptUser(config.build, cfgFiles)) {
+    if (shouldPromptUser(config.build as BuildOptions, cfgFiles)) {
         const selectedCfgFiles = await selectFiles(cfgFiles);
 
         cfgFiles.splice(0, cfgFiles.length);
@@ -157,7 +155,7 @@ async function executeCfgBuild(
 }
 
 export const build = {
-    async execute(cliOptions: CliBuildOptions): Promise<void> {
+    async execute(cliOptions: BuildCliArgs): Promise<void> {
         try {
             const config = await getAppConfig({
                 build: {
@@ -165,7 +163,7 @@ export const build = {
                 },
             });
 
-            const { cfgFiles, sourceFile } = config.build;
+            const { cfgFiles, sourceFile } = config.build as BuildOptions;
 
             if (sourceFile) {
                 await executeSourceBuild(sourceFile, config);

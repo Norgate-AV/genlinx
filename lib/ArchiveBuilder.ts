@@ -11,12 +11,12 @@ import {
 } from "./@types/index.js";
 
 export class ArchiveBuilder {
-    private apw: APW;
-    private options: ArchiveOptions;
-    private builder = new AdmZip();
-    private extraFilesOnDisk: Array<string> = [];
-    private extraFileReferences: Array<string> = [];
-    private locatedExtraFileReferences: Array<string> = [];
+    private readonly apw: APW;
+    private readonly options: ArchiveOptions;
+    private readonly builder = new AdmZip();
+    private readonly extraFilesOnDisk: Array<string> = [];
+    private readonly extraFileReferences: Array<string> = [];
+    private readonly locatedExtraFileReferences: Array<string> = [];
 
     public constructor(apw: APW, options: ArchiveOptions) {
         this.apw = apw;
@@ -50,8 +50,8 @@ export class ArchiveBuilder {
             files.push(...(await walkDirectory(location)));
         }
 
-        this.extraFilesOnDisk = files.filter((file) =>
-            ArchiveBuilder.fileIsOfInterest(file),
+        this.extraFilesOnDisk.push(
+            ...files.filter((file) => ArchiveBuilder.fileIsOfInterest(file)),
         );
 
         return this;

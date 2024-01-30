@@ -1,3 +1,7 @@
-import { CliCfgOptions, CliArchiveOptions, CliBuildOptions } from "./index.js";
+import { CfgCliArgs, ArchiveCliArgs, BuildCliArgs } from "./index.js";
 
-export type CliOptions = CliCfgOptions | CliArchiveOptions | CliBuildOptions;
+export type CliOptions = {
+    cfg?: CfgCliArgs;
+    archive?: ArchiveCliArgs;
+    build?: BuildCliArgs;
+};

@@ -7,17 +7,17 @@ import {
     WorkspaceItem,
 } from "./index.js";
 import {
-    ArchiveConfig,
     ArchiveFileType as FileType,
     ArchiveItem,
     File,
+    ArchiveOptions,
 } from "./@types/index.js";
 
 export class ArchiveItemFactory {
     public static create(
         builder: AdmZip,
         file: File,
-        options: ArchiveConfig,
+        options: ArchiveOptions,
     ): ArchiveItem {
         switch (file.type) {
             case FileType.APW.Workspace:

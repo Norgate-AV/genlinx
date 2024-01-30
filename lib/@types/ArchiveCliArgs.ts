@@ -1,4 +1,4 @@
-export type CliArchiveOptions = {
+export type ArchiveCliArgs = {
     workspaceFiles: Array<string>;
     outputFileSuffix?: string;
     includeCompiledSourceFiles?: boolean;

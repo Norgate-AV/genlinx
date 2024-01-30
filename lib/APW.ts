@@ -13,9 +13,9 @@ export class APW {
 
     private _id: string | null = null;
 
-    private fileReferences: Array<File> = [];
+    private readonly fileReferences: Array<File> = [];
 
-    private uniqueFileReferences: Array<File> = [];
+    private readonly uniqueFileReferences: Array<File> = [];
 
     public constructor(filePath: string) {
         this.filePath = path.isAbsolute(filePath)
@@ -28,15 +28,15 @@ export class APW {
             const data = await this.read();
 
             this.id = APW.getId(data);
-            this.fileReferences = await this.getFileReferences(data);
-            this.uniqueFileReferences = this.getUniqueFileReferences();
+            this.fileReferences.push(...(await this.getFileReferences(data)));
+            this.uniqueFileReferences.push(...this.getUniqueFileReferences());
         } catch (error: any) {
             throw new Error(`Failed to load APW file: ${error.message}`);
         }
     }
 
     private async read(): Promise<string> {
-        const filePath = this.filePath;
+        const { filePath } = this;
 
         const exists = await fs.pathExists(filePath);
 
@@ -137,7 +137,7 @@ export class APW {
             fileReferences.push(id);
         }
 
-        return [...new Set(fileReferences)];
+        return [...new Set<string>(fileReferences)];
     }
 
     public static getFileType(file: string): FileType | null {
@@ -177,7 +177,7 @@ export class APW {
 
         extraFiles.push(...extraIncludeFiles, ...extraModuleFiles);
 
-        return [...new Set(extraFiles)];
+        return [...new Set<string>(extraFiles)];
     }
 
     public async getExtraFileReferences(): Promise<Array<string>> {
@@ -193,7 +193,7 @@ export class APW {
             );
         }
 
-        return [...new Set(extraFiles)];
+        return [...new Set<string>(extraFiles)];
     }
 
     get moduleFiles(): Array<FileReference> {
@@ -228,7 +228,7 @@ export class APW {
             return path.dirname(absoluteFilePath);
         });
 
-        return [...new Set(directories)];
+        return [...new Set<string>(directories)];
     }
 
     get includePath(): Array<string> {
@@ -279,7 +279,7 @@ export class APW {
     }
 
     get filePath(): string {
-        return this._filePath ? this._filePath : "";
+        return this._filePath || "";
     }
 
     set filePath(filePath: string) {

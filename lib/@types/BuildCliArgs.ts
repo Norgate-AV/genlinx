@@ -1,4 +1,4 @@
-export type CliBuildOptions = {
+export type BuildCliArgs = {
     cfgFiles: Array<string>;
     sourceFile?: string;
     includePath?: Array<string>;

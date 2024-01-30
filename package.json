@@ -43,7 +43,7 @@
         "build": "tsup",
         "prestart": "pnpm lint && pnpm build",
         "start": "cross-env NODE_ENV=production node dist/app.js",
-        "dev": "nodemon --exec ts-node src/app.ts",
+        "dev": "nodemon --exec vite-node src/app.ts",
         "doctoc": "doctoc --title '## Contents 📖' README.md",
         "semantic-release": "semantic-release",
         "contrib:add": "all-contributors add",
@@ -76,9 +76,9 @@
         "rimraf": "^5.0.5",
         "semantic-release": "^23.0.0",
         "terser": "^5.27.0",
-        "ts-node": "^10.9.2",
         "tsup": "^8.0.1",
-        "typescript": "^5.3.3"
+        "typescript": "^5.3.3",
+        "vite-node": "^1.2.2"
     },
     "dependencies": {
         "adm-zip": "^0.5.10",

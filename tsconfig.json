@@ -17,11 +17,8 @@
         "typeRoots": ["lib/@types", "node_modules/@types"],
         "allowSyntheticDefaultImports": true,
         "noEmit": true,
+        // "noUnusedLocals": true,
+        // "noUnusedParameters": true,
     },
     "include": ["src/**/*", "lib/**/*", "config/**/*"],
-    "ts-node": {
-        "esm": true,
-        "files": true,
-        "transpileOnly": true,
-    },
 }

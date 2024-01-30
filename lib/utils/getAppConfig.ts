@@ -6,7 +6,7 @@ import { findUp } from "find-up";
 import pkg from "../../package.json";
 import defaultConfig from "../../config/index.js";
 import {
-    CliConfig,
+    CliOptions,
     Config,
     GlobalConfig,
     LocalConfig,
@@ -91,7 +91,7 @@ async function getLocalAppConfig(): Promise<LocalConfig> {
         return {};
     }
 
-    console.log(`Found local config file at ${filePath}`);
+    console.debug(`Found local config file at ${filePath}`);
 
     const root = path.dirname(filePath);
     const config = resolvePaths(
@@ -102,7 +102,7 @@ async function getLocalAppConfig(): Promise<LocalConfig> {
     return config || {};
 }
 
-export async function getAppConfig(cliOptions: CliConfig): Promise<Config> {
+export async function getAppConfig(cliOptions: CliOptions): Promise<Config> {
     const global = await getGlobalAppConfig();
     const local = await getLocalAppConfig();
 

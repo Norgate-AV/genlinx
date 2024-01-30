@@ -1,4 +1,4 @@
-export type CliCfgOptions = {
+export type CfgCliArgs = {
     workspaceFiles: Array<string>;
     rootDirectory: string;
     outputFileSuffix?: string;

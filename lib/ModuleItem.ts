@@ -3,7 +3,7 @@ import chalk from "chalk";
 import AdmZip from "adm-zip";
 import { AmxExtensions, AmxCompiledExtensions } from "./index.js";
 import {
-    ArchiveConfig,
+    ArchiveOptions,
     ArchiveItem,
     ArchiveFileType as FileType,
     File,
@@ -12,10 +12,10 @@ import {
 export class ModuleItem implements ArchiveItem {
     private readonly file: File;
     private readonly builder: AdmZip;
-    private readonly options: ArchiveConfig;
+    private readonly options: ArchiveOptions;
     private readonly archivePath: string;
 
-    public constructor(builder: AdmZip, file: File, options: ArchiveConfig) {
+    public constructor(builder: AdmZip, file: File, options: ArchiveOptions) {
         this.file = file;
         this.builder = builder;
         this.options = options;

@@ -9,20 +9,21 @@ import {
     shouldPromptUser,
 } from "../../lib/utils/index.js";
 import {
-    CliArchiveOptions,
+    ArchiveOptions,
+    ArchiveCliArgs,
     AmxFileType as FileType,
 } from "../../lib/@types/index.js";
 
 export const archive = {
-    async create(cliOptions: CliArchiveOptions): Promise<void> {
+    async create(args: ArchiveCliArgs): Promise<void> {
         try {
             const config = await getAppConfig({
                 archive: {
-                    ...cliOptions,
+                    ...args,
                 },
             });
 
-            const { workspaceFiles } = config.archive;
+            const { workspaceFiles } = config.archive as ArchiveOptions;
 
             if (workspaceFiles.length === 0) {
                 console.log(chalk.blue("Searching for workspace files..."));
@@ -42,7 +43,12 @@ export const archive = {
                 process.exit();
             }
 
-            if (shouldPromptUser(config.archive, workspaceFiles)) {
+            if (
+                shouldPromptUser(
+                    config.archive as ArchiveOptions,
+                    workspaceFiles,
+                )
+            ) {
                 const selectedWorkspaceFiles =
                     await selectFiles(workspaceFiles);
 
@@ -57,7 +63,10 @@ export const archive = {
 
                 const apw = await loadAPW(workspaceFile);
 
-                const builder = new ArchiveBuilder(apw, config.archive);
+                const builder = new ArchiveBuilder(
+                    apw,
+                    config.archive as ArchiveOptions,
+                );
                 builder.build();
             }
         } catch (error: any) {

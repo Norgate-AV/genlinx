@@ -1,5 +1,3 @@
-import { CliBuildOptions } from "./index.js";
-
 export type BuildConfig = {
     nlrc: {
         path: string;
@@ -19,5 +17,3 @@ export type BuildConfig = {
     all: boolean;
     createCfg: boolean;
 };
-
-export type BuildOptions = BuildConfig & CliBuildOptions;
