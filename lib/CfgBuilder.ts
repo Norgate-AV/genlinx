@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
+import { fileURLToPath } from "url";
 import StringBuilder from "string-builder";
 import figlet from "figlet";
 import { APW } from "./index.js";
@@ -33,8 +34,9 @@ export class CfgBuilder {
         const { builder } = this;
 
         try {
+            const __dirname = path.dirname(fileURLToPath(import.meta.url));
             const license = fs.readFileSync(
-                path.resolve(__dirname, "../../LICENSE"),
+                path.resolve(__dirname, "../LICENSE"),
                 {
                     encoding: "utf8",
                 },

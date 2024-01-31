@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
+import { fileURLToPath } from "url";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
 import { walkDirectory } from "./utils/index.js";
@@ -108,10 +109,8 @@ export class ArchiveBuilder {
             ),
         );
 
-        const scriptsPath = path.resolve(
-            __dirname,
-            path.join("..", "..", "scripts"),
-        );
+        const __dirname = path.dirname(fileURLToPath(import.meta.url));
+        const scriptsPath = path.resolve(__dirname, path.join("..", "scripts"));
 
         const scripts = await fs.readdir(scriptsPath);
 
