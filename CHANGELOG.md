@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.0](https://github.com/Norgate-AV/genlinx/compare/v1.1.4...v2.0.0) (2024-01-31)
+
+### ⚠ BREAKING CHANGES
+
+-   convert codebase to typescript
+
+### 🌟 Features
+
+-   convert codebase to typescript ([937de15](https://github.com/Norgate-AV/genlinx/commit/937de15f1a30b354d7f104785218865c2f7f58bf))
+
 ## [1.1.4](https://github.com/Norgate-AV/genlinx/compare/v1.1.3...v1.1.4) (2024-01-04)
 
 ### Bug Fixes
