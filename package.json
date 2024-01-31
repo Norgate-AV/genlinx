@@ -4,7 +4,6 @@
     "version": "1.1.4",
     "license": "MIT",
     "main": "dist/app.js",
-    "typings": "dist/app.d.ts",
     "type": "module",
     "keywords": [
         "netlinx",
@@ -12,8 +11,6 @@
         "genlinx"
     ],
     "files": [
-        "assets",
-        "config",
         "dist",
         "docs",
         "scripts"
@@ -49,7 +46,7 @@
         "contrib:add": "all-contributors add",
         "contrib:generate": "all-contributors generate",
         "contrib:check": "all-contributors check",
-        "prepare": "husky install"
+        "prepare": "husky"
     },
     "devDependencies": {
         "@commitlint/cli": "^18.6.0",
@@ -61,7 +58,7 @@
         "@types/figlet": "^1.5.8",
         "@types/fs-extra": "^11.0.4",
         "@types/inquirer": "^9.0.7",
-        "@types/node": "^20.11.10",
+        "@types/node": "^20.11.13",
         "@types/nodemon": "^1.19.6",
         "all-contributors-cli": "^6.24.0",
         "commitizen": "^4.3.0",
@@ -70,7 +67,7 @@
         "doctoc": "^2.2.1",
         "husky": "^9.0.7",
         "jsdoc": "^4.0.2",
-        "lint-staged": "^15.2.0",
+        "lint-staged": "^15.2.1",
         "nodemon": "^3.0.3",
         "prettier": "^3.2.4",
         "rimraf": "^5.0.5",
