@@ -1,0 +1,13 @@
+{
+    "entry": ["src/app.ts"],
+    "dts": false,
+    "format": ["esm"],
+    "target": "node20",
+    "minify": "terser",
+    "minifyWhitespace": true,
+    "minifyIdentifiers": true,
+    "minifySyntax": true,
+    "treeshake": true,
+    "sourcemap": true,
+    "splitting": true
+}

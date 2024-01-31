@@ -1,5 +1,6 @@
 {
     "typescript.validate.enable": true,
+    "typescript.tsdk": "./node_modules/typescript/lib",
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
@@ -32,5 +33,14 @@
     },
     "editor.codeActionsOnSave": {
         "source.fixAll.markdownlint": "explicit"
-    }
+    },
+    "[dotenv]": {
+        "editor.formatOnSave": false
+    },
+    "json.schemas": [
+        {
+            "url": "./tsup.schema.json",
+            "fileMatch": ["package.json", "tsup.config.json"]
+        }
+    ]
 }
