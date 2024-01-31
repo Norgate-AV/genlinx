@@ -74,6 +74,7 @@
         "semantic-release": "^23.0.0",
         "terser": "^5.27.0",
         "tsup": "^8.0.1",
+        "type-fest": "^4.10.2",
         "typescript": "^5.3.3",
         "vite-node": "^1.2.2"
     },

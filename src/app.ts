@@ -3,11 +3,12 @@
 import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
-import { version } from "../package.json";
+import { getAppVersion } from "../lib/utils/index.js";
 import { archive, build, cfg } from "./commands/index.js";
 
 const args = process.argv;
 const program = new Command();
+const version = await getAppVersion();
 
 program
     .name("genlinx")
