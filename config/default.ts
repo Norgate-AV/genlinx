@@ -1,6 +1,6 @@
-import { Config } from "../lib/@types/index.js";
+// import { Config } from "../lib/@types/index.js";
 
-export const defaultGlobalAppConfig: Config = {
+export const config = {
     cfg: {
         outputFileSuffix: "build.cfg",
         outputLogFileSuffix: "build.log",
@@ -82,4 +82,4 @@ export const defaultGlobalAppConfig: Config = {
     },
 };
 
-export default defaultGlobalAppConfig;
+export default config;

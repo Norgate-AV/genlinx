@@ -1,6 +1,6 @@
 {
     "entry": ["src/app.ts"],
-    "dts": true,
+    "dts": false,
     "format": ["esm"],
     "target": "node20",
     "minify": "terser",

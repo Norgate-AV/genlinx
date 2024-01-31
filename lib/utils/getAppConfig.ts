@@ -4,7 +4,7 @@ import os from "os";
 import { mergician } from "mergician";
 import { findUp } from "find-up";
 import pkg from "../../package.json";
-import defaultConfig from "../../config/index.js";
+import defaultConfig from "../../config/default.js";
 import {
     CliOptions,
     Config,
