@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.2](https://github.com/Norgate-AV/genlinx/compare/v2.0.1...v2.0.2) (2024-01-31)
+
+### 🐛 Bug Fixes
+
+-   get most upto date app version ([9c7c784](https://github.com/Norgate-AV/genlinx/commit/9c7c784555c799db47987aee1621f90faad29b1d))
+
 ## [2.0.1](https://github.com/Norgate-AV/genlinx/compare/v2.0.0...v2.0.1) (2024-01-31)
 
 ### 🐛 Bug Fixes
