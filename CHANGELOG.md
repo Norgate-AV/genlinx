@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1](https://github.com/Norgate-AV/genlinx/compare/v2.0.0...v2.0.1) (2024-01-31)
+
+### 🐛 Bug Fixes
+
+-   replace \_\_dirname in code ([9432445](https://github.com/Norgate-AV/genlinx/commit/9432445ad4d26ab3e19212f444a9fdf4388e0663))
+
 ## [2.0.0](https://github.com/Norgate-AV/genlinx/compare/v1.1.4...v2.0.0) (2024-01-31)
 
 ### ⚠ BREAKING CHANGES
