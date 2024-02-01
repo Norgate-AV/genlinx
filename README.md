@@ -45,11 +45,15 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 Install genlinx globally with:
 
 ```bash
-npm install -g @norgate-av/genlinx
+pnpm add -g @norgate-av/genlinx
 
 # or
 
 yarn global add @norgate-av/genlinx
+
+# or
+
+npm install -g @norgate-av/genlinx
 ```
 
 ## Usage :rocket:
