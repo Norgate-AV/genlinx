@@ -23,8 +23,8 @@ export function build(): Command {
         )
         .addOption(
             new Option(
-                "-s, --source-file <string>",
-                "axs source file to build",
+                "-s, --source-files <string...>",
+                "axs source file(s) to build",
             ).conflicts(["cfgFiles"]),
         )
         .addOption(

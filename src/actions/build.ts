@@ -1,4 +1,3 @@
-import util from "util";
 import chalk from "chalk";
 import { NLRC } from "../../lib/index.js";
 import {
@@ -10,7 +9,6 @@ import {
 } from "../../lib/utils/index.js";
 import {
     BuildConfig,
-    Config,
     BuildCliArgs,
     BuildLog,
     BuildLogCollection,
@@ -104,66 +102,54 @@ async function buildFile(
 }
 
 async function executeSourceBuild(
-    sourceFile: string,
-    config: Config,
+    files: Array<string>,
+    options: BuildOptions,
 ): Promise<void> {
-    const command = NLRC.getSourceBuildCommand(
-        sourceFile,
-        config.build as BuildOptions,
-    );
+    for (const file of files) {
+        const command = NLRC.getSourceBuildCommand(file, options);
 
-    const buildResult = await buildFile(
-        sourceFile,
-        command,
-        config.build as BuildOptions,
-    );
+        const buildResult = await buildFile(file, command, options);
 
-    const logs = getBuildLogs(buildResult);
+        const logs = getBuildLogs(buildResult);
 
-    printAllWarnings(logs.warning);
-    catchAllErrors(logs.error);
+        printAllWarnings(logs.warning);
+        catchAllErrors(logs.error);
+    }
 }
 
 async function executeCfgBuild(
-    cfgFiles: Array<string>,
-    config: Config,
+    files: Array<string>,
+    options: BuildOptions,
 ): Promise<void> {
-    const { verbose } = config.build as BuildOptions;
+    const { verbose } = options;
 
-    if (cfgFiles.length === 0) {
+    if (files.length === 0) {
         verbose && console.log(chalk.blue("Searching for CFG files..."));
 
-        const locatedCfgFiles = await getFilesByExtension(".cfg");
+        const located = await getFilesByExtension(".cfg");
 
-        if (locatedCfgFiles.length) {
-            verbose && printFiles(locatedCfgFiles);
-            cfgFiles.push(...locatedCfgFiles);
+        if (located.length) {
+            verbose && printFiles(located);
+            files.push(...located);
         }
     }
 
-    if (cfgFiles.length === 0) {
+    if (files.length === 0) {
         console.log(chalk.red("No CFG files found."));
         process.exit();
     }
 
-    if (shouldPromptUser(config.build as BuildOptions, cfgFiles)) {
-        const selectedCfgFiles = await selectFiles(cfgFiles);
+    if (shouldPromptUser(options, files)) {
+        const selected = await selectFiles(files);
 
-        cfgFiles.splice(0, cfgFiles.length);
-        cfgFiles.push(...selectedCfgFiles);
+        files.splice(0, files.length);
+        files.push(...selected);
     }
 
-    for (const cfgFile of cfgFiles) {
-        const command = NLRC.getCfgBuildCommand(
-            cfgFile,
-            config.build as BuildOptions,
-        );
+    for (const file of files) {
+        const command = NLRC.getCfgBuildCommand(file, options);
 
-        const buildResult = await buildFile(
-            cfgFile,
-            command,
-            config.build as BuildOptions,
-        );
+        const buildResult = await buildFile(file, command, options);
 
         const logs = getBuildLogs(buildResult);
 
@@ -181,15 +167,18 @@ export const build = {
                 },
             });
 
-            const { cfgFiles, sourceFile } = config.build as BuildOptions;
+            const { cfgFiles, sourceFiles } = config.build as BuildOptions;
 
-            if (sourceFile) {
-                await executeSourceBuild(sourceFile, config);
+            if (sourceFiles) {
+                await executeSourceBuild(
+                    sourceFiles,
+                    config.build as BuildOptions,
+                );
                 process.exit();
             }
 
             if (cfgFiles.length > 0) {
-                await executeCfgBuild(cfgFiles, config);
+                await executeCfgBuild(cfgFiles, config.build as BuildOptions);
                 process.exit();
             }
 

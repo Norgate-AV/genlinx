@@ -1,6 +1,6 @@
 export type BuildCliArgs = {
     cfgFiles: Array<string>;
-    sourceFile?: string;
+    sourceFiles?: Array<string>;
     includePath?: Array<string>;
     modulePath?: Array<string>;
     libraryPath?: Array<string>;
