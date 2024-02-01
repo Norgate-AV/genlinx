@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.0](https://github.com/Norgate-AV/genlinx/compare/v2.0.3...v2.1.0) (2024-02-01)
+
+### 🌟 Features
+
+-   add --verbose flag to commands ([e822091](https://github.com/Norgate-AV/genlinx/commit/e82209108b50aa1d64aa4807a2f349ebc5d64df6))
+
 ## [2.0.3](https://github.com/Norgate-AV/genlinx/compare/v2.0.2...v2.0.3) (2024-02-01)
 
 ### 🐛 Bug Fixes
