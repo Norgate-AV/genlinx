@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/Norgate-AV/genlinx/compare/v2.0.2...v2.0.3) (2024-02-01)
+
+### 🐛 Bug Fixes
+
+-   add year to banner dynamically ([0425c24](https://github.com/Norgate-AV/genlinx/commit/0425c242d0e35336b50730ff44e9d97adeebb22d))
+-   open correct file to obtain latest version ([34617d2](https://github.com/Norgate-AV/genlinx/commit/34617d2167274b3ec84e2bee27b68e531be329d1))
+
 ## [2.0.2](https://github.com/Norgate-AV/genlinx/compare/v2.0.1...v2.0.2) (2024-01-31)
 
 ### 🐛 Bug Fixes
