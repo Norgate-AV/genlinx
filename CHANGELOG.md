@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.2.0](https://github.com/Norgate-AV/genlinx/compare/v2.1.1...v2.2.0) (2024-02-01)
+
+### 🌟 Features
+
+-   **build:** allow for building multiple source files ([f2f8243](https://github.com/Norgate-AV/genlinx/commit/f2f8243928ecdd5733ab0ea0b6924467c98693bc))
+
+### 📖 Documentation
+
+-   add verbose flag ([aaaeb4e](https://github.com/Norgate-AV/genlinx/commit/aaaeb4e4024f4a1082a87bdd5354154d4556c93b))
+-   update build docs for multiple source file build ([07c7fec](https://github.com/Norgate-AV/genlinx/commit/07c7fec6a38876245a62e497d8e1f9f077cb2f54))
+-   update installation commands to include PNPM ([065ced3](https://github.com/Norgate-AV/genlinx/commit/065ced3c82b7d04536ab7767f9d29a757fbfe430))
+-   update to show latest config options ([6bc2815](https://github.com/Norgate-AV/genlinx/commit/6bc2815ac8d88491d57702b44ee3e60e36a7301c))
+
 ## [2.1.1](https://github.com/Norgate-AV/genlinx/compare/v2.1.0...v2.1.1) (2024-02-01)
 
 ### 🐛 Bug Fixes
