@@ -140,16 +140,18 @@ export class APW {
         return [...new Set<string>(fileReferences)];
     }
 
-    public static getFileType(file: string): FileType | null {
-        if (!(path.extname(file) in AmxExtensions)) {
-            return null;
+    public static getFileType(file: string): FileType {
+        const extension = path.extname(file);
+
+        if (!(extension in Object.values<string>(AmxExtensions))) {
+            return FileType.Other;
         }
 
         const fileType = Object.keys(AmxExtensions).find(
-            (key) => AmxExtensions[key as FileType] === path.extname(file),
+            (key) => AmxExtensions[key as FileType] === extension,
         );
 
-        return fileType as FileType;
+        return (fileType as FileType) || FileType.Other;
     }
 
     public static fileIsReadable(file: string): boolean {

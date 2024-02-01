@@ -276,22 +276,9 @@ export class ArchiveBuilder {
         }
 
         for (const reference of locatedExtraFileReferences) {
-            const fileType = APW.getFileType(reference);
-
-            if (!fileType) {
-                verbose &&
-                    console.log(
-                        chalk.red(
-                            `Could not determine file type for ${reference}`,
-                        ),
-                    );
-
-                continue;
-            }
-
             const file: File = {
                 id: "",
-                type: fileType,
+                type: APW.getFileType(reference),
                 path: reference,
                 exists: true,
                 isExtra: true,
