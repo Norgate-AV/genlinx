@@ -212,9 +212,9 @@ Commands:
 
 ### Global
 
-A global configuration file will be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx. This file can be edited to change the default values for the commands options.
+A global configuration file can be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx. This file can be edited to change the default values for the commands options.
 
-If you would like to use a different location to store the global configuration file, you can set the `GENLINX_CONFIG_DIR` environment variable to the path of directory you would like to use. This directory must contain the `config.json` file.
+If you would like to use a different location to store the global configuration file, you can set the `GENLINX_CONFIG_DIR` environment variable to the path of the directory you would like to use. This directory must contain the `config.json` file.
 
 ```json
 {
@@ -236,7 +236,10 @@ If you would like to use a different location to store the global configuration 
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx"
         ],
-        "libraryPath": ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"]
+        "libraryPath": [
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
+        ],
+        "all": false
     },
     "archive": {
         "outputFile": "archive.zip",
@@ -247,18 +250,54 @@ If you would like to use a different location to store the global configuration 
             "C:\\Program Files (x86)\\Common Files\\AMXShare",
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18"
         ],
-        "extraFileArchiveLocation": ".genlinx"
+        "extraFileArchiveLocation": ".genlinx",
+        "all": false,
+        "ignoredFiles": [
+            "G4API.axi",
+            "NetLinx.axi",
+            "SNAPI.axi",
+            "UnicodeLib.axi",
+            "componentssdk.jar",
+            "componentssdkrt.jar",
+            "DeviceDriverEngine.jar",
+            "devicesdkrt.jar",
+            "jregex1.2_01-bundle.jar",
+            "js-14-bundle.jar",
+            "json-bundle.jar",
+            "picocontainer-1.3-bundle.jar",
+            "snapirouter.jar",
+            "snapirouter2.jar"
+        ]
     },
     "build": {
         "nlrc": {
             "path": "C:\\Program Files (x86)\\Common Files\\AMXShare\\COM\\NLRC.exe",
             "option": {
-                "cfg": "-CFG"
-            }
+                "cfg": "-CFG",
+                "includePath": "-I",
+                "modulePath": "-M",
+                "libraryPath": "-L"
+            },
+            "includePath": [
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes"
+            ],
+            "modulePath": [
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx"
+            ],
+            "libraryPath": [
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
+            ]
         },
         "shell": {
             "path": "C:\\Windows\\System32\\cmd.exe"
-        }
+        },
+        "all": false,
+        "createCfg": true
     }
 }
 ```
