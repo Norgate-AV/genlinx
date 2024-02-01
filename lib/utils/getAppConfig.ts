@@ -1,11 +1,15 @@
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
+import chalk from "chalk";
 import { mergician } from "mergician";
 import { findUp } from "find-up";
 import pkg from "../../package.json";
 import defaultConfig from "../../config/default.js";
 import {
+    ArchiveCliArgs,
+    BuildCliArgs,
+    CfgCliArgs,
     CliOptions,
     Config,
     GlobalConfig,
@@ -82,7 +86,7 @@ function resolvePaths(root: string, config: LocalConfig): LocalConfig {
     return config;
 }
 
-async function getLocalAppConfig(): Promise<LocalConfig> {
+async function getLocalAppConfig(options: CliOptions): Promise<LocalConfig> {
     const filePath = await findUp([".genlinxrc.json", ".genlinxrc"], {
         cwd: process.cwd(),
     });
@@ -91,7 +95,13 @@ async function getLocalAppConfig(): Promise<LocalConfig> {
         return {};
     }
 
-    console.debug(`Found local config file at ${filePath}`);
+    const verbose =
+        (options.cfg as CfgCliArgs)?.verbose ||
+        (options.build as BuildCliArgs)?.verbose ||
+        (options.archive as ArchiveCliArgs)?.verbose;
+
+    verbose &&
+        console.log(chalk.blue(`Using local config file at ${filePath}`));
 
     const root = path.dirname(filePath);
     const config = resolvePaths(
@@ -104,7 +114,7 @@ async function getLocalAppConfig(): Promise<LocalConfig> {
 
 export async function getAppConfig(cliOptions: CliOptions): Promise<Config> {
     const global = await getGlobalAppConfig();
-    const local = await getLocalAppConfig();
+    const local = await getLocalAppConfig(cliOptions);
 
     const config = {
         default: defaultConfig,
