@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.2.1](https://github.com/Norgate-AV/genlinx/compare/v2.2.0...v2.2.1) (2024-02-01)
+
+### 🐛 Bug Fixes
+
+-   **archive:** correctly determine file type or return "Other" ([66e68df](https://github.com/Norgate-AV/genlinx/commit/66e68dfcb7202fbf5ba895e068acf0b09f4a8eee))
+
+### 📖 Documentation
+
+-   fix broken links ([0976139](https://github.com/Norgate-AV/genlinx/commit/097613919a08d617bcccc8e4a6a56bc9efbe7b35))
+
 ## [2.2.0](https://github.com/Norgate-AV/genlinx/compare/v2.1.1...v2.2.0) (2024-02-01)
 
 ### 🌟 Features
