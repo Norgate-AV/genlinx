@@ -9,8 +9,8 @@
 [![CI](https://github.com/Norgate-AV/genlinx/actions/workflows/main.yml/badge.svg)](https://github.com/Norgate-AV/genlinx/actions)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-[![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV/genlinx)](#contributors)
-[![NPM](https://img.shields.io/npm/v/genlinx.svg)](https://www.npmjs.com/package/genlinx)
+[![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV/genlinx)](#contributors-sparkles)
+[![NPM](https://img.shields.io/npm/v/%40norgate-av%2Fgenlinx)](https://www.npmjs.com/package/@norgate-av/genlinx)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
@@ -361,7 +361,7 @@ This project is maintained by the following person(s) and a bunch of [awesome co
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)]
 
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
