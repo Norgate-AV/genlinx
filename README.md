@@ -142,7 +142,7 @@ build a NetLinx project
 
 Options:
   -c, --cfg-files <string...>     cfg file(s) to build from (default: search for CFG files in current directory)
-  -s, --source-file <string>      axs source file to build
+  -s, --source-files <string...>  axs source file(s) to build
   -i, --include-path <string...>  add additional include paths
   -m, --module-path <string...>   add additional module paths
   -l, --library-path <string...>  add additional library paths
