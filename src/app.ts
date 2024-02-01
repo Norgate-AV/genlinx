@@ -24,7 +24,9 @@ program.addHelpText("beforeAll", () => {
         .appendLine(figlet.textSync("genlinx"))
         .appendLine()
         .appendLine("Open source CLI tool for NetLinx projects")
-        .appendLine("Copyright (c) 2023, Norgate AV Services Limited")
+        .appendLine(
+            `Copyright (c) ${new Date().getFullYear()}, Norgate AV Services Limited`,
+        )
         .appendLine("https://github.com/Norgate-AV/genlinx")
         .appendLine()
         .appendLine("===================================================")
