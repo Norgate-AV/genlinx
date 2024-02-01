@@ -123,6 +123,7 @@ Options:
   -N, --include-files-not-in-workspace           include files not in workspace
   -l, --extra-file-search-locations <string...>  extra file locations to search
   -p, --extra-file-archive-location <string>     location to place extra files in the archive
+  --verbose                                      verbose output
   -h, --help                                     display help for command
 ```
 
@@ -143,6 +144,7 @@ Options:
   -l, --library-path <string...>  add additional library paths
   -a, --all                       select all cfg files without prompting
   -A, --no-all                    select multiple cfg files with a prompt
+  --verbose                       verbose output
   -h, --help                      display help for command
 ```
 
@@ -178,6 +180,7 @@ Options:
   -A, --no-all                           if no workspace files are specified with the -w option and more than one
                                          workspace file is found in the current directory, prompt to select which
                                          workspace files to use
+  --verbose                              verbose output
   -h, --help                             display help for command
 ```
 
