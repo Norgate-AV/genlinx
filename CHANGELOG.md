@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.1](https://github.com/Norgate-AV/genlinx/compare/v2.1.0...v2.1.1) (2024-02-01)
+
+### 🐛 Bug Fixes
+
+-   only log using local config if verbose ([f72744d](https://github.com/Norgate-AV/genlinx/commit/f72744de9cd7a7eca207caf37cc57cd63408965c))
+
 ## [2.1.0](https://github.com/Norgate-AV/genlinx/compare/v2.0.3...v2.1.0) (2024-02-01)
 
 ### 🌟 Features
