@@ -23,6 +23,7 @@ program.addHelpText("beforeAll", () => {
     builder
         .appendLine(figlet.textSync("genlinx"))
         .appendLine()
+        .appendLine(`${version}`)
         .appendLine("Open source CLI tool for NetLinx projects")
         .appendLine(
             `Copyright (c) ${new Date().getFullYear()}, Norgate AV Services Limited`,
