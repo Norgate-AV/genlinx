@@ -6,4 +6,5 @@ export type ArchiveCliArgs = {
     includeFilesNotInWorkspace?: boolean;
     extraFileSearchLocations?: Array<string>;
     extraFileArchiveLocation?: string;
+    verbose: boolean;
 };

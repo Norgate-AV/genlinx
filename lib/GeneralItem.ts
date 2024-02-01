@@ -20,9 +20,10 @@ export class GeneralItem implements ArchiveItem {
 
     private addItem(file: File): void {
         const { builder, archivePath } = this;
+        const { verbose } = this.options;
 
         builder.addLocalFile(file.path, archivePath);
-        console.log(chalk.green(`Added file: ${file.path}`));
+        verbose && console.log(chalk.green(`Added file: ${file.path}`));
     }
 
     public addToArchive(): void {

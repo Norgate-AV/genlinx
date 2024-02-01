@@ -23,17 +23,19 @@ export const archive = {
                 },
             });
 
-            const { workspaceFiles } = config.archive as ArchiveOptions;
+            const { workspaceFiles, verbose } =
+                config.archive as ArchiveOptions;
 
             if (workspaceFiles.length === 0) {
-                console.log(chalk.blue("Searching for workspace files..."));
+                verbose &&
+                    console.log(chalk.blue("Searching for workspace files..."));
 
                 const locatedWorkspaceFiles = await getFilesByExtension(
                     AmxExtensions[FileType.Workspace],
                 );
 
                 if (locatedWorkspaceFiles.length) {
-                    printFiles(locatedWorkspaceFiles);
+                    verbose && printFiles(locatedWorkspaceFiles);
                     workspaceFiles.push(...locatedWorkspaceFiles);
                 }
             }
@@ -57,9 +59,12 @@ export const archive = {
             }
 
             for (const workspaceFile of workspaceFiles) {
-                console.log(
-                    chalk.blue(`Generating archive for ${workspaceFile}...`),
-                );
+                verbose &&
+                    console.log(
+                        chalk.blue(
+                            `Generating archive for ${workspaceFile}...`,
+                        ),
+                    );
 
                 const apw = await loadAPW(workspaceFile);
 

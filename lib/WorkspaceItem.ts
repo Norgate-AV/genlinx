@@ -16,9 +16,11 @@ export class WorkspaceItem implements ArchiveItem {
 
     private addItem(file: File): void {
         const { builder } = this;
+        const { verbose } = this.options;
 
         builder.addLocalFile(file.path);
-        console.log(chalk.green(`Added file: ${path.basename(file.path)}`));
+        verbose &&
+            console.log(chalk.green(`Added file: ${path.basename(file.path)}`));
     }
 
     public addToArchive(): void {

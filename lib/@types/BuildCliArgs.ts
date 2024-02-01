@@ -6,4 +6,5 @@ export type BuildCliArgs = {
     libraryPath?: Array<string>;
     all?: boolean;
     noAll?: boolean;
+    verbose: boolean;
 };

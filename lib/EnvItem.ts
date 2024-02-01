@@ -20,13 +20,13 @@ export class EnvItem implements ArchiveItem {
         }
 
         const { builder, options } = this;
-        const { extraFileArchiveLocation } = options;
+        const { extraFileArchiveLocation, verbose } = options;
 
         const filePath = path.join(extraFileArchiveLocation, file.path);
         const content = Buffer.from(file.content, "utf8");
 
         builder.addFile(filePath, content);
-        console.log(chalk.green(`Added file: ${filePath}`));
+        verbose && console.log(chalk.green(`Added file: ${filePath}`));
     }
 
     addToArchive() {

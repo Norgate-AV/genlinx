@@ -48,6 +48,7 @@ export function archive(): Command {
                 "location to place extra files in the archive",
             ),
         )
+        .addOption(new Option("--verbose", "verbose output").default(false))
         .action((options) => actions.archive.create(options));
 
     return command;

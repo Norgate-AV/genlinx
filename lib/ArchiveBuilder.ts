@@ -42,16 +42,22 @@ export class ArchiveBuilder {
     }
 
     private async getExtraFilesOnDisk(locations: Array<string>): Promise<this> {
-        console.log(chalk.blue("Searching known locations for extra files..."));
+        const { extraFilesOnDisk } = this;
+        const { verbose } = this.options;
+
+        verbose &&
+            console.log(
+                chalk.blue("Searching known locations for extra files..."),
+            );
 
         const files: Array<string> = [];
 
         for (const location of locations) {
-            console.log(chalk.cyan(`--> Searching ${location}`));
+            verbose && console.log(chalk.cyan(`--> Searching ${location}`));
             files.push(...(await walkDirectory(location)));
         }
 
-        this.extraFilesOnDisk.push(
+        extraFilesOnDisk.push(
             ...files.filter((file) => ArchiveBuilder.fileIsOfInterest(file)),
         );
 
@@ -59,12 +65,17 @@ export class ArchiveBuilder {
     }
 
     private displayExtraFileReferences(references: Array<string>): this {
-        console.log(
-            chalk.green(`Found ${references.length} extra files referenced...`),
-        );
+        const { verbose } = this.options;
+
+        verbose &&
+            console.log(
+                chalk.green(
+                    `Found ${references.length} extra files referenced...`,
+                ),
+            );
 
         for (const reference of references) {
-            console.log(chalk.cyan(`--> ${reference}`));
+            verbose && console.log(chalk.cyan(`--> ${reference}`));
         }
 
         return this;
@@ -72,12 +83,13 @@ export class ArchiveBuilder {
 
     private addEnvFile(): this {
         const { apw } = this;
+        const { verbose } = this.options;
 
         if (!apw.masterSrcPath[0]) {
             return this;
         }
 
-        console.log(chalk.blue("Adding env file to the archive..."));
+        verbose && console.log(chalk.blue("Adding env file to the archive..."));
 
         const masterSrcPath = path.join(
             "..",
@@ -103,11 +115,14 @@ export class ArchiveBuilder {
     }
 
     private async addSymlinkScripts(): Promise<this> {
-        console.log(
-            chalk.blue(
-                "Adding symlink scripts for extra files to the archive...",
-            ),
-        );
+        const { verbose } = this.options;
+
+        verbose &&
+            console.log(
+                chalk.blue(
+                    "Adding symlink scripts for extra files to the archive...",
+                ),
+            );
 
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
         const scriptsPath = path.resolve(__dirname, path.join("..", "scripts"));
@@ -138,6 +153,7 @@ export class ArchiveBuilder {
         references: Array<string>,
     ): Promise<this> {
         const { extraFilesOnDisk, locatedExtraFileReferences } = this;
+        const { verbose } = this.options;
 
         const newLocatedReferences: Array<string> = [];
 
@@ -147,7 +163,8 @@ export class ArchiveBuilder {
             );
 
             if (!filePath) {
-                console.log(chalk.red(`Could not find ${reference}`));
+                verbose &&
+                    console.log(chalk.red(`Could not find ${reference}`));
                 continue;
             }
 
@@ -155,16 +172,18 @@ export class ArchiveBuilder {
             const isIgnored = ignoredFiles.includes(path.basename(filePath));
 
             if (isIgnored) {
-                console.log(
-                    chalk.blue(
-                        `Ignoring ${path.basename(filePath)} as per config`,
-                    ),
-                );
+                verbose &&
+                    console.log(
+                        chalk.blue(
+                            `Ignoring ${path.basename(filePath)} as per config`,
+                        ),
+                    );
 
                 continue;
             }
 
-            console.log(chalk.green(`Found ${reference}: ${filePath}`));
+            verbose &&
+                console.log(chalk.green(`Found ${reference}: ${filePath}`));
             newLocatedReferences.push(filePath);
         }
 
@@ -179,17 +198,19 @@ export class ArchiveBuilder {
 
     private async getFileReferences(files: Array<string>): Promise<this> {
         const { extraFileReferences, apw } = this;
+        const { verbose } = this.options;
 
         for (const file of files) {
             if (!APW.fileIsReadable(file)) {
                 continue;
             }
 
-            console.log(chalk.blue(`Searching ${file} for references...`));
+            verbose &&
+                console.log(chalk.blue(`Searching ${file} for references...`));
             const references = await apw.getExtraFileReferencesFromFile(file);
 
             if (references.length === 0) {
-                console.log(chalk.cyan("--> No references found"));
+                verbose && console.log(chalk.cyan("--> No references found"));
                 continue;
             }
 
@@ -198,7 +219,8 @@ export class ArchiveBuilder {
             );
 
             if (newReferences.length === 0) {
-                console.log(chalk.cyan("--> No new references found"));
+                verbose &&
+                    console.log(chalk.cyan("--> No new references found"));
                 continue;
             }
 
@@ -212,26 +234,29 @@ export class ArchiveBuilder {
 
     private async addExtraFiles(): Promise<this> {
         const { apw, options } = this;
+        const { verbose } = options;
 
         if (!options.includeFilesNotInWorkspace) {
             return this;
         }
 
-        console.log(
-            chalk.blue(
-                "Searching for extra files that are not part of the workspace...",
-            ),
-        );
+        verbose &&
+            console.log(
+                chalk.blue(
+                    "Searching for extra files that are not part of the workspace...",
+                ),
+            );
 
         const { extraFileReferences } = this;
         extraFileReferences.push(...(await apw.getExtraFileReferences()));
 
         if (extraFileReferences.length === 0) {
-            console.log(
-                chalk.blue(
-                    "No extra file references found in the workspace file",
-                ),
-            );
+            verbose &&
+                console.log(
+                    chalk.blue(
+                        "No extra file references found in the workspace file",
+                    ),
+                );
 
             return this;
         }
@@ -254,9 +279,12 @@ export class ArchiveBuilder {
             const fileType = APW.getFileType(reference);
 
             if (!fileType) {
-                console.log(
-                    chalk.red(`Could not determine file type for ${reference}`),
-                );
+                verbose &&
+                    console.log(
+                        chalk.red(
+                            `Could not determine file type for ${reference}`,
+                        ),
+                    );
 
                 continue;
             }
@@ -300,8 +328,10 @@ export class ArchiveBuilder {
 
     private createZip(): this {
         const { builder, apw, options } = this;
+        const { verbose } = options;
 
-        console.log(chalk.blue("Compressing files into a zip archive..."));
+        verbose &&
+            console.log(chalk.blue("Compressing files into a zip archive..."));
 
         const outputFile = `${apw.id}.${options.outputFileSuffix}`;
         builder.writeZip(outputFile);
@@ -322,13 +352,17 @@ export class ArchiveBuilder {
     }
 
     public async build(): Promise<void> {
-        console.log(chalk.blue("Creating archive..."));
+        const { verbose } = this.options;
+
+        verbose && console.log(chalk.blue("Creating archive..."));
 
         this.addWorkspaceFiles();
 
         await this.addExtraFiles();
 
-        this.createZip().displayZippedFiles();
+        this.createZip();
+
+        verbose && this.displayZippedFiles();
     }
 }
 

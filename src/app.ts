@@ -2,7 +2,7 @@
 
 import figlet from "figlet";
 import StringBuilder from "string-builder";
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import { getAppVersion } from "../lib/utils/index.js";
 import { archive, build, cfg } from "./commands/index.js";
 

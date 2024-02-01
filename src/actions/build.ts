@@ -1,3 +1,4 @@
+import util from "util";
 import chalk from "chalk";
 import { NLRC } from "../../lib/index.js";
 import {
@@ -94,9 +95,10 @@ async function runBuildProcess(
 async function buildFile(
     file: string,
     command: ShellCommand,
-    options: BuildConfig,
+    options: BuildOptions,
 ): Promise<string> {
-    console.log(chalk.blue(`Executing build for ${file}...`));
+    options.verbose &&
+        console.log(chalk.blue(`Executing build for ${file}...`));
 
     return await runBuildProcess(command, options);
 }
@@ -105,9 +107,16 @@ async function executeSourceBuild(
     sourceFile: string,
     config: Config,
 ): Promise<void> {
-    const command = NLRC.getSourceBuildCommand(sourceFile, config.build);
+    const command = NLRC.getSourceBuildCommand(
+        sourceFile,
+        config.build as BuildOptions,
+    );
 
-    const buildResult = await buildFile(sourceFile, command, config.build);
+    const buildResult = await buildFile(
+        sourceFile,
+        command,
+        config.build as BuildOptions,
+    );
 
     const logs = getBuildLogs(buildResult);
 
@@ -119,13 +128,15 @@ async function executeCfgBuild(
     cfgFiles: Array<string>,
     config: Config,
 ): Promise<void> {
+    const { verbose } = config.build as BuildOptions;
+
     if (cfgFiles.length === 0) {
-        console.log(chalk.blue("Searching for CFG files..."));
+        verbose && console.log(chalk.blue("Searching for CFG files..."));
 
         const locatedCfgFiles = await getFilesByExtension(".cfg");
 
         if (locatedCfgFiles.length) {
-            printFiles(locatedCfgFiles);
+            verbose && printFiles(locatedCfgFiles);
             cfgFiles.push(...locatedCfgFiles);
         }
     }
@@ -143,9 +154,16 @@ async function executeCfgBuild(
     }
 
     for (const cfgFile of cfgFiles) {
-        const command = NLRC.getCfgBuildCommand(cfgFile, config.build);
+        const command = NLRC.getCfgBuildCommand(
+            cfgFile,
+            config.build as BuildOptions,
+        );
 
-        const buildResult = await buildFile(cfgFile, command, config.build);
+        const buildResult = await buildFile(
+            cfgFile,
+            command,
+            config.build as BuildOptions,
+        );
 
         const logs = getBuildLogs(buildResult);
 
@@ -155,11 +173,11 @@ async function executeCfgBuild(
 }
 
 export const build = {
-    async execute(cliOptions: BuildCliArgs): Promise<void> {
+    async execute(args: BuildCliArgs): Promise<void> {
         try {
             const config = await getAppConfig({
                 build: {
-                    ...cliOptions,
+                    ...args,
                 },
             });
 

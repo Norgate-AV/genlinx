@@ -15,4 +15,5 @@ export type CfgCliArgs = {
     libraryPath?: Array<string>;
     all?: boolean;
     noAll?: boolean;
+    verbose: boolean;
 };

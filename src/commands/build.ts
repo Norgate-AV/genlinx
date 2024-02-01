@@ -67,6 +67,7 @@ export function build(): Command {
                 "libraryPath",
             ]),
         )
+        .addOption(new Option("--verbose", "verbose output").default(false))
         .action((options) => {
             if (os.platform() !== "win32") {
                 console.log(

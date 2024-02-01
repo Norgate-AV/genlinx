@@ -106,6 +106,7 @@ workspace file is found in the current directory, prompt to select which
 workspace files to use`,
             ),
         )
+        .addOption(new Option("--verbose", "verbose output").default(false))
         .action((options) => actions.cfg.create(options))
         .addHelpText(
             "after",
