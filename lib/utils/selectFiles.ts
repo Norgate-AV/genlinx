@@ -1,26 +1,19 @@
-import inquirer from "inquirer";
+import { checkbox } from "@inquirer/prompts";
 
 export async function selectFiles(
     files: Array<string>,
 ): Promise<Array<string>> {
-    const { selectedFiles }: { selectedFiles: Array<string> } =
-        await inquirer.prompt([
-            {
-                type: "checkbox",
-                name: "selectedFiles",
-                message: "Select file(s):",
-                choices: files,
-                validate: (answer: Array<string>) => {
-                    if (answer.length < 1) {
-                        return "You must choose at least one file.";
-                    }
+    return await checkbox<string>({
+        message: "Select file(s):",
+        choices: files.map((file) => ({ value: file })),
+        validate: (answer) => {
+            if (answer.length < 1) {
+                return "You must choose at least one file.";
+            }
 
-                    return true;
-                },
-            },
-        ]);
-
-    return selectedFiles;
+            return true;
+        },
+    });
 }
 
 export default selectFiles;
