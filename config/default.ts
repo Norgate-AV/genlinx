@@ -1,6 +1,6 @@
-// import { Config } from "../lib/@types/index.js";
+import { Config } from "../lib/@types/index.js";
 
-export const config = {
+export const config: Config = {
     cfg: {
         outputFileSuffix: "build.cfg",
         outputLogFileSuffix: "build.log",
@@ -8,16 +8,11 @@ export const config = {
         outputLogConsoleOption: true,
         buildWithDebugInformation: false,
         buildWithSource: false,
-        includePath: [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes",
-        ],
+        includePath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs"],
         modulePath: [
             "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx",
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module",
         ],
         libraryPath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"],
         all: false,
@@ -29,7 +24,6 @@ export const config = {
         includeFilesNotInWorkspace: true,
         extraFileSearchLocations: [
             "C:\\Program Files (x86)\\Common Files\\AMXShare",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
         ],
         extraFileArchiveLocation: ".genlinx",
         all: false,
@@ -61,14 +55,11 @@ export const config = {
             },
             includePath: [
                 "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes",
             ],
             modulePath: [
                 "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx",
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module",
             ],
             libraryPath: [
                 "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs",
