@@ -7,6 +7,9 @@ settings:
 importers:
   .:
     dependencies:
+      "@inquirer/prompts":
+        specifier: ^5.3.0
+        version: 5.3.0
       adm-zip:
         specifier: ^0.5.14
         version: 0.5.14
@@ -37,9 +40,6 @@ importers:
       fs-extra:
         specifier: ^11.2.0
         version: 11.2.0
-      inquirer:
-        specifier: ^10.1.0
-        version: 10.1.0
       listr2:
         specifier: ^8.2.3
         version: 8.2.3
@@ -80,9 +80,6 @@ importers:
       "@types/fs-extra":
         specifier: ^11.0.4
         version: 11.0.4
-      "@types/inquirer":
-        specifier: ^9.0.7
-        version: 9.0.7
       "@types/node":
         specifier: ^20.14.11
         version: 20.14.11
@@ -1301,12 +1298,6 @@ packages:
         integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==,
       }
 
-  "@types/inquirer@9.0.7":
-    resolution:
-      {
-        integrity: sha512-Q0zyBupO6NxGRZut/JdmqYKOnN95Eg5V8Csg3PGKkP+FnvsUZx1jAyK7fztIszxxMuoBA6E3KXWvdZVXIpx60g==,
-      }
-
   "@types/jsonfile@6.1.4":
     resolution:
       {
@@ -1365,12 +1356,6 @@ packages:
     resolution:
       {
         integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==,
-      }
-
-  "@types/through@0.0.33":
-    resolution:
-      {
-        integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==,
       }
 
   "@types/unist@2.0.10":
@@ -3063,13 +3048,6 @@ packages:
         integrity: sha512-QQnnxNyfvmHFIsj7gkPcYymR8Jdw/o7mp5ZFihxn6h8Ci6fh3Dx4E1gPjpQEpIuPo9XVNY/ZUwh4BPMjGyL01g==,
       }
     engines: { node: ^14.17.0 || ^16.13.0 || >=18.0.0 }
-
-  inquirer@10.1.0:
-    resolution:
-      {
-        integrity: sha512-r298BBoEjWWJbu5LSFTU7Ob+KL3/g5xsGCwNLtSFuIKb6rGeRJMzAwNlcrrbomkxc6ryfRDj8aFV/QC3QZ9cLQ==,
-      }
-    engines: { node: ">=18" }
 
   inquirer@7.3.3:
     resolution:
@@ -4915,13 +4893,6 @@ packages:
       }
     engines: { node: ">=0.12.0" }
 
-  run-async@3.0.0:
-    resolution:
-      {
-        integrity: sha512-540WwVDOMxA6dN6We19EcT9sc3hkXPw5mzRNGM3FkdN/vtE9NFvj5lFAPNwUDmJjXidm3v7TC1cTE7t17Ulm1Q==,
-      }
-    engines: { node: ">=0.12.0" }
-
   run-parallel@1.2.0:
     resolution:
       {
@@ -6705,11 +6676,6 @@ snapshots:
       "@types/jsonfile": 6.1.4
       "@types/node": 20.14.11
 
-  "@types/inquirer@9.0.7":
-    dependencies:
-      "@types/through": 0.0.33
-      rxjs: 7.8.1
-
   "@types/jsonfile@6.1.4":
     dependencies:
       "@types/node": 20.14.11
@@ -6742,10 +6708,6 @@ snapshots:
   "@types/normalize-package-data@2.4.4": {}
 
   "@types/semver@7.5.8": {}
-
-  "@types/through@0.0.33":
-    dependencies:
-      "@types/node": 20.14.11
 
   "@types/unist@2.0.10": {}
 
@@ -7847,16 +7809,6 @@ snapshots:
 
   ini@4.1.1: {}
 
-  inquirer@10.1.0:
-    dependencies:
-      "@inquirer/prompts": 5.3.0
-      "@inquirer/type": 1.5.1
-      "@types/mute-stream": 0.0.4
-      ansi-escapes: 4.3.2
-      mute-stream: 1.0.0
-      run-async: 3.0.0
-      rxjs: 7.8.1
-
   inquirer@7.3.3:
     dependencies:
       ansi-escapes: 4.3.2
@@ -8873,8 +8825,6 @@ snapshots:
       fsevents: 2.3.3
 
   run-async@2.4.1: {}
-
-  run-async@3.0.0: {}
 
   run-parallel@1.2.0:
     dependencies:
