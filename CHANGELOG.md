@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.2](https://github.com/Norgate-AV/genlinx/compare/v2.2.1...v2.2.2) (2024-07-24)
+
+### ⚠ BREAKING CHANGES
+
+-   **config:** remove RMS locations from the default config
+
+### 🐛 Bug Fixes
+
+-   use @inquirer/prompts for selecting files ([4ad90cd](https://github.com/Norgate-AV/genlinx/commit/4ad90cd77da30a73e0b6dfe3dc4df5060e7f4e5d))
+
+### ✨ Refactor
+
+-   **config:** remove RMS locations from the default config ([7eb65e6](https://github.com/Norgate-AV/genlinx/commit/7eb65e6eeab8f92285b726be81dbd31e26cc4680))
+
 ## [2.2.1](https://github.com/Norgate-AV/genlinx/compare/v2.2.0...v2.2.1) (2024-02-01)
 
 ### 🐛 Bug Fixes
