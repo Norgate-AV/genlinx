@@ -92,6 +92,9 @@ importers:
       commitizen:
         specifier: ^4.3.0
         version: 4.3.0(@types/node@20.14.12)(typescript@5.5.4)
+      conventional-changelog-conventionalcommits:
+        specifier: ^8.0.0
+        version: 8.0.0
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -1972,6 +1975,13 @@ packages:
         integrity: sha512-NKXYmMR/Hr1DevQegFB4MwfM5Vv0m4UIxKZTTYuD98lpTknaZlSRrDOG4X7wIXpGkfsYxZTghUN+Qq+T0YQI7w==,
       }
     engines: { node: ">=16" }
+
+  conventional-changelog-conventionalcommits@8.0.0:
+    resolution:
+      {
+        integrity: sha512-eOvlTO6OcySPyyyk8pKz2dP4jjElYunj9hn9/s0OB+gapTO8zwS9UQWrZ1pmF2hFs3vw1xhonOLGcGjy/zgsuA==,
+      }
+    engines: { node: ">=18" }
 
   conventional-changelog-writer@8.0.0:
     resolution:
@@ -7060,6 +7070,10 @@ snapshots:
       compare-func: 2.0.0
 
   conventional-changelog-conventionalcommits@7.0.2:
+    dependencies:
+      compare-func: 2.0.0
+
+  conventional-changelog-conventionalcommits@8.0.0:
     dependencies:
       compare-func: 2.0.0
 
