@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "display": "Node LTS",
+    "_version": "18.1.0",
+    "compilerOptions": {
+        "lib": ["ESNext"],
+        "module": "NodeNext",
+        "target": "es2022",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "NodeNext",
+        "noUncheckedIndexedAccess": true,
+        "resolveJsonModule": true,
+        "types": ["node"],
+        "typeRoots": ["lib/@types", "node_modules/@types"],
+        "allowSyntheticDefaultImports": true,
+        "noEmit": true
+        // "noUnusedLocals": true,
+        // "noUnusedParameters": true,
+    },
+    "include": ["src/**/*", "lib/**/*", "config/**/*"]
+}

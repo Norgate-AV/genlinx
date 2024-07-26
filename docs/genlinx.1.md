@@ -1,6 +1,6 @@
 % GENLINX(1) genlinx 0.0.0-development
-% Norgate AV Solutions Ltd
-% September 2022
+% Norgate AV Services Limited
+% September 2023
 
 # NAME
 
@@ -37,7 +37,7 @@ More then likely.
 
 # COPYRIGHT
 
-Copyright (C) 2022 Norgate AV Solutions Ltd.
+Copyright (C) 2023 Norgate AV Services Limited
 
 The MIT License (MIT)
 

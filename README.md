@@ -6,11 +6,11 @@
 
 ---
 
-[![CI](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/actions/workflows/main.yml/badge.svg)](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/actions)
+[![CI](https://github.com/Norgate-AV/genlinx/actions/workflows/main.yml/badge.svg)](https://github.com/Norgate-AV/genlinx/actions)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-[![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV-Solutions-Ltd/genlinx)](#contributors)
-[![NPM](https://img.shields.io/npm/v/genlinx.svg)](https://www.npmjs.com/package/genlinx)
+[![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV/genlinx)](#contributors-sparkles)
+[![NPM](https://img.shields.io/npm/v/%40norgate-av%2Fgenlinx)](https://www.npmjs.com/package/@norgate-av/genlinx)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
@@ -28,7 +28,6 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     -   [archive](#archive)
     -   [build](#build)
     -   [cfg](#cfg)
-    -   [config](#config)
 -   [Configuration :gear:](#configuration-gear)
     -   [Global](#global)
     -   [Local](#local)
@@ -46,11 +45,15 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 Install genlinx globally with:
 
 ```bash
-npm install -g @norgate-av/genlinx
+pnpm add -g @norgate-av/genlinx
 
 # or
 
 yarn global add @norgate-av/genlinx
+
+# or
+
+npm install -g @norgate-av/genlinx
 ```
 
 ## Usage :rocket:
@@ -82,8 +85,8 @@ genlinx will
   |___/
 
 Open source CLI tool for NetLinx projects
-Copyright (c) 2022, Norgate AV Solutions Ltd
-https://github.com/Norgate-AV-Solutions-Ltd/genlinx
+Copyright (c) 2022, Norgate AV Services Limited
+https://github.com/Norgate-AV/genlinx
 
 ===================================================
 
@@ -99,7 +102,6 @@ Commands:
   archive [options]  generate a NetLinx workspace zip archive
   build [options]    build a NetLinx project
   cfg [options]      generate NetLinx build CFG files
-  config [options]   edit configuration properties for genlinx
   help [command]     display help for command
 
 ===================================================
@@ -125,6 +127,7 @@ Options:
   -N, --include-files-not-in-workspace           include files not in workspace
   -l, --extra-file-search-locations <string...>  extra file locations to search
   -p, --extra-file-archive-location <string>     location to place extra files in the archive
+  --verbose                                      verbose output
   -h, --help                                     display help for command
 ```
 
@@ -139,12 +142,13 @@ build a NetLinx project
 
 Options:
   -c, --cfg-files <string...>     cfg file(s) to build from (default: search for CFG files in current directory)
-  -s, --source-file <string>      axs source file to build
+  -s, --source-files <string...>  axs source file(s) to build
   -i, --include-path <string...>  add additional include paths
   -m, --module-path <string...>   add additional module paths
   -l, --library-path <string...>  add additional library paths
   -a, --all                       select all cfg files without prompting
   -A, --no-all                    select multiple cfg files with a prompt
+  --verbose                       verbose output
   -h, --help                      display help for command
 ```
 
@@ -180,10 +184,11 @@ Options:
   -A, --no-all                           if no workspace files are specified with the -w option and more than one
                                          workspace file is found in the current directory, prompt to select which
                                          workspace files to use
+  --verbose                              verbose output
   -h, --help                             display help for command
 ```
 
-### config
+<!-- ### config
 
 Edit configuration properties for genlinx
 
@@ -201,15 +206,15 @@ Commands:
   set <key <string>> <value(s) <string...>>  set configuration properties for genlinx
   get <key <string>>                         get configuration properties for genlinx
   help [command]                             display help for command
-```
+``` -->
 
 ## Configuration :gear:
 
 ### Global
 
-A global configuration file will be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx. This file can be edited to change the default values for the commands options.
+A global configuration file can be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx. This file can be edited to change the default values for the commands options.
 
-If you would like to use a different location to store the global configuration file, you can set the `GENLINX_CONFIG_DIR` environment variable to the path of directory you would like to use. This directory must contain the `config.json` file.
+If you would like to use a different location to store the global configuration file, you can set the `GENLINX_CONFIG_DIR` environment variable to the path of the directory you would like to use. This directory must contain the `config.json` file.
 
 ```json
 {
@@ -231,7 +236,10 @@ If you would like to use a different location to store the global configuration 
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx"
         ],
-        "libraryPath": ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"]
+        "libraryPath": [
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
+        ],
+        "all": false
     },
     "archive": {
         "outputFile": "archive.zip",
@@ -242,18 +250,54 @@ If you would like to use a different location to store the global configuration 
             "C:\\Program Files (x86)\\Common Files\\AMXShare",
             "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18"
         ],
-        "extraFileArchiveLocation": ".genlinx"
+        "extraFileArchiveLocation": ".genlinx",
+        "all": false,
+        "ignoredFiles": [
+            "G4API.axi",
+            "NetLinx.axi",
+            "SNAPI.axi",
+            "UnicodeLib.axi",
+            "componentssdk.jar",
+            "componentssdkrt.jar",
+            "DeviceDriverEngine.jar",
+            "devicesdkrt.jar",
+            "jregex1.2_01-bundle.jar",
+            "js-14-bundle.jar",
+            "json-bundle.jar",
+            "picocontainer-1.3-bundle.jar",
+            "snapirouter.jar",
+            "snapirouter2.jar"
+        ]
     },
     "build": {
         "nlrc": {
             "path": "C:\\Program Files (x86)\\Common Files\\AMXShare\\COM\\NLRC.exe",
             "option": {
-                "cfg": "-CFG"
-            }
+                "cfg": "-CFG",
+                "includePath": "-I",
+                "modulePath": "-M",
+                "libraryPath": "-L"
+            },
+            "includePath": [
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes"
+            ],
+            "modulePath": [
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
+                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx"
+            ],
+            "libraryPath": [
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
+            ]
         },
         "shell": {
             "path": "C:\\Windows\\System32\\cmd.exe"
-        }
+        },
+        "all": false,
+        "createCfg": true
     }
 }
 ```
@@ -305,7 +349,7 @@ genlinx
 
 ## Team :soccer:
 
-This project is maintained by the following person(s) and a bunch of [awesome contributors](https://github.com/Norgate-AV-Solutions-Ltd/genlinx/graphs/contributors).
+This project is maintained by the following person(s) and a bunch of [awesome contributors](https://github.com/Norgate-AV/genlinx/graphs/contributors).
 
 <table>
   <tr>
@@ -317,7 +361,7 @@ This project is maintained by the following person(s) and a bunch of [awesome co
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)]
 
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
