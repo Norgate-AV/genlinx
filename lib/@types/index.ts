@@ -15,6 +15,7 @@ export * from "./CfgOptions.js";
 export * from "./CliArgs.js";
 export * from "./CliOptions.js";
 export * from "./Config.js";
+export * from "./ConfigCliArgs.js";
 export * from "./File.js";
 export * from "./FileId.js";
 export * from "./FileReference.js";

@@ -1,6 +1,6 @@
-import { execa } from "execa";
+// import { execa } from "execa";
 import util from "util";
-import { CliOptions, Config } from "../../lib/@types/index.js";
+import { ConfigCliArgs } from "../../lib/@types/index.js";
 import { getAppConfig } from "../../lib/utils/index.js";
 
 // async function openInEditor(config: Config) {
@@ -51,84 +51,90 @@ import { getAppConfig } from "../../lib/utils/index.js";
 //     }
 // }
 
-// async function listConfig(cliOptions) {
+async function listConfig(args: ConfigCliArgs) {
+    try {
+        const config = await getAppConfig({});
+
+        console.log(
+            util.inspect(config, {
+                depth: null,
+                colors: true,
+            }),
+        );
+        // const { local } = cliOptions;
+        // if (local) {
+        //     const localConfig = await getLocalAppConfig();
+        //     console.log(
+        //         util.inspect(localConfig.config.store, {
+        //             depth: null,
+        //             colors: true,
+        //         }),
+        //     );
+        //     return;
+        // }
+        // const globalConfig = getGlobalAppConfig();
+        // console.log(
+        //     util.inspect(globalConfig.store, { depth: null, colors: true }),
+        // );
+    } catch (error) {
+        console.error(error);
+        process.exit(1);
+    }
+}
+
+// async function editConfig(args: ConfigCliArgs) {
 //     try {
-//         const { local } = cliOptions;
-
-//         if (local) {
-//             const localConfig = await getLocalAppConfig();
-
-//             console.log(
-//                 util.inspect(localConfig.config.store, {
-//                     depth: null,
-//                     colors: true,
-//                 }),
-//             );
-
-//             return;
-//         }
-
-//         const globalConfig = getGlobalAppConfig();
-//         console.log(
-//             util.inspect(globalConfig.store, { depth: null, colors: true }),
-//         );
+//         // const { local } = cliOptions;
+//         // if (local) {
+//         //     const localConfig = await getLocalAppConfig();
+//         //     await openInEditor(localConfig);
+//         //     return;
+//         // }
+//         // const globalConfig = getGlobalAppConfig();
+//         // await openInEditor(globalConfig);
 //     } catch (error) {
 //         console.error(error);
 //         process.exit(1);
 //     }
 // }
 
-// async function editConfig(cliOptions) {
-//     try {
-//         const { local } = cliOptions;
+export const config = {
+    async process(args: ConfigCliArgs) {
+        try {
+            const { list } = args;
 
-//         if (local) {
-//             const localConfig = await getLocalAppConfig();
-//             await openInEditor(localConfig);
+            if (list) {
+                listConfig(args);
+                return;
+            }
 
-//             return;
-//         }
+            // console.log(key, value, args);
 
-//         const globalConfig = getGlobalAppConfig();
-//         await openInEditor(globalConfig);
-//     } catch (error) {
-//         console.error(error);
-//         process.exit(1);
-//     }
-// }
+            // if (!key && value.length === 0) {
+            //     // console.log("No key or value provided");
 
-// export const config = {
-//     async process(key, value, cliOptions) {
-//         try {
-//             const { list, edit } = cliOptions;
+            //     // if (list) {
+            //     //     listConfig(args);
+            //     // }
 
-//             console.log(key, value, cliOptions);
+            //     // if (edit) {
+            //     //     await editConfig(cliOptions);
+            //     // }
 
-//             if (!key && value.length === 0) {
-//                 console.log("No key or value provided");
+            //     return;
+            // }
 
-//                 if (list) {
-//                     listConfig(cliOptions);
-//                 }
+            // if (value.length === 0) {
+            //     get(key, cliOptions);
+            //     return;
+            // }
 
-//                 if (edit) {
-//                     await editConfig(cliOptions);
-//                 }
+            // await set(key, value, cliOptions);
+        } catch (error) {
+            console.error(error);
+            process.exit(1);
+        }
+    },
+};
 
-//                 return;
-//             }
-
-//             if (value.length === 0) {
-//                 get(key, cliOptions);
-//                 return;
-//             }
-
-//             await set(key, value, cliOptions);
-//         } catch (error) {
-//             console.error(error);
-//             process.exit(1);
-//         }
-//     },
-// };
-
-// export default config;
+export default config;
