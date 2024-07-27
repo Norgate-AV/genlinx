@@ -124,9 +124,9 @@ export async function getAppConfig(cliOptions: CliOptions): Promise<Config> {
     };
 
     return mergician({
-        appendArrays: true,
+        prependArrays: true,
         dedupArrays: true,
-        sortArrays: true,
+        sortArrays: false,
     })(config.default, config.global, config.local, config.cli);
 }
 
