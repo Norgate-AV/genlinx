@@ -1,7 +1,7 @@
 {
     "name": "@norgate-av/genlinx",
     "description": "A CLI utility for NetLinx projects 🚀🚀🚀",
-    "version": "2.2.2",
+    "version": "2.2.3",
     "license": "MIT",
     "main": "dist/app.js",
     "type": "module",
@@ -57,7 +57,7 @@
         "@types/config": "^3.3.4",
         "@types/figlet": "^1.5.8",
         "@types/fs-extra": "^11.0.4",
-        "@types/node": "^20.14.12",
+        "@types/node": "^22.0.0",
         "@types/nodemon": "^1.19.6",
         "all-contributors-cli": "^6.26.1",
         "commitizen": "^4.3.0",
@@ -79,7 +79,7 @@
         "vite-node": "^2.0.4"
     },
     "dependencies": {
-        "@inquirer/prompts": "^5.3.2",
+        "@inquirer/prompts": "^5.3.4",
         "adm-zip": "^0.5.14",
         "chalk": "^5.3.0",
         "commander": "^12.1.0",
@@ -91,7 +91,7 @@
         "figlet": "^1.7.0",
         "find-up": "7.0.0",
         "fs-extra": "^11.2.0",
-        "listr2": "^8.2.3",
+        "listr2": "^8.2.4",
         "mergician": "^2.0.2",
         "node-jq": "^6.0.1",
         "string-builder": "^0.1.8",

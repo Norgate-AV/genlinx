@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.3](https://github.com/Norgate-AV/genlinx/compare/v2.2.2...v2.2.3) (2024-07-27)
+
+### 🐛 Bug Fixes
+
+-   prepend arrays in config and dont sort ([86c8887](https://github.com/Norgate-AV/genlinx/commit/86c88872156b5a003562248a220ac897236e1476))
+
 ## [2.2.2](https://github.com/Norgate-AV/genlinx/compare/v2.2.1...v2.2.2) (2024-07-24)
 
 ### ⚠ BREAKING CHANGES

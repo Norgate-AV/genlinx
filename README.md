@@ -226,15 +226,12 @@ If you would like to use a different location to store the global configuration 
         "buildWithDebugInformation": false,
         "buildWithSource": false,
         "includePath": [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes"
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs"
         ],
         "modulePath": [
             "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx"
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
+            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module"
         ],
         "libraryPath": [
             "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
@@ -247,8 +244,7 @@ If you would like to use a different location to store the global configuration 
         "includeCompiledModuleFiles": true,
         "includeFilesNotInWorkspace": true,
         "extraFileSearchLocations": [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare",
-            "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18"
+            "C:\\Program Files (x86)\\Common Files\\AMXShare"
         ],
         "extraFileArchiveLocation": ".genlinx",
         "all": false,
@@ -279,15 +275,12 @@ If you would like to use a different location to store the global configuration 
                 "libraryPath": "-L"
             },
             "includePath": [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\includes"
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs"
             ],
             "modulePath": [
                 "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-duet",
-                "C:\\Program Files\\AMX\\Resource Management Suite\\SDK\\NetLinx\\4.7.18\\monitors-netlinx"
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
+                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module"
             ],
             "libraryPath": [
                 "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
