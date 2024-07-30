@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
 import { ArchiveOptions, ArchiveItem, File } from "./@types/index.js";

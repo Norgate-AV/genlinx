@@ -1,3 +1,4 @@
+import path from "node:path";
 import chalk from "chalk";
 import { cosmiconfig, CosmiconfigResult } from "cosmiconfig";
 import path from "path";

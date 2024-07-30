@@ -1,6 +1,6 @@
+import util from "node:util";
 import { execa } from "execa";
 import chalk from "chalk";
-import util from "util";
 import { ConfigCliArgs } from "../../lib/@types/index.js";
 import {
     getAppConfig,

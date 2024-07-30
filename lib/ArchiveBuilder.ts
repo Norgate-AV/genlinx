@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
 import { walkDirectory } from "./utils/index.js";

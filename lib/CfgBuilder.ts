@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import StringBuilder from "string-builder";
 import figlet from "figlet";
 import { APW } from "./index.js";

@@ -1,5 +1,5 @@
-import path from "path";
-import os from "os";
+import path from "node:path";
+import os from "node:os";
 import { cosmiconfig, CosmiconfigResult } from "cosmiconfig";
 import { GlobalConfig } from "../@types/index.js";
 import pkg from "../../package.json";
