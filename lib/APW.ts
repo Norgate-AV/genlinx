@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs from "node:fs/promises";
 import path from "path";
 import {
     File,
@@ -7,6 +7,7 @@ import {
     AmxFileType as FileType,
 } from "./@types/index.js";
 import { AmxExtensions } from "./index.js";
+import { pathExists } from "./utils/index.js";
 
 export class APW {
     private _filePath: string | null = null;
@@ -38,7 +39,7 @@ export class APW {
     private async read(): Promise<string> {
         const { filePath } = this;
 
-        const exists = await fs.pathExists(filePath);
+        const exists = await pathExists(filePath);
 
         if (!exists) {
             throw new Error("File does not exist");
@@ -79,7 +80,7 @@ export class APW {
 
             const { type, id, path } = match.groups as FileReference;
 
-            const exists = await fs.pathExists(path);
+            const exists = await pathExists(path);
 
             fileReferences.push({
                 type,

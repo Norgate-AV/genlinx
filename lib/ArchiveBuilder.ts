@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs from "node:fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";

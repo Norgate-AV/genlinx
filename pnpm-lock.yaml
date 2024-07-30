@@ -40,9 +40,6 @@ importers:
       find-up:
         specifier: 7.0.0
         version: 7.0.0
-      fs-extra:
-        specifier: ^11.2.0
-        version: 11.2.0
       listr2:
         specifier: ^8.2.4
         version: 8.2.4
@@ -80,9 +77,6 @@ importers:
       "@types/figlet":
         specifier: ^1.5.8
         version: 1.5.8
-      "@types/fs-extra":
-        specifier: ^11.0.4
-        version: 11.0.4
       "@types/node":
         specifier: ^22.0.0
         version: 22.0.0
@@ -1424,18 +1418,6 @@ packages:
     resolution:
       {
         integrity: sha512-G22AUvy4Tl95XLE7jmUM8s8mKcoz+Hr+Xm9W90gJsppJq9f9tHvOGkrpn4gRX0q/cLtBdNkWtWCKDg2UDZoZvQ==,
-      }
-
-  "@types/fs-extra@11.0.4":
-    resolution:
-      {
-        integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==,
-      }
-
-  "@types/jsonfile@6.1.4":
-    resolution:
-      {
-        integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==,
       }
 
   "@types/linkify-it@5.0.0":
@@ -6901,15 +6883,6 @@ snapshots:
   "@types/estree@1.0.5": {}
 
   "@types/figlet@1.5.8": {}
-
-  "@types/fs-extra@11.0.4":
-    dependencies:
-      "@types/jsonfile": 6.1.4
-      "@types/node": 22.0.0
-
-  "@types/jsonfile@6.1.4":
-    dependencies:
-      "@types/node": 22.0.0
 
   "@types/linkify-it@5.0.0": {}
 
