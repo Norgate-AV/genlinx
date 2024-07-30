@@ -1,17 +1,35 @@
-// import { execa } from "execa";
+import { execa } from "execa";
+import chalk from "chalk";
 import util from "util";
 import { ConfigCliArgs } from "../../lib/@types/index.js";
-import { getAppConfig } from "../../lib/utils/index.js";
+import {
+    getAppConfig,
+    getGlobalConfig,
+    getLocalConfig,
+} from "../../lib/utils/index.js";
 
-// async function openInEditor(config: Config) {
-//     const editor = config.get("core.editor") || process.env.EDITOR || "code";
+function getEditor() {
+    return process.env.EDITOR || "nvim";
+}
 
-//     const childProcess = execa(editor, [config.path], {
-//         stdio: "inherit",
-//     });
+async function openInEditor({
+    editor,
+    filepath,
+}: {
+    editor: string;
+    filepath: string;
+}) {
+    try {
+        const childProcess = execa(editor, [filepath], {
+            stdio: "inherit",
+        });
 
-//     await childProcess;
-// }
+        await childProcess;
+    } catch (error: any) {
+        console.error(error);
+        process.exit(1);
+    }
+}
 
 // async function set(key: string, value: string, cliOptions: CliOptions) {
 //     try {
@@ -51,86 +69,94 @@ import { getAppConfig } from "../../lib/utils/index.js";
 //     }
 // }
 
+async function getConfig(args: ConfigCliArgs) {
+    return args.global ? await getGlobalConfig() : await getLocalConfig({});
+}
+
 async function listConfig(args: ConfigCliArgs) {
     try {
-        const config = await getAppConfig({});
+        const { global, local } = args;
+
+        if (!global && !local) {
+            // Show the combined configuration
+            const config = await getAppConfig({});
+
+            console.log(
+                util.inspect(config, {
+                    depth: null,
+                    colors: true,
+                }),
+            );
+
+            return;
+        }
+
+        const result = await getConfig(args);
+
+        if (!result) {
+            console.log(
+                `No ${global ? "global" : "local"} configuration found.`,
+            );
+
+            return;
+        }
 
         console.log(
-            util.inspect(config, {
+            util.inspect(result.config, {
                 depth: null,
                 colors: true,
             }),
         );
-        // const { local } = cliOptions;
-        // if (local) {
-        //     const localConfig = await getLocalAppConfig();
-        //     console.log(
-        //         util.inspect(localConfig.config.store, {
-        //             depth: null,
-        //             colors: true,
-        //         }),
-        //     );
-        //     return;
-        // }
-        // const globalConfig = getGlobalAppConfig();
-        // console.log(
-        //     util.inspect(globalConfig.store, { depth: null, colors: true }),
-        // );
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         process.exit(1);
     }
 }
 
-// async function editConfig(args: ConfigCliArgs) {
-//     try {
-//         // const { local } = cliOptions;
-//         // if (local) {
-//         //     const localConfig = await getLocalAppConfig();
-//         //     await openInEditor(localConfig);
-//         //     return;
-//         // }
-//         // const globalConfig = getGlobalAppConfig();
-//         // await openInEditor(globalConfig);
-//     } catch (error) {
-//         console.error(error);
-//         process.exit(1);
-//     }
-// }
+async function editConfig(args: ConfigCliArgs) {
+    try {
+        const { global, local } = args;
+
+        if (!global && !local) {
+            console.log(chalk.red("Please specify --global or --local"));
+            return;
+        }
+
+        const result = await getConfig(args);
+
+        if (!result) {
+            console.log(
+                `No ${global ? "global" : "local"} configuration found.`,
+            );
+
+            return;
+        }
+
+        await openInEditor({
+            editor: getEditor(),
+            filepath: result.filepath,
+        });
+    } catch (error: any) {
+        console.error(error);
+        process.exit(1);
+    }
+}
 
 export const config = {
     async process(args: ConfigCliArgs) {
         try {
-            const { list } = args;
+            const { list, edit } = args;
 
             if (list) {
                 listConfig(args);
                 return;
             }
 
-            // console.log(key, value, args);
-
-            // if (!key && value.length === 0) {
-            //     // console.log("No key or value provided");
-
-            //     // if (list) {
-            //     //     listConfig(args);
-            //     // }
-
-            //     // if (edit) {
-            //     //     await editConfig(cliOptions);
-            //     // }
-
-            //     return;
-            // }
-
-            // if (value.length === 0) {
-            //     get(key, cliOptions);
-            //     return;
-            // }
-
-            // await set(key, value, cliOptions);
-        } catch (error) {
+            if (edit) {
+                editConfig(args);
+                return;
+            }
+        } catch (error: any) {
             console.error(error);
             process.exit(1);
         }
