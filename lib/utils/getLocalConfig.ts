@@ -1,7 +1,6 @@
 import path from "node:path";
 import chalk from "chalk";
 import { cosmiconfig, CosmiconfigResult } from "cosmiconfig";
-import path from "path";
 import {
     ArchiveCliArgs,
     BuildCliArgs,
@@ -9,7 +8,7 @@ import {
     CliOptions,
     LocalConfig,
 } from "../@types/index.js";
-import pkg from "../../package.json";
+import { getPackageJson } from "./index.js";
 
 function resolvePaths(root: string, config: LocalConfig): LocalConfig {
     if (config.cfg?.includePath) {
@@ -61,7 +60,17 @@ function resolvePaths(root: string, config: LocalConfig): LocalConfig {
 export async function getLocalConfig(
     options: CliOptions,
 ): Promise<CosmiconfigResult> {
-    const explorer = cosmiconfig(path.basename(pkg.name));
+    const packageJson = await getPackageJson();
+
+    if (!packageJson) {
+        throw new Error("package.json not found");
+    }
+
+    if (!packageJson.name) {
+        throw new Error("package.json missing name field");
+    }
+
+    const explorer = cosmiconfig(path.basename(packageJson.name));
     const result = await explorer.search();
 
     if (!result) {
