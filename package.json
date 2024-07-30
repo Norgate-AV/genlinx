@@ -79,7 +79,7 @@
         "vite-node": "^2.0.4"
     },
     "dependencies": {
-        "@inquirer/prompts": "^5.3.4",
+        "@inquirer/prompts": "^5.3.5",
         "adm-zip": "^0.5.14",
         "chalk": "^5.3.0",
         "commander": "^12.1.0",
