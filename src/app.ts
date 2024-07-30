@@ -3,15 +3,16 @@
 import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
-import { getAppVersion } from "../lib/utils/index.js";
+import { getAppVersion, getModuleName } from "../lib/utils/index.js";
 import { archive, build, cfg, config } from "./commands/index.js";
 
 const args = process.argv;
 const program = new Command();
+const name = await getModuleName();
 const version = await getAppVersion();
 
 program
-    .name("genlinx")
+    .name(name)
     .description("cli helper utility for NetLinx projects 🚀🚀🚀")
     .version(version, "-v, --version");
 
