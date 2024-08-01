@@ -1,4 +1,4 @@
-import { Command, Option } from "commander";
+import { Argument, Command, Option } from "commander";
 import { actions } from "../actions/index.js";
 
 export function config(): Command {
@@ -6,6 +6,7 @@ export function config(): Command {
 
     command
         .description("view/edit configuration properties for genlinx")
+        .addArgument(new Argument("[key]", "configuration key"))
         .addOption(
             new Option("--global", "edit the global configuration").conflicts(
                 "local",
@@ -28,8 +29,8 @@ export function config(): Command {
                 "edit the configuration with default text editor",
             ).conflicts("list"),
         )
-        .action(async (options) => {
-            await actions.config.process(options);
+        .action(async (key, options) => {
+            await actions.config.process(key, options);
         });
 
     return command;
