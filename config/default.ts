@@ -8,13 +8,13 @@ export const config: Config = {
         outputLogConsoleOption: true,
         buildWithDebugInformation: false,
         buildWithSource: false,
-        includePath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs"],
+        includePath: ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
         modulePath: [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/module",
         ],
-        libraryPath: ["C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"],
+        libraryPath: ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"],
         all: false,
     },
     archive: {
@@ -23,7 +23,7 @@ export const config: Config = {
         includeCompiledModuleFiles: true,
         includeFilesNotInWorkspace: true,
         extraFileSearchLocations: [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare",
+            "C:/Program Files (x86)/Common Files/AMXShare",
         ],
         extraFileArchiveLocation: ".genlinx",
         all: false,
@@ -46,27 +46,23 @@ export const config: Config = {
     },
     build: {
         nlrc: {
-            path: "C:\\Program Files (x86)\\Common Files\\AMXShare\\COM\\NLRC.exe",
+            path: "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
             option: {
                 cfg: "-CFG",
                 includePath: "-I",
                 modulePath: "-M",
                 libraryPath: "-L",
             },
-            includePath: [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs",
-            ],
+            includePath: ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
             modulePath: [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module",
+                "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
+                "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
+                "C:/Program Files (x86)/Common Files/AMXShare/Duet/module",
             ],
-            libraryPath: [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs",
-            ],
+            libraryPath: ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"],
         },
         shell: {
-            path: "C:\\Windows\\System32\\cmd.exe",
+            path: "C:/Windows/System32/cmd.exe",
         },
         all: false,
         createCfg: true,
