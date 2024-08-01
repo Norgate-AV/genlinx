@@ -43,6 +43,9 @@ importers:
       listr2:
         specifier: ^8.2.4
         version: 8.2.4
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       mergician:
         specifier: ^2.0.2
         version: 2.0.2
@@ -77,6 +80,9 @@ importers:
       "@types/figlet":
         specifier: ^1.5.8
         version: 1.5.8
+      "@types/lodash":
+        specifier: ^4.17.7
+        version: 4.17.7
       "@types/node":
         specifier: ^22.0.0
         version: 22.0.0
@@ -1424,6 +1430,12 @@ packages:
     resolution:
       {
         integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==,
+      }
+
+  "@types/lodash@4.17.7":
+    resolution:
+      {
+        integrity: sha512-8wTvZawATi/lsmNu10/j2hk1KEP0IvjubqPE3cu1Xz7xfXXt5oCq3SNUz4fMIP4XGF9Ky+Ue2tBA3hcS7LSBlA==,
       }
 
   "@types/markdown-it@14.1.1":
@@ -6885,6 +6897,8 @@ snapshots:
   "@types/figlet@1.5.8": {}
 
   "@types/linkify-it@5.0.0": {}
+
+  "@types/lodash@4.17.7": {}
 
   "@types/markdown-it@14.1.1":
     dependencies:
