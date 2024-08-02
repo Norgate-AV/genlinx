@@ -1,4 +1,4 @@
-import fs from "fs-extra";
+import fs from "node:fs/promises";
 import chalk from "chalk";
 import { CfgBuilder, AmxExtensions } from "../../lib/index.js";
 import {
@@ -63,7 +63,7 @@ export const cfg = {
 
                 const builder = new CfgBuilder(apw, config.cfg as CfgOptions);
 
-                const cfg = builder.build();
+                const cfg = await builder.build();
 
                 const file = `${apw.id}.${config.cfg.outputFileSuffix}`;
                 fs.writeFile(file, cfg);

@@ -1,26 +1,37 @@
-import { Command } from "commander";
+import { Argument, Command, Option } from "commander";
 import { actions } from "../actions/index.js";
 
 export function config(): Command {
     const command = new Command("config");
 
     command
-        .description("edit configuration properties for genlinx")
-        .option("-g, --global", "edit the global configuration")
-        .option("-l, --local", "edit the local configuration");
-
-    command
-        .command("set")
-        .argument("key <string>", "key to set")
-        .argument("value(s) <string...>", "value(s) to set")
-        .description("set configuration properties for genlinx")
-        .action(() => actions.config.set());
-
-    command
-        .command("get")
-        .argument("key <string>", "key to get")
-        .description("get configuration properties for genlinx")
-        .action(() => actions.config.get());
+        .description("view/edit configuration properties for genlinx")
+        .addArgument(new Argument("[key]", "configuration key"))
+        .addOption(
+            new Option("--global", "use global configuration").conflicts(
+                "local",
+            ),
+        )
+        .addOption(
+            new Option("--local", "use local configuration").conflicts(
+                "global",
+            ),
+        )
+        .addOption(
+            new Option(
+                "-l, --list",
+                "display the configuration in stdout",
+            ).conflicts("edit"),
+        )
+        .addOption(
+            new Option(
+                "-e, --edit",
+                "edit the configuration with default text editor",
+            ).conflicts("list"),
+        )
+        .action(async (key, options) => {
+            await actions.config.process(key, options);
+        });
 
     return command;
 }

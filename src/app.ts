@@ -3,27 +3,32 @@
 import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
-import { getAppVersion } from "../lib/utils/index.js";
-import { archive, build, cfg } from "./commands/index.js";
+import { getAppVersion, getModuleName } from "../lib/utils/index.js";
+import { archive, build, cfg, config } from "./commands/index.js";
 
 const args = process.argv;
 const program = new Command();
+const name = await getModuleName();
 const version = await getAppVersion();
 
 program
-    .name("genlinx")
+    .name(name)
     .description("cli helper utility for NetLinx projects 🚀🚀🚀")
     .version(version, "-v, --version");
 
-program.addCommand(archive()).addCommand(build()).addCommand(cfg());
+program
+    .addCommand(archive())
+    .addCommand(build())
+    .addCommand(cfg())
+    .addCommand(config());
 
 program.addHelpText("beforeAll", () => {
     const builder = new StringBuilder();
 
     builder
-        .appendLine(figlet.textSync("genlinx"))
+        .appendLine(figlet.textSync(name))
         .appendLine()
-        .appendLine(`${version}`)
+        .appendLine(version)
         .appendLine("Open source CLI tool for NetLinx projects")
         .appendLine(
             `Copyright (c) ${new Date().getFullYear()}, Norgate AV Services Limited`,
@@ -43,7 +48,7 @@ program.addHelpText("afterAll", () => {
         .appendLine("===================================================")
         .appendLine()
         .appendLine("For more help, make sure to check out the man page:")
-        .appendLine("    $ man genlinx");
+        .appendLine(`    $ man ${name}`);
 
     return builder.toString();
 });

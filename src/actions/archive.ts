@@ -72,6 +72,7 @@ export const archive = {
                     apw,
                     config.archive as ArchiveOptions,
                 );
+
                 builder.build();
             }
         } catch (error: any) {
