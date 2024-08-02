@@ -8,19 +8,19 @@ export function config(): Command {
         .description("view/edit configuration properties for genlinx")
         .addArgument(new Argument("[key]", "configuration key"))
         .addOption(
-            new Option("--global", "edit the global configuration").conflicts(
+            new Option("--global", "use global configuration").conflicts(
                 "local",
             ),
         )
         .addOption(
-            new Option("--local", "edit the local configuration").conflicts(
+            new Option("--local", "use local configuration").conflicts(
                 "global",
             ),
         )
         .addOption(
             new Option(
                 "-l, --list",
-                "display the current configuration in stdout",
+                "display the configuration in stdout",
             ).conflicts("edit"),
         )
         .addOption(
