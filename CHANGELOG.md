@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.4.0](https://github.com/Norgate-AV/genlinx/compare/v2.3.0...v2.4.0) (2024-08-02)
+
+### 🌟 Features
+
+-   integrate findlinx with the find command ([61770f2](https://github.com/Norgate-AV/genlinx/commit/61770f2a0e43b51ac34ceb53403f382e120040e2))
+
+### 📖 Documentation
+
+-   update contents in readme to link to default config ([faa9362](https://github.com/Norgate-AV/genlinx/commit/faa936255aabeb1a3c589121764ebec56820656c))
+-   update readme and man page with find command ([dfebf5b](https://github.com/Norgate-AV/genlinx/commit/dfebf5b6dee0f56541b7915d786b3beed0bf22e3))
+
 ## [2.3.0](https://github.com/Norgate-AV/genlinx/compare/v2.2.3...v2.3.0) (2024-08-02)
 
 ### 🌟 Features
