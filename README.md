@@ -29,6 +29,7 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     -   [build](#build)
     -   [cfg](#cfg)
     -   [config](#config)
+    -   [find](#find)
 -   [Configuration :gear:](#configuration-gear)
     -   [Default](#default)
     -   [Global](#global)
@@ -102,9 +103,10 @@ Options:
 
 Commands:
   archive [options]       generate a NetLinx workspace zip archive
-  build [options]         build a NetLinx workspace or individual source file
+  build [options]         build a NetLinx workspace or individual source file(s)
   cfg [options]           generate NetLinx build CFG files
   config [options] [key]  view/edit configuration properties for genlinx
+  find [options]          find NetLinx devices on a local broadcast subnet
   help [command]          display help for command
 
 ===================================================
@@ -208,6 +210,20 @@ Options:
   --local     use local configuration
   -l, --list  display the configuration in stdout
   -e, --edit  edit the configuration with default text editor
+  -h, --help  display help for command
+```
+
+### find
+
+Find Netlinx devices on a local broadcast subnet
+
+```bash
+Usage: genlinx find [options]
+
+find NetLinx devices on a local broadcast subnet
+
+Options:
+  -j, --json  output as JSON
   -h, --help  display help for command
 ```
 

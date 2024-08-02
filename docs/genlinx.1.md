@@ -13,6 +13,7 @@ genlinx - an open source CLI tool for NetLinx projects
 **genlinx build** [*OPTIONS*]\
 **genlinx cfg** [*OPTIONS*]\
 **genlinx config** [*OPTIONS*] [*key*]\
+**genlinx find** [*OPTIONS*]\
 
 # DESCRIPTION
 
