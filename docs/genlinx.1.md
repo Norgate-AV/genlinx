@@ -1,6 +1,6 @@
-% GENLINX(1) genlinx 2.2.3
+% GENLINX(1) genlinx
 % Norgate AV Services Limited
-% July 2024
+% August 2024
 
 # NAME
 
@@ -12,6 +12,7 @@ genlinx - an open source CLI tool for NetLinx projects
 **genlinx archive** [*OPTIONS*]\
 **genlinx build** [*OPTIONS*]\
 **genlinx cfg** [*OPTIONS*]\
+**genlinx config** [*OPTIONS*] [*key*]\
 
 # DESCRIPTION
 

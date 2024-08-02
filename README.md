@@ -28,6 +28,7 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     -   [archive](#archive)
     -   [build](#build)
     -   [cfg](#cfg)
+    -   [config](#config)
 -   [Configuration :gear:](#configuration-gear)
     -   [Global](#global)
     -   [Local](#local)
@@ -79,13 +80,13 @@ genlinx will
 ```bash
                    _ _
    __ _  ___ _ __ | (_)_ __ __  __
-  / _` |/ _ \ '_ \| | | '_ \\ \/ /
+  / _` |/ _ \ '_ \| | | '_ / \/ /
  | (_| |  __/ | | | | | | | |>  <
   \__, |\___|_| |_|_|_|_| |_/_/\_\
   |___/
 
 Open source CLI tool for NetLinx projects
-Copyright (c) 2022, Norgate AV Services Limited
+Copyright (c) 2024, Norgate AV Services Limited
 https://github.com/Norgate-AV/genlinx
 
 ===================================================
@@ -95,14 +96,15 @@ Usage: genlinx [options] [command]
 cli helper utility for NetLinx projects 🚀🚀🚀
 
 Options:
-  -v, --version      output the version number
-  -h, --help         display help for command
+  -v, --version           output the version number
+  -h, --help              display help for command
 
 Commands:
-  archive [options]  generate a NetLinx workspace zip archive
-  build [options]    build a NetLinx project
-  cfg [options]      generate NetLinx build CFG files
-  help [command]     display help for command
+  archive [options]       generate a NetLinx workspace zip archive
+  build [options]         build a NetLinx workspace or individual source file
+  cfg [options]           generate NetLinx build CFG files
+  config [options] [key]  view/edit configuration properties for genlinx
+  help [command]          display help for command
 
 ===================================================
 
@@ -133,12 +135,12 @@ Options:
 
 ### build
 
-Build a NetLinx project from a CFG file
+Build a NetLinx workspace or individual source file(s)
 
 ```bash
 Usage: genlinx build [options]
 
-build a NetLinx project
+build a NetLinx workspace or individual source file(s)
 
 Options:
   -c, --cfg-files <string...>     cfg file(s) to build from (default: search for CFG files in current directory)
@@ -148,7 +150,7 @@ Options:
   -l, --library-path <string...>  add additional library paths
   -a, --all                       select all cfg files without prompting
   -A, --no-all                    select multiple cfg files with a prompt
-  --verbose                       verbose output
+  --verbose                       verbose output (default: false)
   -h, --help                      display help for command
 ```
 
@@ -188,33 +190,29 @@ Options:
   -h, --help                             display help for command
 ```
 
-<!-- ### config
+### config
 
 Edit configuration properties for genlinx
 
 ```bash
-Usage: genlinx config [options] [command]
+Usage: genlinx config [options] [key]
 
-edit configuration properties for genlinx
+view/edit configuration properties for genlinx
+
+Arguments:
+  key         configuration key
 
 Options:
-  -g, --global                               edit the global configuration
-  -l, --local                                edit the local configuration
-  -h, --help                                 display help for command
-
-Commands:
-  set <key <string>> <value(s) <string...>>  set configuration properties for genlinx
-  get <key <string>>                         get configuration properties for genlinx
-  help [command]                             display help for command
-``` -->
+  --global    use global configuration
+  --local     use local configuration
+  -l, --list  display the configuration in stdout
+  -e, --edit  edit the configuration with default text editor
+  -h, --help  display help for command
+```
 
 ## Configuration :gear:
 
-### Global
-
-A global configuration file can be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx. This file can be edited to change the default values for the commands options.
-
-If you would like to use a different location to store the global configuration file, you can set the `GENLINX_CONFIG_DIR` environment variable to the path of the directory you would like to use. This directory must contain the `config.json` file.
+### Default
 
 ```json
 {
@@ -225,17 +223,13 @@ If you would like to use a different location to store the global configuration 
         "outputLogConsoleOption": true,
         "buildWithDebugInformation": false,
         "buildWithSource": false,
-        "includePath": [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs"
-        ],
+        "includePath": ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
         "modulePath": [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module"
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
         ],
-        "libraryPath": [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
-        ],
+        "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"],
         "all": false
     },
     "archive": {
@@ -244,7 +238,7 @@ If you would like to use a different location to store the global configuration 
         "includeCompiledModuleFiles": true,
         "includeFilesNotInWorkspace": true,
         "extraFileSearchLocations": [
-            "C:\\Program Files (x86)\\Common Files\\AMXShare"
+            "C:/Program Files (x86)/Common Files/AMXShare"
         ],
         "extraFileArchiveLocation": ".genlinx",
         "all": false,
@@ -267,7 +261,7 @@ If you would like to use a different location to store the global configuration 
     },
     "build": {
         "nlrc": {
-            "path": "C:\\Program Files (x86)\\Common Files\\AMXShare\\COM\\NLRC.exe",
+            "path": "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
             "option": {
                 "cfg": "-CFG",
                 "includePath": "-I",
@@ -275,25 +269,29 @@ If you would like to use a different location to store the global configuration 
                 "libraryPath": "-L"
             },
             "includePath": [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\AXIs"
+                "C:/Program Files (x86)/Common Files/AMXShare/AXIs"
             ],
             "modulePath": [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\bundle",
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\lib",
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\Duet\\module"
+                "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
+                "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
+                "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
             ],
-            "libraryPath": [
-                "C:\\Program Files (x86)\\Common Files\\AMXShare\\SYCs"
-            ]
+            "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"]
         },
         "shell": {
-            "path": "C:\\Windows\\System32\\cmd.exe"
+            "path": "C:/Windows/System32/cmd.exe"
         },
         "all": false,
         "createCfg": true
     }
 }
 ```
+
+### Global
+
+A global configuration file can be installed to `%USERPROFILE%\.config\genlinx\config.json` to assist in using genlinx. This file can be edited to change the default values for the commands options.
+
+If you would like to use a different location to store the global configuration file, you can set the `GENLINX_CONFIG_DIR` environment variable to the path of the directory you would like to use. This directory must contain the `config.json` file.
 
 ### Local
 
@@ -323,6 +321,7 @@ The precedence of the configuration options is as follows:
 1. Command Line
 2. Local Configuration File
 3. Global Configuration File
+4. Default Configuration
 
 <!-- ## Run with Docker :whale:
 
