@@ -30,6 +30,7 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     -   [cfg](#cfg)
     -   [config](#config)
 -   [Configuration :gear:](#configuration-gear)
+    -   [Default](#default)
     -   [Global](#global)
     -   [Local](#local)
         -   [Example](#example)
