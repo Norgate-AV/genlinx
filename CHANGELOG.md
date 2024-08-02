@@ -1,5 +1,67 @@
 # Changelog
 
+## [2.3.0](https://github.com/Norgate-AV/genlinx/compare/v2.2.3...v2.3.0) (2024-08-02)
+
+### 🌟 Features
+
+-   **config:** add --add and --remove options for adding/removing from an array ([a0ee5e6](https://github.com/Norgate-AV/genlinx/commit/a0ee5e640437da10f59645dac7162981bceb31f6))
+-   **config:** add --delete option for deleting a key ([0c35ed1](https://github.com/Norgate-AV/genlinx/commit/0c35ed176b8299e4c4930353a1a1b297a57473d4))
+-   **config:** add --edit option to open config in default editor ([4bc70ac](https://github.com/Norgate-AV/genlinx/commit/4bc70ac19c4c5e1229cd5b86395ca1a735c06320))
+-   **config-cmd:** add basic implementation of cmd functionality ([1e9ac7a](https://github.com/Norgate-AV/genlinx/commit/1e9ac7a192e77873f13d1516f5ada46e66d71603))
+-   add config command to main cli ([4ab0192](https://github.com/Norgate-AV/genlinx/commit/4ab0192caffd20aadb1127dfab098cd53611069a))
+-   **config:** add config schema for validation ([f1c299e](https://github.com/Norgate-AV/genlinx/commit/f1c299e88a46c2a244ab2e9cdbae67c4c71b418d))
+-   **config:** add core section ([1ea0109](https://github.com/Norgate-AV/genlinx/commit/1ea01096f368a8a3f55f08f57bb0fd958a82cd57))
+-   add getLocalAppConfigFilePath function ([96c03e0](https://github.com/Norgate-AV/genlinx/commit/96c03e0e92b6b23eff1a0baffb39bb93c3c6bf11))
+-   **archive-cmd:** add negated boolean options ([56c414e](https://github.com/Norgate-AV/genlinx/commit/56c414e78c751b9c58e8c1aaa11ca8f241129844))
+-   add resolvePaths function ([e785cec](https://github.com/Norgate-AV/genlinx/commit/e785cec75760b49b946608fec69eebe33ed579be))
+-   **config:** add schema for config ([beb53f3](https://github.com/Norgate-AV/genlinx/commit/beb53f3f12d44b1bf50c1c06c54725f125e84895))
+-   add selectWorkspaceFiles function ([688053a](https://github.com/Norgate-AV/genlinx/commit/688053ac92237e71914437d563be58485e0a8e9b))
+-   export new util functions ([011aff7](https://github.com/Norgate-AV/genlinx/commit/011aff7d84074093f6c4d551c78e5e7e1693feb0))
+-   **config:** implement config get value ([f03f136](https://github.com/Norgate-AV/genlinx/commit/f03f13695d7647af69d8d32700ea54655cdddcaf))
+-   implement config listing and editing in editor ([cc144c3](https://github.com/Norgate-AV/genlinx/commit/cc144c3230fc957f348143f7731b570d5347070c))
+-   run paths through normalizer so / or \\ can be used ([1071b26](https://github.com/Norgate-AV/genlinx/commit/1071b260ebab2a0f280c668e9320e8ee4e5a6379))
+
+### 🐛 Bug Fixes
+
+-   **config:** return after getting property ([7d24ee9](https://github.com/Norgate-AV/genlinx/commit/7d24ee944e090bc92d66c3417b27f98ad99d088e))
+
+### 📖 Documentation
+
+-   update docs ([427619e](https://github.com/Norgate-AV/genlinx/commit/427619e92f10da2243994bed242ae67c951c01f1))
+-   update readme and man page ([c529be8](https://github.com/Norgate-AV/genlinx/commit/c529be8e35e68174bc4d42465339d5ff3e1d2c3c))
+
+### ✨ Refactor
+
+-   **config:** add line break. remove console.log ([16b75de](https://github.com/Norgate-AV/genlinx/commit/16b75dea75152e2c4157048f22d45248e30ba37f))
+-   log to console after evaluating options ([f9431ad](https://github.com/Norgate-AV/genlinx/commit/f9431ad3fa9c40e8ed6b6835ae2425d6b131cb64))
+-   **config:** make list option conflict with edit ([1fa14de](https://github.com/Norgate-AV/genlinx/commit/1fa14de044a71b88de3170b5985b3410eeda9baa))
+-   **config:** make value arg an array ([a34ebdb](https://github.com/Norgate-AV/genlinx/commit/a34ebdbf48073dbae8da086e3ce3fea409610fbd))
+-   **getOptions:** merge default global config ([b464d68](https://github.com/Norgate-AV/genlinx/commit/b464d68df292b8e5d512c36bbb85b1206dc1038b))
+-   **config:** move file patsh to core section of config to be shared ([a398887](https://github.com/Norgate-AV/genlinx/commit/a3988874b66d3fae54228176684173f6242f912c))
+-   **config:** only take first value when setting property ([4a0a0f9](https://github.com/Norgate-AV/genlinx/commit/4a0a0f91c7c920388cd3b238c08b72f1306df6bd))
+-   **config:** outout lists in green ([5be2034](https://github.com/Norgate-AV/genlinx/commit/5be20347acd4f2b4cc16e7e53e39f182786e4970))
+-   **options:** pass config stores into mergician ([097f951](https://github.com/Norgate-AV/genlinx/commit/097f951ec387d98669b071ccbfb85147e6b184ef))
+-   prefix native imports with node: ([0af7f2e](https://github.com/Norgate-AV/genlinx/commit/0af7f2e49b764872e9bf50e82000f77fd51930b1))
+-   **config:** process options within the action ([483cf4c](https://github.com/Norgate-AV/genlinx/commit/483cf4cff727f4dc32d2562f4ab3ba9f905c1841))
+-   **global-config:** refactor to use conf package ([0b205f1](https://github.com/Norgate-AV/genlinx/commit/0b205f151f33c854cba3a1bb26e4cb8af0234c28))
+-   **local-config:** refactor to use conf package ([f319815](https://github.com/Norgate-AV/genlinx/commit/f31981548bd9a0e5ce1373a633f33aa2ba2f7875))
+-   **config:** remove delete key option ([a0fbc7c](https://github.com/Norgate-AV/genlinx/commit/a0fbc7cbe763c7b404cf97de7b528e93d13261f0))
+-   remove fs-extra dependency ([1067aed](https://github.com/Norgate-AV/genlinx/commit/1067aed4ec57c3d049f7cffaf4c1f31e07e8ff1d))
+-   replace string literals with name variable ([4e2d661](https://github.com/Norgate-AV/genlinx/commit/4e2d661bc9fc5354bcbc52ad2d44786c290278ce))
+-   **global-config:** return complete object rather than just the store ([4548838](https://github.com/Norgate-AV/genlinx/commit/45488381554ceba5330a2b5fcf3a9c7147007f13))
+-   **local-config:** return complete object rather than just the store ([899a052](https://github.com/Norgate-AV/genlinx/commit/899a05227395e6b35d94597018f756c9d7636876))
+-   return unique sets ([0e3182c](https://github.com/Norgate-AV/genlinx/commit/0e3182c557025ec9544cc76814cae51499955c9c))
+-   split app/global/local config function into separate files ([320d918](https://github.com/Norgate-AV/genlinx/commit/320d918366135ac260eff474d87435f942435992))
+-   split into smaller functions and resolve relative paths ([f2efc1c](https://github.com/Norgate-AV/genlinx/commit/f2efc1c9e9544519dfe4d48a90a57a50051d71a4))
+-   **config:** update cli logic ([a705024](https://github.com/Norgate-AV/genlinx/commit/a705024e7651859fc3896384f92bc41d0d2f0d8f))
+-   **build:** update command description ([b6e349b](https://github.com/Norgate-AV/genlinx/commit/b6e349b5466a1941e98682c6041ff04b744b44d4))
+-   **config:** update option descriptions ([b41944c](https://github.com/Norgate-AV/genlinx/commit/b41944cba0dbec0acb45dc66b44cbbf219ad38b7))
+-   use getModuleName ([a0e6939](https://github.com/Norgate-AV/genlinx/commit/a0e6939e3bb467c131a84a9ce5c9fc286e382f7d))
+-   use getPackageJson function when getting configs ([cbc59c6](https://github.com/Norgate-AV/genlinx/commit/cbc59c618972542ac14d4c41134582a53d9f03af))
+-   **config:** use new config member ([38be685](https://github.com/Norgate-AV/genlinx/commit/38be6851e7dd0027ad1d5fa5c9e3a7cd35f0e15a))
+-   use new function to get file path. return file path in object ([cf2149e](https://github.com/Norgate-AV/genlinx/commit/cf2149e9c9fbb047afedf6591859b7b298055ec2))
+-   **config:** use utils to print complex objects ([6af6c32](https://github.com/Norgate-AV/genlinx/commit/6af6c32ea1a4e355eb7466fc3cf082b918747819))
+
 ## [2.2.3](https://github.com/Norgate-AV/genlinx/compare/v2.2.2...v2.2.3) (2024-07-27)
 
 ### 🐛 Bug Fixes
