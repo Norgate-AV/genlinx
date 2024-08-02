@@ -26,9 +26,9 @@ program.addHelpText("beforeAll", () => {
     const builder = new StringBuilder();
 
     builder
-        .appendLine(figlet.textSync("genlinx"))
+        .appendLine(figlet.textSync(name))
         .appendLine()
-        .appendLine(`${version}`)
+        .appendLine(version)
         .appendLine("Open source CLI tool for NetLinx projects")
         .appendLine(
             `Copyright (c) ${new Date().getFullYear()}, Norgate AV Services Limited`,
@@ -48,7 +48,7 @@ program.addHelpText("afterAll", () => {
         .appendLine("===================================================")
         .appendLine()
         .appendLine("For more help, make sure to check out the man page:")
-        .appendLine("    $ man genlinx");
+        .appendLine(`    $ man ${name}`);
 
     return builder.toString();
 });
