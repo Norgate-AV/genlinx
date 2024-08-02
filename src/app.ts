@@ -4,7 +4,7 @@ import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
 import { getAppVersion, getModuleName } from "../lib/utils/index.js";
-import { archive, build, cfg, config } from "./commands/index.js";
+import { archive, build, cfg, config, find } from "./commands/index.js";
 
 const args = process.argv;
 const program = new Command();
@@ -20,7 +20,8 @@ program
     .addCommand(archive())
     .addCommand(build())
     .addCommand(cfg())
-    .addCommand(config());
+    .addCommand(config())
+    .addCommand(find());
 
 program.addHelpText("beforeAll", () => {
     const builder = new StringBuilder();

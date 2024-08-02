@@ -49,6 +49,7 @@
         "prepare": "husky"
     },
     "devDependencies": {
+        "@commander-js/extra-typings": "^12.1.0",
         "@commitlint/cli": "^19.3.0",
         "@commitlint/config-conventional": "^19.2.2",
         "@semantic-release/changelog": "^6.0.3",
@@ -57,7 +58,7 @@
         "@types/config": "^3.3.4",
         "@types/figlet": "^1.5.8",
         "@types/lodash": "^4.17.7",
-        "@types/node": "^22.0.2",
+        "@types/node": "^22.1.0",
         "@types/nodemon": "^1.19.6",
         "all-contributors-cli": "^6.26.1",
         "commitizen": "^4.3.0",
@@ -84,6 +85,7 @@
         "chalk": "^5.3.0",
         "commander": "^12.1.0",
         "config": "^3.3.12",
+        "console-table-printer": "^2.12.1",
         "cosmiconfig": "^9.0.0",
         "dotenv": "^16.4.5",
         "envalid": "^8.0.0",
