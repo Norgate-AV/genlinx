@@ -7,7 +7,7 @@ import { FindCliArgs } from "../../lib/@types/index.js";
 
 const ICSP_PORT = 1319;
 
-export async function discover(): Promise<Array<Device>> {
+export async function discover(args: FindCliArgs): Promise<Array<Device>> {
     const devices: Array<Device> = [];
 
     const socket = dgram.createSocket("udp4");
@@ -41,7 +41,7 @@ export async function discover(): Promise<Array<Device>> {
                     devices.map((device) => [device.mac, device]),
                 ).values(),
             ]);
-        }, 6000);
+        }, args.timeout);
     });
 }
 
@@ -56,7 +56,7 @@ export const find = {
                 {
                     title: "Listening for NetLinx devices...",
                     task: async (context): Promise<void> => {
-                        context.devices = await discover();
+                        context.devices = await discover(args);
 
                         const { devices } = context;
 

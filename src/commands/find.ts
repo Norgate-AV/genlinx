@@ -6,6 +6,12 @@ export function find(): Command {
 
     command
         .description("find NetLinx devices on a local broadcast subnet")
+        .addOption(
+            new Option(
+                "-t, --timeout <number>",
+                "timeout in milliseconds",
+            ).default(6000),
+        )
         .addOption(new Option("-j, --json", "output as JSON"))
         .action(async (options) => {
             await actions.find.execute(options);
