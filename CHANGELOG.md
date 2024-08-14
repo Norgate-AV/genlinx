@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.5.0](https://github.com/Norgate-AV/genlinx/compare/v2.4.0...v2.5.0) (2024-08-14)
+
+### 🌟 Features
+
+-   **find:** add cli option for timeout with 6000ms as default ([772988e](https://github.com/Norgate-AV/genlinx/commit/772988e4ee77f3f8f655012c4f8ca871a95247e3))
+
 ## [2.4.0](https://github.com/Norgate-AV/genlinx/compare/v2.3.0...v2.4.0) (2024-08-02)
 
 ### 🌟 Features
