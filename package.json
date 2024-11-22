@@ -29,7 +29,7 @@
         "url": "https://github.com/Norgate-AV/genlinx/issues"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=20"
     },
     "scripts": {
         "commit": "git-cz",
