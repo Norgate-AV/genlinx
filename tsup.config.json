@@ -2,7 +2,7 @@
     "entry": ["src/app.ts"],
     "dts": false,
     "format": ["esm"],
-    "target": "node20",
+    "target": "node22",
     "minify": "terser",
     "minifyWhitespace": true,
     "minifyIdentifiers": true,
