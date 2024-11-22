@@ -59,7 +59,7 @@ function resolvePaths(root: string, config: LocalConfig): LocalConfig {
 
 export async function getLocalConfig(
     options: CliOptions,
-): Promise<CosmiconfigResult> {
+): Promise<CosmiconfigResult | null> {
     const packageJson = await getPackageJson();
 
     if (!packageJson) {

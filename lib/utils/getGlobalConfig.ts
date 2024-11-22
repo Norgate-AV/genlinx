@@ -12,7 +12,7 @@ export function getGlobalConfigFilePath(name: string): string {
     return path.join(directory, file);
 }
 
-export async function getGlobalConfig(): Promise<CosmiconfigResult> {
+export async function getGlobalConfig(): Promise<CosmiconfigResult | null> {
     const packageJson = await getPackageJson();
 
     if (!packageJson) {
@@ -23,7 +23,13 @@ export async function getGlobalConfig(): Promise<CosmiconfigResult> {
         throw new Error("package.json missing name field");
     }
 
-    return await cosmiconfig(path.basename(packageJson.name)).load(
-        getGlobalConfigFilePath(packageJson.name),
-    );
+    try {
+        const result = await cosmiconfig(path.basename(packageJson.name)).load(
+            getGlobalConfigFilePath(packageJson.name),
+        );
+
+        return result;
+    } catch (error: any) {
+        return null;
+    }
 }

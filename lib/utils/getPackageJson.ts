@@ -13,5 +13,5 @@ export async function getPackageJson(): Promise<PackageJson | null> {
         return null;
     }
 
-    return JSON.parse(await fs.readFile(filepath, "utf-8"));
+    return JSON.parse(await fs.readFile(filepath, "utf-8")) as PackageJson;
 }
