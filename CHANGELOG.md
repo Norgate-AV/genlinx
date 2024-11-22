@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.6.1](https://github.com/Norgate-AV/genlinx/compare/v2.6.0...v2.6.1) (2024-11-22)
+
+### 🐛 Bug Fixes
+
+-   **find:** correctly display json output in pretty format ([96a8937](https://github.com/Norgate-AV/genlinx/commit/96a89376a23b4a27afc023bb8fa98c0868505b36))
+
 ## [2.6.0](https://github.com/Norgate-AV/genlinx/compare/v2.5.0...v2.6.0) (2024-11-22)
 
 ### 🌟 Features
