@@ -22,10 +22,6 @@ export async function discover(args: FindCliArgs): Promise<Array<Device>> {
             return;
         }
 
-        if (packet.getType() !== "A") {
-            return;
-        }
-
         devices.push({
             ...packet.parse().getDevice(),
             ip: remoteInfo.address,
