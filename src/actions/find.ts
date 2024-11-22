@@ -62,10 +62,13 @@ export const find = {
                         }
 
                         if (args.json) {
+                            const json = JSON.stringify(devices);
+
                             console.log(
-                                await jq.run(".", JSON.stringify(devices), {
+                                await jq.run(".", json, {
                                     color: true,
-                                    input: "json",
+                                    input: "string",
+                                    output: "pretty",
                                 }),
                             );
 
