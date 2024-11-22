@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.6.0](https://github.com/Norgate-AV/genlinx/compare/v2.5.0...v2.6.0) (2024-11-22)
+
+### 🌟 Features
+
+-   **find:** add support for finding muse controllers ([72f7d55](https://github.com/Norgate-AV/genlinx/commit/72f7d559396519511194e058f4f3c2ad1cd07de1))
+
+### 🐛 Bug Fixes
+
+-   **config:** handle exception if no global config is found ([3f232ce](https://github.com/Norgate-AV/genlinx/commit/3f232ce9c36c9a6ebeb66a165afdd25132933687))
+
 ## [2.5.0](https://github.com/Norgate-AV/genlinx/compare/v2.4.0...v2.5.0) (2024-08-14)
 
 ### 🌟 Features
