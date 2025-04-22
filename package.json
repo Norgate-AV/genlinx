@@ -46,7 +46,10 @@
         "contrib:add": "all-contributors add",
         "contrib:generate": "all-contributors generate",
         "contrib:check": "all-contributors check",
-        "prepare": "husky"
+        "prepare": "husky",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage"
     },
     "devDependencies": {
         "@commander-js/extra-typings": "^13.1.0",
@@ -76,7 +79,8 @@
         "tsup": "^8.4.0",
         "type-fest": "^4.40.0",
         "typescript": "^5.8.3",
-        "vite-node": "^3.1.2"
+        "vite-node": "^3.1.2",
+        "vitest": "^3.1.2"
     },
     "dependencies": {
         "@inquirer/prompts": "^7.4.1",
