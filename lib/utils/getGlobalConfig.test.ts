@@ -7,7 +7,6 @@ import { cosmiconfig } from "cosmiconfig";
 vi.mock("./index.js");
 vi.mock("cosmiconfig");
 
-// Helper function to normalize paths for testing
 function normalizePaths(
     paths: string | string[] | undefined,
 ): string | string[] | undefined {
@@ -18,9 +17,18 @@ function normalizePaths(
     const normalize = (p: string) => {
         // First replace backslashes with forward slashes
         let normalized = p.replace(/\\/g, "/");
-        // Then replace any user home directory paths with our expected path
+
+        // Replace common home directory patterns with /home/user/
+        // 1. macOS: /Users/username/
         normalized = normalized.replace(/\/Users\/[^\/]+\//, "/home/user/");
+        // 2. Windows: C:/Users/username/
         normalized = normalized.replace(/C:\/Users\/[^\/]+\//, "/home/user/");
+        // 3. Linux: /home/username/ (but not if already /home/user/)
+        normalized = normalized.replace(
+            /\/home\/(?!user\/)[^\/]+\//,
+            "/home/user/",
+        );
+
         // Additionally strip drive letter if still present
         normalized = normalized.replace(/^[A-Z]:/, "");
         return normalized;
