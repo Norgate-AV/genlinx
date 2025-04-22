@@ -49,7 +49,7 @@
         "prepare": "husky"
     },
     "devDependencies": {
-        "@commander-js/extra-typings": "^12.1.0",
+        "@commander-js/extra-typings": "^13.1.0",
         "@commitlint/cli": "^19.8.0",
         "@commitlint/config-conventional": "^19.8.0",
         "@semantic-release/changelog": "^6.0.3",
@@ -82,7 +82,7 @@
         "@inquirer/prompts": "^7.4.1",
         "adm-zip": "^0.5.16",
         "chalk": "^5.4.1",
-        "commander": "^12.1.0",
+        "commander": "^13.1.0",
         "config": "^3.3.12",
         "console-table-printer": "^2.12.1",
         "cosmiconfig": "^9.0.0",

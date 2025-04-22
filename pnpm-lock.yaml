@@ -17,8 +17,8 @@ importers:
         specifier: ^5.4.1
         version: 5.4.1
       commander:
-        specifier: ^12.1.0
-        version: 12.1.0
+        specifier: ^13.1.0
+        version: 13.1.0
       config:
         specifier: ^3.3.12
         version: 3.3.12
@@ -63,8 +63,8 @@ importers:
         version: 5.0.0
     devDependencies:
       "@commander-js/extra-typings":
-        specifier: ^12.1.0
-        version: 12.1.0(commander@12.1.0)
+        specifier: ^13.1.0
+        version: 13.1.0(commander@13.1.0)
       "@commitlint/cli":
         specifier: ^19.8.0
         version: 19.8.0(@types/node@22.14.1)(typescript@5.8.3)
@@ -219,13 +219,13 @@ packages:
       }
     engines: { node: ">=0.1.90" }
 
-  "@commander-js/extra-typings@12.1.0":
+  "@commander-js/extra-typings@13.1.0":
     resolution:
       {
-        integrity: sha512-wf/lwQvWAA0goIghcb91dQYpkLBcyhOhQNqG/VgWhnKzgt+UOMvra7EX/2fv70arm5RW+PUHoQHHDa6/p77Eqg==,
+        integrity: sha512-q5P52BYb1hwVWE6dtID7VvuJWrlfbCv4klj7BjUUOqMz4jbSZD4C9fJ9lRjL2jnBGTg+gDDlaXN51rkWcLk4fg==,
       }
     peerDependencies:
-      commander: ~12.1.0
+      commander: ~13.1.0
 
   "@commitlint/cli@19.8.0":
     resolution:
@@ -1797,13 +1797,6 @@ packages:
       {
         integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==,
       }
-
-  commander@12.1.0:
-    resolution:
-      {
-        integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==,
-      }
-    engines: { node: ">=18" }
 
   commander@13.1.0:
     resolution:
@@ -6100,9 +6093,9 @@ snapshots:
   "@colors/colors@1.5.0":
     optional: true
 
-  "@commander-js/extra-typings@12.1.0(commander@12.1.0)":
+  "@commander-js/extra-typings@13.1.0(commander@13.1.0)":
     dependencies:
-      commander: 12.1.0
+      commander: 13.1.0
 
   "@commitlint/cli@19.8.0(@types/node@22.14.1)(typescript@5.8.3)":
     dependencies:
@@ -7057,8 +7050,6 @@ snapshots:
   color-name@1.1.4: {}
 
   colorette@2.0.20: {}
-
-  commander@12.1.0: {}
 
   commander@13.1.0: {}
 
