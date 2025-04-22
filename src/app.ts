@@ -31,9 +31,7 @@ program.addHelpText("beforeAll", () => {
         .appendLine()
         .appendLine(version)
         .appendLine("Open source CLI tool for NetLinx projects")
-        .appendLine(
-            `Copyright (c) ${new Date().getFullYear()}, Norgate AV Services Limited`,
-        )
+        .appendLine(`Copyright (c) ${new Date().getFullYear()}, Norgate AV`)
         .appendLine("https://github.com/Norgate-AV/genlinx")
         .appendLine()
         .appendLine("===================================================")
