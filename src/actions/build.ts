@@ -178,7 +178,7 @@ export const build = {
                 process.exit();
             }
 
-            if (cfgFiles.length > 0) {
+            if (cfgFiles && cfgFiles.length > 0) {
                 await executeCfgBuild(cfgFiles, config.build as BuildOptions);
                 process.exit();
             }
