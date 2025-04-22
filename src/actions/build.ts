@@ -169,11 +169,12 @@ export const build = {
 
             const { cfgFiles, sourceFiles } = config.build as BuildOptions;
 
-            if (sourceFiles) {
+            if (sourceFiles && sourceFiles.length > 0) {
                 await executeSourceBuild(
                     sourceFiles,
                     config.build as BuildOptions,
                 );
+
                 process.exit();
             }
 
@@ -182,9 +183,9 @@ export const build = {
                 process.exit();
             }
 
-            console.log(chalk.red("No source or CFG files specified."));
+            console.log("No source or CFG files specified.");
         } catch (error: any) {
-            console.error(error);
+            // Just exit with an error code
             process.exit(1);
         }
     },

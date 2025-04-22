@@ -7,15 +7,16 @@ export function build(): Command {
     const command = new Command("build");
 
     command
-        .description("build a NetLinx workspace or individual source file(s)")
+        .description("build NetLinx source file(s) or CFG file(s)")
+        .arguments("[sourceFiles...]")
         .addOption(
             new Option(
                 "-c, --cfg-files <string...>",
                 "cfg file(s) to build from",
             )
-                .default([], "search for CFG files in current directory")
+                .default([])
                 .conflicts([
-                    "sourceFile",
+                    "sourceFiles",
                     "includePath",
                     "modulePath",
                     "libraryPath",
@@ -24,8 +25,10 @@ export function build(): Command {
         .addOption(
             new Option(
                 "-s, --source-files <string...>",
-                "axs source file(s) to build",
-            ).conflicts(["cfgFiles"]),
+                "source file(s) to build (*.axs, *.axi)",
+            )
+                .default([])
+                .conflicts(["cfgFiles"]),
         )
         .addOption(
             new Option(
@@ -50,7 +53,7 @@ export function build(): Command {
                 "-a, --all",
                 "select all cfg files without prompting",
             ).conflicts([
-                "sourceFile",
+                "sourceFiles",
                 "includePath",
                 "modulePath",
                 "libraryPath",
@@ -61,14 +64,14 @@ export function build(): Command {
                 "-A, --no-all",
                 "select multiple cfg files with a prompt",
             ).conflicts([
-                "sourceFile",
+                "sourceFiles",
                 "includePath",
                 "modulePath",
                 "libraryPath",
             ]),
         )
         .addOption(new Option("--verbose", "verbose output").default(false))
-        .action((options) => {
+        .action((sourceFiles, options) => {
             if (os.platform() !== "win32") {
                 console.log(
                     chalk.red(
@@ -77,6 +80,14 @@ export function build(): Command {
                 );
 
                 process.exit(1);
+            }
+
+            if (sourceFiles && sourceFiles.length > 0) {
+                if (!options.sourceFiles) {
+                    options.sourceFiles = [];
+                }
+
+                options.sourceFiles = [...sourceFiles, ...options.sourceFiles];
             }
 
             actions.build.execute(options);
