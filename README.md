@@ -6,40 +6,45 @@
 
 ---
 
-[![CI](https://github.com/Norgate-AV/genlinx/actions/workflows/main.yml/badge.svg)](https://github.com/Norgate-AV/genlinx/actions)
+[![CI][ci]](https://github.com/Norgate-AV/genlinx/actions/workflows/main.yml)
+[![GitHub Release][release]](https://github.com/Norgate-AV/genlinx/releases)
+[![npm][npm]](https://www.npmjs.com/package/@norgate-av/genlinx)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 [![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV/genlinx)](#contributors-sparkles)
-[![NPM](https://img.shields.io/npm/v/%40norgate-av%2Fgenlinx)](https://www.npmjs.com/package/@norgate-av/genlinx)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
 A CLI utility for Netlinx projects 🚀🚀🚀
 
+[ci]: https://img.shields.io/github/actions/workflow/status/Norgate-AV/genlinx/main.yml?logo=github&label=CI
+[release]: https://img.shields.io/github/v/release/Norgate-AV/genlinx?logo=github&label=Release
+[npm]: https://img.shields.io/npm/v/@norgate-av/genlinx?logo=npm
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 ## Contents 📖
 
--   [Installation :zap:](#installation-zap)
--   [Usage :rocket:](#usage-rocket)
--   [Command Line :man_technologist:](#command-line-man_technologist)
-    -   [archive](#archive)
-    -   [build](#build)
-    -   [cfg](#cfg)
-    -   [config](#config)
-    -   [find](#find)
--   [Configuration :gear:](#configuration-gear)
-    -   [Default](#default)
-    -   [Global](#global)
-    -   [Local](#local)
-        -   [Example](#example)
-    -   [Command Line](#command-line)
-    -   [Precedence](#precedence)
--   [Team :soccer:](#team-soccer)
--   [Contributors :sparkles:](#contributors-sparkles)
--   [LICENSE :balance_scale:](#license-balance_scale)
+- [Installation :zap:](#installation-zap)
+- [Usage :rocket:](#usage-rocket)
+- [Command Line :man_technologist:](#command-line-man_technologist)
+    - [archive](#archive)
+    - [build](#build)
+    - [cfg](#cfg)
+    - [config](#config)
+    - [find](#find)
+- [Configuration :gear:](#configuration-gear)
+    - [Default](#default)
+    - [Global](#global)
+    - [Local](#local)
+        - [Example](#example)
+    - [Command Line](#command-line)
+    - [Precedence](#precedence)
+- [Team :soccer:](#team-soccer)
+- [Contributors :sparkles:](#contributors-sparkles)
+- [LICENSE :balance_scale:](#license-balance_scale)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -88,7 +93,7 @@ genlinx will
   |___/
 
 Open source CLI tool for NetLinx projects
-Copyright (c) 2024, Norgate AV Services Limited
+Copyright (c) 2025, Norgate AV
 https://github.com/Norgate-AV/genlinx
 
 ===================================================
@@ -98,16 +103,16 @@ Usage: genlinx [options] [command]
 cli helper utility for NetLinx projects 🚀🚀🚀
 
 Options:
-  -v, --version           output the version number
-  -h, --help              display help for command
+  -v, --version                     output the version number
+  -h, --help                        display help for command
 
 Commands:
-  archive [options]       generate a NetLinx workspace zip archive
-  build [options]         build a NetLinx workspace or individual source file(s)
-  cfg [options]           generate NetLinx build CFG files
-  config [options] [key]  view/edit configuration properties for genlinx
-  find [options]          find NetLinx devices on a local broadcast subnet
-  help [command]          display help for command
+  archive [options]                 generate a NetLinx workspace zip archive
+  build [options] [sourceFiles...]  build NetLinx source file(s) or CFG file(s)
+  cfg [options]                     generate NetLinx build CFG files
+  config [options] [key]            view/edit configuration properties for genlinx
+  find [options]                    find NetLinx devices on a local broadcast subnet
+  help [command]                    display help for command
 
 ===================================================
 
@@ -138,16 +143,16 @@ Options:
 
 ### build
 
-Build a NetLinx workspace or individual source file(s)
+Build NetLinx source file(s) or CFG file(s)
 
 ```bash
-Usage: genlinx build [options]
+Usage: genlinx build [options] [sourceFiles...]
 
-build a NetLinx workspace or individual source file(s)
+build NetLinx source file(s) or CFG file(s)
 
 Options:
-  -c, --cfg-files <string...>     cfg file(s) to build from (default: search for CFG files in current directory)
-  -s, --source-files <string...>  axs source file(s) to build
+  -c, --cfg-files <string...>     cfg file(s) to build from (default: [])
+  -s, --source-files <string...>  source file(s) to build (*.axs, *.axi) (default: [])
   -i, --include-path <string...>  add additional include paths
   -m, --module-path <string...>   add additional module paths
   -l, --library-path <string...>  add additional library paths
