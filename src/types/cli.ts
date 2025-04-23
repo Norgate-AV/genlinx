@@ -1,9 +1,7 @@
-import {
-    CfgCliArgs,
-    ArchiveCliArgs,
-    BuildCliArgs,
-    ConfigCliArgs,
-} from "./index.js";
+import { CfgCliArgs } from "./cfg.js";
+import { ArchiveCliArgs } from "./archive.js";
+import { BuildCliArgs } from "./build.js";
+import { ConfigCliArgs } from "./config.js";
 
 export type CliArgs = CfgCliArgs | ArchiveCliArgs | BuildCliArgs;
 

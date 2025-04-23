@@ -1,4 +1,4 @@
-import { ObjectTypes } from "./index.js";
+import { ObjectTypes } from "./utils.js";
 
 export type File = FileReference & {
     exists: boolean;

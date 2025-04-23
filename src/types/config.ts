@@ -1,4 +1,6 @@
-import { ArchiveConfig, BuildConfig, CfgConfig } from "./index.js";
+import { ArchiveConfig } from "./archive.js";
+import { BuildConfig } from "./build.js";
+import { CfgConfig } from "./cfg.js";
 
 export type Config = {
     cfg: CfgConfig;

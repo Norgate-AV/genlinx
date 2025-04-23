@@ -1,4 +1,5 @@
-import { AmxFileType, ObjectTypes } from "./index.js";
+import { AmxFileType } from "./file.js";
+import { ObjectTypes } from "./utils.js";
 
 export interface ArchiveItem {
     addToArchive(): void;
