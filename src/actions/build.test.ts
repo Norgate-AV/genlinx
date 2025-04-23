@@ -41,12 +41,6 @@ function createTestBuildOptions(
     const defaultOptions: BuildOptions = {
         nlrc: {
             path: "path/to/nlrc",
-            option: {
-                cfg: "-CFG",
-                includePath: "-I",
-                modulePath: "-M",
-                libraryPath: "-L",
-            },
             includePath: [],
             modulePath: [],
             libraryPath: [],

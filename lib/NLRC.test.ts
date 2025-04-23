@@ -11,12 +11,6 @@ describe("NLRC", () => {
             buildOptions = {
                 nlrc: {
                     path: "C:/NLRC.exe",
-                    option: {
-                        cfg: "-CFG",
-                        includePath: "-I",
-                        modulePath: "-M",
-                        libraryPath: "-L",
-                    },
                     includePath: ["path/to/include"],
                     modulePath: ["path/to/module"],
                     libraryPath: ["path/to/library"],
@@ -70,12 +64,6 @@ describe("NLRC", () => {
             const buildOptions: BuildOptions = {
                 nlrc: {
                     path: "C:/NLRC.exe",
-                    option: {
-                        cfg: "-CFG",
-                        includePath: "-I",
-                        modulePath: "-M",
-                        libraryPath: "-L",
-                    },
                     includePath: [],
                     modulePath: [],
                     libraryPath: [],
@@ -97,6 +85,45 @@ describe("NLRC", () => {
                 `-CFG"${path.resolve(process.cwd(), "project.cfg")}"`,
             );
         });
+    });
+
+    it("should handle configs with old option property", () => {
+        // Create a config object with the old structure
+        const oldStyleConfig = {
+            build: {
+                nlrc: {
+                    path: "path/to/compiler",
+                    includePath: ["path1"],
+                    modulePath: [],
+                    libraryPath: [],
+                    option: {
+                        cfg: "-FOO",
+                        includePath: "-A",
+                        modulePath: "-B",
+                        libraryPath: "-C",
+                    },
+                },
+                shell: { path: "cmd.exe" },
+                all: false,
+                createCfg: true,
+                verbose: false,
+            },
+        };
+
+        // Load this config and run a build command
+        // Verify it succeeds with the correct command line args
+        const command = NLRC.getSourceBuildCommand(
+            "test.axs",
+            oldStyleConfig.build,
+        );
+
+        console.log(command);
+
+        // Check that the proper flags are used - with the correct combined format
+        expect(command.args.some((arg) => arg.startsWith("-I"))).toBeTruthy();
+        expect(command.args.some((arg) => arg.includes("path1"))).toBeTruthy();
+        // Or more precisely:
+        expect(command.args).toContain('-I"path1"');
     });
 });
 

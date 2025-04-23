@@ -47,12 +47,6 @@ export const config: Config = {
     build: {
         nlrc: {
             path: "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
-            option: {
-                cfg: "-CFG",
-                includePath: "-I",
-                modulePath: "-M",
-                libraryPath: "-L",
-            },
             includePath: ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
             modulePath: [
                 "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",

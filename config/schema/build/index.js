@@ -7,23 +7,6 @@ export const build = {
                 path: {
                     type: "string",
                 },
-                option: {
-                    type: "object",
-                    properties: {
-                        cfg: {
-                            type: "string",
-                        },
-                        includePath: {
-                            type: "string",
-                        },
-                        modulePath: {
-                            type: "string",
-                        },
-                        libraryPath: {
-                            type: "string",
-                        },
-                    },
-                },
                 includePath: {
                     type: "array",
                     uniqueItems: true,

@@ -2,6 +2,13 @@ import path from "node:path";
 import { BuildConfig, ShellCommand } from "./@types/index.js";
 
 export class NLRC {
+    private static readonly COMPILER_FLAGS = {
+        cfg: "-CFG",
+        includePath: "-I",
+        modulePath: "-M",
+        libraryPath: "-L",
+    };
+
     static getCfgBuildCommand(
         file: string,
         options: BuildConfig,
@@ -14,7 +21,7 @@ export class NLRC {
 
         return {
             path: `"${nlrc.path}"`,
-            args: [`${nlrc.option.cfg}"${filePath}"`],
+            args: [`${NLRC.COMPILER_FLAGS.cfg}"${filePath}"`],
         };
     }
 
@@ -30,9 +37,15 @@ export class NLRC {
 
         const args = [`"${filePath}"`];
 
-        args.push(`${nlrc.option.includePath}"${nlrc.includePath.join(";")}"`);
-        args.push(`${nlrc.option.modulePath}"${nlrc.modulePath.join(";")}"`);
-        args.push(`${nlrc.option.libraryPath}"${nlrc.libraryPath.join(";")}"`);
+        args.push(
+            `${NLRC.COMPILER_FLAGS.includePath}"${nlrc.includePath.join(";")}"`,
+        );
+        args.push(
+            `${NLRC.COMPILER_FLAGS.modulePath}"${nlrc.modulePath.join(";")}"`,
+        );
+        args.push(
+            `${NLRC.COMPILER_FLAGS.libraryPath}"${nlrc.libraryPath.join(";")}"`,
+        );
 
         return {
             path: `"${nlrc.path}"`,
