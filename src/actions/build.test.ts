@@ -1,8 +1,9 @@
 import os from "node:os";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { build } from "../commands/build.js";
 import { actions } from "./index.js";
 import type { BuildOptions } from "../../lib/@types/index.js";
+import { getBuildLogs, catchAllErrors, printAllWarnings } from "./build.js";
 
 // Mock the actions module
 vi.mock("./index", () => ({
@@ -20,6 +21,50 @@ vi.mock("node:os", () => ({
     },
     platform: vi.fn(() => "win32"),
 }));
+
+// Mock NLRC for the executeSourceBuild test
+vi.mock("../../lib/index.js", () => ({
+    NLRC: {
+        getSourceBuildCommand: vi.fn().mockImplementation((file) => {
+            // Always return an object with the required properties
+            return {
+                path: "nlrc",
+                args: ["-c", file],
+            };
+        }),
+    },
+}));
+
+function createTestBuildOptions(
+    overrides: Partial<BuildOptions> = {},
+): BuildOptions {
+    const defaultOptions: BuildOptions = {
+        nlrc: {
+            path: "path/to/nlrc",
+            option: {
+                cfg: "-CFG",
+                includePath: "-I",
+                modulePath: "-M",
+                libraryPath: "-L",
+            },
+            includePath: [],
+            modulePath: [],
+            libraryPath: [],
+        },
+        shell: {
+            path: "cmd.exe",
+        },
+        all: false,
+        createCfg: false,
+        verbose: false,
+    };
+
+    // Merge the defaults with any provided overrides
+    return {
+        ...defaultOptions,
+        ...overrides,
+    };
+}
 
 function getCallOptions(): BuildOptions {
     // This ensures TypeScript knows we have a call and options object
@@ -394,5 +439,109 @@ describe("build command", () => {
         // We don't necessarily expect an exception, but Commander should have prevented
         // both options from being set simultaneously
         // Testing the specific behavior would depend on Commander's implementation
+    });
+});
+
+describe("getBuildLogs", () => {
+    it("should parse error and warning messages", () => {
+        const buildOutput = `
+            Compiling project...
+            ERROR: Undefined variable 'x' on line 42
+            Processing...
+            WARNING: Unused variable 'y' on line 73
+            WARNING: Duplicate definition on line 81
+            ERROR: Missing semicolon on line 90
+            Build complete with errors.
+        `;
+
+        const logs = getBuildLogs(buildOutput);
+
+        expect(logs.error).toHaveLength(2);
+        expect(logs.warning).toHaveLength(2);
+        expect(logs.error).toContain(
+            "ERROR: Undefined variable 'x' on line 42",
+        );
+        expect(logs.error).toContain("ERROR: Missing semicolon on line 90");
+        expect(logs.warning).toContain(
+            "WARNING: Unused variable 'y' on line 73",
+        );
+        expect(logs.warning).toContain(
+            "WARNING: Duplicate definition on line 81",
+        );
+    });
+
+    it("should deduplicate repeated errors and warnings", () => {
+        const buildOutput = `
+            ERROR: Same error on line 10
+            Processing...
+            ERROR: Same error on line 10
+            WARNING: Repeated warning on line 20
+            More processing...
+            WARNING: Repeated warning on line 20
+        `;
+
+        const logs = getBuildLogs(buildOutput);
+
+        expect(logs.error).toHaveLength(1);
+        expect(logs.warning).toHaveLength(1);
+        expect(logs.error).toContain("ERROR: Same error on line 10");
+        expect(logs.warning).toContain("WARNING: Repeated warning on line 20");
+    });
+
+    it("should return empty arrays when no errors or warnings", () => {
+        const buildOutput = `
+            Compiling project...
+            Processing...
+            Build successful.
+        `;
+
+        const logs = getBuildLogs(buildOutput);
+
+        expect(logs.error).toHaveLength(0);
+        expect(logs.warning).toHaveLength(0);
+    });
+});
+
+describe("catchAllErrors", () => {
+    beforeEach(() => {
+        vi.spyOn(console, "log").mockImplementation(() => {});
+    });
+
+    it("should throw an error when errors exist", () => {
+        const errors = ["ERROR: Something went wrong", "ERROR: Another issue"];
+
+        expect(() => catchAllErrors(errors)).toThrow(
+            "The build process failed with a total of 2 error(s)",
+        );
+        expect(console.log).toHaveBeenCalledWith(
+            expect.stringContaining("2 error(s)"),
+        );
+    });
+
+    it("should not throw when errors array is empty", () => {
+        expect(() => catchAllErrors([])).not.toThrow();
+        expect(console.log).not.toHaveBeenCalled();
+    });
+});
+
+describe("printAllWarnings", () => {
+    beforeEach(() => {
+        vi.spyOn(console, "log").mockImplementation(() => {});
+    });
+
+    it("should print warnings when they exist", () => {
+        const warnings = ["WARNING: Minor issue", "WARNING: Something to note"];
+
+        printAllWarnings(warnings);
+
+        expect(console.log).toHaveBeenCalledWith(
+            expect.stringContaining("2 warning(s)"),
+        );
+        expect(console.log).toHaveBeenCalledTimes(3);
+    });
+
+    it("should not print anything when warnings array is empty", () => {
+        printAllWarnings([]);
+        expect(console.log).not.toHaveBeenCalled();
     });
 });
