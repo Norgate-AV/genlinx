@@ -3,8 +3,8 @@
 import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
-import { getAppVersion, getModuleName } from "../lib/utils/index.js";
-import { archive, build, cfg, config, find } from "./commands/index.js";
+import { getAppVersion, getModuleName } from "./utils/index.js";
+import { archive, build, cfg, config, find } from "./cli/commands/index.js";
 
 const args = process.argv;
 const program = new Command();
