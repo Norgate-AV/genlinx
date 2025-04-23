@@ -1,3 +1,5 @@
+export type CfgOptions = CfgConfig & CfgCliArgs;
+
 export type CfgCliArgs = {
     workspaceFiles: Array<string>;
     rootDirectory: string;
@@ -16,4 +18,17 @@ export type CfgCliArgs = {
     all?: boolean;
     noAll?: boolean;
     verbose: boolean;
+};
+
+export type CfgConfig = {
+    outputFileSuffix: string;
+    outputLogFileSuffix: string;
+    outputLogFileOption: "N" | "Y";
+    outputLogConsoleOption: boolean;
+    buildWithDebugInformation: boolean;
+    buildWithSource: boolean;
+    includePath: Array<string>;
+    modulePath: Array<string>;
+    libraryPath: Array<string>;
+    all: boolean;
 };
