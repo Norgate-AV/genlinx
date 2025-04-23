@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import { execa } from "execa";
 import { NLRC } from "../../lib/index.js";
 import {
     getFilesByExtension,
@@ -17,7 +18,7 @@ import {
     BuildOptions,
 } from "../../lib/@types/index.js";
 
-function getBuildLogs(data: string): BuildLogCollection {
+export function getBuildLogs(data: string): BuildLogCollection {
     const pattern = /(?<log>(?<level>ERROR|WARNING): .+)/gm;
     const matches = data.matchAll(pattern);
 
@@ -41,7 +42,7 @@ function getBuildLogs(data: string): BuildLogCollection {
     };
 }
 
-function catchAllErrors(errors: Array<string>) {
+export function catchAllErrors(errors: Array<string>) {
     if (errors.length === 0) {
         return;
     }
@@ -57,7 +58,7 @@ function catchAllErrors(errors: Array<string>) {
     );
 }
 
-function printAllWarnings(warnings: Array<string>) {
+export function printAllWarnings(warnings: Array<string>) {
     if (warnings.length === 0) {
         return;
     }
@@ -71,13 +72,12 @@ function printAllWarnings(warnings: Array<string>) {
     }
 }
 
-async function runBuildProcess(
+export async function runBuildProcess(
     command: ShellCommand,
     options: BuildConfig,
 ): Promise<string> {
     const { shell } = options;
 
-    const { execa } = await import("execa");
     const childProcess = execa(command.path, [...command.args], {
         shell: shell.path,
         windowsVerbatimArguments: true,
@@ -90,7 +90,7 @@ async function runBuildProcess(
     return stdout;
 }
 
-async function buildFile(
+export async function buildFile(
     file: string,
     command: ShellCommand,
     options: BuildOptions,
@@ -101,7 +101,7 @@ async function buildFile(
     return await runBuildProcess(command, options);
 }
 
-async function executeSourceBuild(
+export async function executeSourceBuild(
     files: Array<string>,
     options: BuildOptions,
 ): Promise<void> {
@@ -117,7 +117,7 @@ async function executeSourceBuild(
     }
 }
 
-async function executeCfgBuild(
+export async function executeCfgBuild(
     files: Array<string>,
     options: BuildOptions,
 ): Promise<void> {
@@ -185,7 +185,6 @@ export const build = {
 
             console.log("No source or CFG files specified.");
         } catch (error: any) {
-            // Just exit with an error code
             process.exit(1);
         }
     },
