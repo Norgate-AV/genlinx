@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getAppConfig, getGlobalConfig, getLocalConfig } from "./index.js";
-import type { CliOptions } from "../@types/index.js";
+import type { CliOptions } from "../types/index.js";
 
 // Mock dependencies
 vi.mock("./getGlobalConfig.js");

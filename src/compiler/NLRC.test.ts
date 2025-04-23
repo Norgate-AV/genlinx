@@ -1,7 +1,7 @@
 import path from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
 import { NLRC } from "./NLRC.js";
-import { BuildOptions } from "../@types/index.js";
+import { BuildOptions } from "../types/index.js";
 
 describe("NLRC", () => {
     describe("getSourceBuildCommand", () => {

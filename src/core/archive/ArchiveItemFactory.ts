@@ -11,7 +11,7 @@ import {
     ArchiveItem,
     File,
     ArchiveOptions,
-} from "../../@types/index.js";
+} from "../../types/index.js";
 
 export class ArchiveItemFactory {
     public static create(

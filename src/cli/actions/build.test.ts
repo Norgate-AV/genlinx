@@ -2,7 +2,7 @@ import os from "node:os";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { build } from "../commands/build.js";
 import { actions } from "./index.js";
-import type { BuildOptions } from "../../@types/index.js";
+import type { BuildOptions } from "../../types/index.js";
 import { getBuildLogs, catchAllErrors, printAllWarnings } from "./build.js";
 
 // Mock the actions module

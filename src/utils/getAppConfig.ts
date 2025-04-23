@@ -2,7 +2,7 @@ import path from "node:path";
 import { mergician } from "mergician";
 import defaultConfig from "../config/default.js";
 import { getGlobalConfig, getLocalConfig } from "./index.js";
-import { CliOptions, Config } from "../@types/index.js";
+import { CliOptions, Config } from "../types/index.js";
 
 function normalizePaths(config: Config): Config {
     config.cfg.includePath = config.cfg.includePath.map((p) =>

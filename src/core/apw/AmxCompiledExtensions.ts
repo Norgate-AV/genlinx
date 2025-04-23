@@ -1,4 +1,4 @@
-import { AmxFileType as FileType } from "../../@types/index.js";
+import { AmxFileType as FileType } from "../../types/index.js";
 
 export const AmxCompiledExtensions: Record<FileType, string> = {
     [FileType.Workspace]: ".apw",

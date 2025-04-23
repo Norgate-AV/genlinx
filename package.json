@@ -34,7 +34,7 @@
     "scripts": {
         "commit": "git-cz",
         "clean": "rimraf dist",
-        "lint": "tsc",
+        "lint": "tsc --noEmit",
         "pretty:fix": "prettier --write .",
         "prebuild": "pnpm clean",
         "build": "tsup",

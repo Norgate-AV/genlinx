@@ -1,4 +1,4 @@
-import { Date } from "../../@types/index.js";
+import { Date } from "../../types/index.js";
 
 export class Device {
     public ip: string;

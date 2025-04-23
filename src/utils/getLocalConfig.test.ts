@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { getLocalConfig } from "./getLocalConfig.js";
 import { getPackageJson } from "./index.js";
 import { cosmiconfig } from "cosmiconfig";
-import type { CliOptions } from "../@types/index.js";
+import type { CliOptions } from "../types/index.js";
 
 // Mock dependencies
 vi.mock("./index.js");

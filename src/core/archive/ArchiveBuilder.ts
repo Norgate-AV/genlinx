@@ -10,7 +10,7 @@ import {
     ArchiveOptions,
     ArchiveFileType as FileType,
     File,
-} from "../../@types/index.js";
+} from "../../types/index.js";
 
 export class ArchiveBuilder {
     private readonly apw: APW;

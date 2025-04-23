@@ -14,7 +14,7 @@ import {
     CfgOptions,
     CfgCliArgs,
     AmxFileType as FileType,
-} from "../../@types/index.js";
+} from "../../types/index.js";
 
 export const cfg = {
     async create(args: CfgCliArgs): Promise<void> {

@@ -3,7 +3,7 @@ import { Listr } from "listr2";
 import * as jq from "node-jq";
 import { Table } from "console-table-printer";
 import { Device, Packet } from "../../core/find/index.js";
-import { FindCliArgs } from "../../@types/index.js";
+import { FindCliArgs } from "../../types/index.js";
 
 const ICSP_PORT = 1319;
 

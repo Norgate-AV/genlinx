@@ -5,7 +5,7 @@ import {
     FileId,
     FileReference,
     AmxFileType as FileType,
-} from "../../@types/index.js";
+} from "../../types/index.js";
 import { AmxExtensions } from "./index.js";
 import { pathExists } from "../../utils/index.js";
 

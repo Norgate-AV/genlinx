@@ -1,5 +1,5 @@
 import path from "node:path";
-import { BuildConfig, ShellCommand } from "../@types/index.js";
+import { BuildConfig, ShellCommand } from "../types/index.js";
 
 export class NLRC {
     private static readonly COMPILER_FLAGS = {

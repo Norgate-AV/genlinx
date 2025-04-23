@@ -1,7 +1,7 @@
 import path from "node:path";
 import chalk from "chalk";
 import AdmZip from "adm-zip";
-import { ArchiveOptions, ArchiveItem, File } from "../../@types/index.js";
+import { ArchiveOptions, ArchiveItem, File } from "../../types/index.js";
 
 export class EnvItem implements ArchiveItem {
     private readonly file: File;

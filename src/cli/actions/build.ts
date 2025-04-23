@@ -16,7 +16,7 @@ import {
     BuildLogCollectionKey,
     ShellCommand,
     BuildOptions,
-} from "../../@types/index.js";
+} from "../../types/index.js";
 
 export function getBuildLogs(data: string): BuildLogCollection {
     const pattern = /(?<log>(?<level>ERROR|WARNING): .+)/gm;

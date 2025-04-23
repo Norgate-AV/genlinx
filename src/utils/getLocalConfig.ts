@@ -7,7 +7,7 @@ import {
     CfgCliArgs,
     CliOptions,
     LocalConfig,
-} from "../@types/index.js";
+} from "../types/index.js";
 import { getPackageJson } from "./index.js";
 
 function resolvePaths(root: string, config: LocalConfig): LocalConfig {

@@ -3,8 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import StringBuilder from "string-builder";
 import figlet from "figlet";
-import { APW } from "../../../lib/index.js";
-import { CfgOptions, FileReference } from "../../@types/index.js";
+import { APW } from "../apw/index.js";
+import { CfgOptions, FileReference } from "../../types/index.js";
 
 export class CfgBuilder {
     private readonly apw: APW;

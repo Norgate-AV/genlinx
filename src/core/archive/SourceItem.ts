@@ -7,7 +7,7 @@ import {
     ArchiveItem,
     ArchiveFileType as FileType,
     File,
-} from "../../@types/index.js";
+} from "../../types/index.js";
 
 export class SourceItem implements ArchiveItem {
     private readonly file: File;

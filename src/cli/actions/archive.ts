@@ -13,7 +13,7 @@ import {
     ArchiveOptions,
     ArchiveCliArgs,
     AmxFileType as FileType,
-} from "../../@types/index.js";
+} from "../../types/index.js";
 
 export const archive = {
     async create(args: ArchiveCliArgs): Promise<void> {

@@ -2,7 +2,7 @@ import util from "node:util";
 import { execa } from "execa";
 import chalk from "chalk";
 import { default as getConfigVal } from "lodash/get.js";
-import { Config, ConfigCliArgs } from "../../@types/index.js";
+import { Config, ConfigCliArgs } from "../../types/index.js";
 import {
     getAppConfig,
     getGlobalConfig,
