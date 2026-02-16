@@ -105,3 +105,7 @@ dist
 
 # Local history
 .history/
+
+# AMX
+*.tkn
+*.tko
