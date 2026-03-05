@@ -157,26 +157,59 @@ func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, erro
 	return opts, configInfo, nil
 }
 
+// GlobalConfigDir returns the directory where the global config file lives.
+// It respects $GENLINX_CONFIG_DIR if set.
+func GlobalConfigDir() (string, error) {
+	if dir := os.Getenv("GENLINX_CONFIG_DIR"); dir != "" {
+		return dir, nil
+	}
+
+	if utils.IsWindows() {
+		appData := os.Getenv("APPDATA")
+		if appData == "" {
+			return "", fmt.Errorf("APPDATA environment variable not set")
+		}
+
+		return filepath.Join(appData, "genlinx"), nil
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	return filepath.Join(homeDir, ".config", "genlinx"), nil
+}
+
+// GlobalConfigPath returns the canonical path for the global JSON config file
+// (used for editing / creating a new global config).
+func GlobalConfigPath() (string, error) {
+	dir, err := GlobalConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, "genlinx.json"), nil
+}
+
+// LoadGlobalConfig is an exported wrapper around the internal loadGlobalConfig.
+func LoadGlobalConfig() (ConfigLoadResult, error) {
+	return loadGlobalConfig()
+}
+
+// LoadLocalConfig is an exported wrapper around the internal loadLocalConfig.
+func LoadLocalConfig() (ConfigLoadResult, error) {
+	return loadLocalConfig()
+}
+
 // loadGlobalConfig loads the global configuration file
 func loadGlobalConfig() (ConfigLoadResult, error) {
 	v := viper.New()
 
 	// Determine global config directory based on OS
-	var globalConfigDir string
-	if utils.IsWindows() {
-		// Windows: %APPDATA%\genlinx
-		appData := os.Getenv("APPDATA")
-		if appData == "" {
-			return ConfigLoadResult{Config: &config.Config{}, Path: "", Found: false}, fmt.Errorf("APPDATA environment variable not set")
-		}
-		globalConfigDir = filepath.Join(appData, "genlinx")
-	} else {
-		// Unix-like: ~/.config/genlinx
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return ConfigLoadResult{Config: &config.Config{}, Path: "", Found: false}, fmt.Errorf("failed to get user home directory: %w", err)
-		}
-		globalConfigDir = filepath.Join(homeDir, ".config", "genlinx")
+	globalConfigDir, err := GlobalConfigDir()
+	if err != nil {
+		return ConfigLoadResult{Config: &config.Config{}, Path: "", Found: false}, err
 	}
 
 	// Try different config file names and formats
