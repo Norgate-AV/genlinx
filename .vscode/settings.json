@@ -42,5 +42,16 @@
     },
     "[ignore]": {
         "editor.defaultFormatter": "lumirelle.shell-format-rev"
+    },
+    "gopls": {
+        "ui.semanticTokens": true,
+        "formatting.local": "github.com/Norgate-AV/genlinx-go"
+    },
+    "[go]": {
+        "editor.defaultFormatter": "golang.go",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
     }
 }

@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/Norgate-AV/genlinx-go/internal/version"
 	"github.com/spf13/cobra"
+
+	"github.com/Norgate-AV/genlinx-go/internal/version"
 )
 
 var rootCmd = &cobra.Command{

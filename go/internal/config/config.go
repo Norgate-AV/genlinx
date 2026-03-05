@@ -5,8 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Norgate-AV/genlinx-go/internal/utils"
 	"github.com/spf13/viper"
+
+	"github.com/Norgate-AV/genlinx-go/internal/utils"
 )
 
 // Config represents the application configuration

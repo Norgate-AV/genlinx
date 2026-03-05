@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/Norgate-AV/genlinx-go/internal/apw"
 	"github.com/Norgate-AV/genlinx-go/internal/archive"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
 	"github.com/Norgate-AV/genlinx-go/internal/utils"
-	"github.com/spf13/cobra"
 )
 
 var archiveCmd = &cobra.Command{

@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/spf13/viper"
+
 	"github.com/Norgate-AV/genlinx-go/internal/config"
 	"github.com/Norgate-AV/genlinx-go/internal/utils"
-	"github.com/spf13/viper"
 )
 
 // BuildOptions represents the merged options for the build command

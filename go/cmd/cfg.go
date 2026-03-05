@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/Norgate-AV/genlinx-go/internal/apw"
 	gocfg "github.com/Norgate-AV/genlinx-go/internal/cfg"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
 	"github.com/Norgate-AV/genlinx-go/internal/utils"
-	"github.com/spf13/cobra"
 )
 
 var cfgCmd = &cobra.Command{

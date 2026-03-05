@@ -9,9 +9,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	internalconfig "github.com/Norgate-AV/genlinx-go/internal/config"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
-	"github.com/spf13/cobra"
 )
 
 var configCmd = &cobra.Command{

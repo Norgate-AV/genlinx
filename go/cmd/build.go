@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/spf13/cobra"
+
 	"github.com/Norgate-AV/genlinx-go/internal/compiler"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
-	"github.com/spf13/cobra"
 )
 
 var buildCmd = &cobra.Command{

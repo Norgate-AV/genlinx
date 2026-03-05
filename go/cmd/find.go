@@ -7,8 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Norgate-AV/genlinx-go/internal/find"
 	"github.com/spf13/cobra"
+
+	"github.com/Norgate-AV/genlinx-go/internal/find"
 )
 
 var findCmd = &cobra.Command{

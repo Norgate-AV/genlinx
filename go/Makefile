@@ -1,6 +1,6 @@
 BIN_DIR := bin
 
-MODULE := github.com/Norgate-AV/genlinx
+MODULE := github.com/Norgate-AV/genlinx-go
 
 ifeq ($(OS),Windows_NT)
 	TARGET := genlinx.exe
@@ -30,6 +30,10 @@ GOFLAGS := -ldflags="-s -w -extldflags=-static \
 	-X '$(VERSION_PKG).GitCommit=$(GIT_COMMIT)' \
 	-X '$(VERSION_PKG).BuildDate=$(BUILD_DATE)'" \
 	-trimpath
+
+.PHONY: fmt
+fmt:
+	goimports -local $(MODULE) -w $(shell go list -f {{.Dir}} ./...)
 
 .PHONY: build
 build:
