@@ -100,6 +100,7 @@ func (c *NLRCCompiler) Compile(options CompileOptions) (*CompileResult, error) {
 		Output:   output,
 		ExitCode: 0,
 	}
+
 	result.Errors, result.Warnings = c.parseOutput(output)
 
 	return result, nil

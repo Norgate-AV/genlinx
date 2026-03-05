@@ -158,6 +158,10 @@ func (suite *OptionsTestSuite) TestResolvePaths() {
 
 // TestLoadGlobalConfig tests global configuration loading
 func (suite *OptionsTestSuite) TestLoadGlobalConfig() {
+	// Redirect the global config search to an empty temp dir so the test is
+	// not affected by any real config file present on the developer's machine.
+	suite.T().Setenv("GENLINX_CONFIG_DIR", suite.tempDir)
+
 	// Test loading global config
 	result, err := loadGlobalConfig()
 	suite.Require().NoError(err)

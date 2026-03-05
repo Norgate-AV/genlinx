@@ -117,9 +117,11 @@ func (b *Builder) addLicense() {
 
 func (b *Builder) addHeader(contentLines []string) {
 	b.writeLine(";------------------------------------------------------------------------------")
+
 	for _, line := range contentLines {
 		b.writeLine(line)
 	}
+
 	b.writeLine(";------------------------------------------------------------------------------")
 }
 
@@ -303,7 +305,6 @@ func deduplicate(items []string) []string {
 }
 
 // asciiArt returns a simple commented banner for the given text.
-// This replaces the figlet dependency used in the TypeScript version.
 func asciiArt(text string) string {
 	line := strings.Repeat("-", len(text)+4)
 
