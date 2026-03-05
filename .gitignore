@@ -109,3 +109,8 @@ dist
 # AMX
 *.tkn
 *.tko
+*.apw
+*.zip
+*.build.cfg
+
+bin

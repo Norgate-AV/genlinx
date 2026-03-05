@@ -2,15 +2,21 @@ package find
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"sort"
 	"strings"
-	"text/tabwriter"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 const ICSPPort = 1319
@@ -201,11 +207,9 @@ func (p *pkt) parse() (*Device, error) {
 // Discover listens on UDP port 1319 for ICSP identify-reply packets and
 // returns deduplicated devices after the given timeout, sorted by IP.
 func Discover(timeout time.Duration) ([]Device, error) {
-	addr := &net.UDPAddr{Port: ICSPPort}
-
-	conn, err := net.ListenUDP("udp4", addr)
+	conn, err := listenUDP()
 	if err != nil {
-		return nil, fmt.Errorf("failed to listen on UDP port %d: %w", ICSPPort, err)
+		return nil, err
 	}
 
 	defer conn.Close()
@@ -214,13 +218,62 @@ func Discover(timeout time.Duration) ([]Device, error) {
 		return nil, fmt.Errorf("failed to set read deadline: %w", err)
 	}
 
-	var devices []Device
+	return collect(conn, nil), nil
+}
+
+// DiscoverWithContext listens on UDP port 1319 until ctx is cancelled (e.g.
+// via Ctrl+C), then returns deduplicated devices sorted by IP.
+func DiscoverWithContext(ctx context.Context) ([]Device, error) {
+	conn, err := listenUDP()
+	if err != nil {
+		return nil, err
+	}
+
+	defer conn.Close()
+
+	// Poll the deadline every 200 ms so the context cancellation is noticed
+	// promptly without blocking indefinitely on ReadFromUDP.
+	const pollInterval = 200 * time.Millisecond
+
+	return collect(conn, func() bool {
+		select {
+		case <-ctx.Done():
+			return true
+		default:
+			conn.SetReadDeadline(time.Now().Add(pollInterval))
+			return false
+		}
+	}), nil
+}
+
+func listenUDP() (*net.UDPConn, error) {
+	conn, err := net.ListenUDP("udp4", &net.UDPAddr{Port: ICSPPort})
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on UDP port %d: %w", ICSPPort, err)
+	}
+
+	return conn, nil
+}
+
+// collect reads ICSP packets from conn until an error (e.g. deadline) occurs.
+// If done is non-nil it is called before each read; returning true stops the
+// loop immediately (used by DiscoverWithContext to check for cancellation).
+func collect(conn *net.UDPConn, done func() bool) []Device {
+	seen := make(map[string]Device)
 	buf := make([]byte, 4096)
 
 	for {
+		if done != nil && done() {
+			break
+		}
+
 		n, remoteAddr, err := conn.ReadFromUDP(buf)
 		if err != nil {
-			// Any error (including deadline exceeded) ends the listen window.
+			if done != nil && isTimeout(err) {
+				// Short deadline expired — check context and retry.
+				continue
+			}
+
 			break
 		}
 
@@ -235,13 +288,8 @@ func Discover(timeout time.Duration) ([]Device, error) {
 		}
 
 		device.IP = remoteAddr.IP.String()
-		devices = append(devices, *device)
-	}
-
-	// Deduplicate by MAC address (last-seen wins, matching TS Map behaviour).
-	seen := make(map[string]Device, len(devices))
-	for _, d := range devices {
-		seen[d.MAC] = d
+		// Deduplicate by MAC (last-seen wins).
+		seen[device.MAC] = *device
 	}
 
 	result := make([]Device, 0, len(seen))
@@ -249,12 +297,17 @@ func Discover(timeout time.Duration) ([]Device, error) {
 		result = append(result, d)
 	}
 
-	// Sort by IP ascending (mirrors the TS sort comparator).
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].IP < result[j].IP
 	})
 
-	return result, nil
+	return result
+}
+
+// isTimeout reports whether err is a network timeout error.
+func isTimeout(err error) bool {
+	var netErr net.Error
+	return errors.As(err, &netErr) && netErr.Timeout()
 }
 
 // ---------------------------------------------------------------------------
@@ -273,17 +326,29 @@ func PrintJSON(devices []Device) error {
 	return nil
 }
 
-// PrintTable outputs devices as an aligned text table.
+// PrintTable outputs devices as a coloured table with green borders.
 func PrintTable(devices []Device) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	green := renderer.Tint{FG: renderer.Colors{color.FgGreen}}
 
-	fmt.Fprintln(w, "Discovered Devices")
-	fmt.Fprintln(w, "IP Address\tSystem\tDate\tTime\tMAC Address\tHostname\tID")
+	r := renderer.NewColorized(renderer.ColorizedConfig{
+		Border:    green,
+		Separator: green,
+	})
+
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithRenderer(r),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Formatting: tw.CellFormatting{Alignment: tw.AlignCenter},
+			},
+		}),
+	)
+
+	table.Header("IP Address", "System", "Date", "Time", "MAC Address", "Hostname", "ID")
 
 	for _, d := range devices {
-		fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\t%s\t%s\n",
-			d.IP, d.System, d.Date.Text, d.Time, d.MAC, d.Hostname, d.ID)
+		table.Append(d.IP, d.System, d.Date.Text, d.Time, d.MAC, d.Hostname, d.ID)
 	}
 
-	w.Flush()
+	table.Render()
 }

@@ -1,6 +1,8 @@
 package apw
 
 import (
+	"bytes"
+	"encoding/xml"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,234 +11,115 @@ import (
 	"strings"
 )
 
-// File type constants matching the TypeScript AmxFileType enum.
-const (
-	FileTypeWorkspace = "Workspace"
-	FileTypeModule    = "Module"
-	FileTypeMasterSrc = "MasterSrc"
-	FileTypeSource    = "Source"
-	FileTypeInclude   = "Include"
-	FileTypeIR        = "IR"
-	FileTypeTP4       = "TP4"
-	FileTypeTP5       = "TP5"
-	FileTypeTPD       = "TPD"
-	FileTypeKPD       = "KPD"
-	FileTypeAXB       = "AXB"
-	FileTypeTKO       = "TKO"
-	FileTypeIRDB      = "IRDB"
-	FileTypeIRNDB     = "IRNDB"
-	FileTypeDuet      = "Duet"
-	FileTypeTOK       = "TOK"
-	FileTypeTKN       = "TKN"
-	FileTypeKPB       = "KPB"
-	FileTypeXDD       = "XDD"
-	FileTypeOther     = "Other"
-)
-
-// AmxExtensions maps file type constants to their file extensions.
-var AmxExtensions = map[string]string{
-	FileTypeWorkspace: ".apw",
-	FileTypeModule:    ".axs",
-	FileTypeMasterSrc: ".axs",
-	FileTypeSource:    ".axs",
-	FileTypeInclude:   ".axi",
-	FileTypeIR:        ".irl",
-	FileTypeTP4:       ".tp4",
-	FileTypeTP5:       ".tp5",
-	FileTypeTPD:       ".tpd",
-	FileTypeDuet:      ".jar",
-	FileTypeXDD:       ".xdd",
-	FileTypeKPD:       ".kpd",
-	FileTypeAXB:       ".axb",
-	FileTypeTKO:       ".tko",
-	FileTypeIRDB:      ".irdb",
-	FileTypeIRNDB:     ".irndb",
-	FileTypeTOK:       ".tok",
-	FileTypeTKN:       ".tkn",
-	FileTypeKPB:       ".kpb",
-	FileTypeOther:     "",
-}
-
-// AmxCompiledExtensions maps file type constants to their compiled output extensions.
-var AmxCompiledExtensions = map[string]string{
-	FileTypeWorkspace: ".apw",
-	FileTypeModule:    ".tko",
-	FileTypeMasterSrc: ".tkn",
-	FileTypeSource:    ".tkn",
-	FileTypeInclude:   ".tkn",
-	FileTypeIR:        ".irl",
-	FileTypeTP4:       ".tp4",
-	FileTypeTP5:       ".tp5",
-	FileTypeTPD:       ".tpd",
-	FileTypeDuet:      ".jar",
-	FileTypeXDD:       ".xdd",
-	FileTypeKPD:       ".kpd",
-	FileTypeAXB:       ".axb",
-	FileTypeTKO:       ".tko",
-	FileTypeIRDB:      ".irdb",
-	FileTypeIRNDB:     ".irndb",
-	FileTypeTOK:       ".tok",
-	FileTypeTKN:       ".tkn",
-	FileTypeKPB:       ".kpb",
-	FileTypeOther:     "",
-}
-
-// File represents a file reference parsed from an APW workspace.
-type File struct {
-	ID      string
-	Type    string
-	Path    string
-	Exists  bool
-	IsExtra bool
-	Content string // optional in-memory content (e.g. for .env files)
-}
-
 // APW represents a parsed AMX NetLinx workspace (.apw) file.
 type APW struct {
-	filePath             string
-	id                   string
-	fileReferences       []File
-	uniqueFileReferences []File
+	id    string
+	name  string
+	path  string
+	dir   string
+	files map[string]File
+	ws    *Workspace
 }
 
-// New returns a new APW instance with an absolute file path.
-func New(filePath string) *APW {
-	absPath, err := filepath.Abs(filePath)
+// Parse validates path and data, then constructs a fully populated APW.
+// The path must have a .apw extension. The data must be the contents of that
+// file — the caller is responsible for reading it.
+func Parse(path string, data []byte) (*APW, error) {
+	if strings.ToLower(filepath.Ext(path)) != FileExtensionAPW {
+		return nil, fmt.Errorf("not a NetLinx Workspace file: %s", path)
+	}
+
+	absPath, err := filepath.Abs(path)
 	if err != nil {
-		absPath = filePath
+		return nil, fmt.Errorf("invalid path: %w", err)
 	}
 
-	return &APW{filePath: absPath}
-}
+	if !bytes.Contains(data, []byte("<!DOCTYPE Workspace [")) {
+		return nil, fmt.Errorf("not a NetLinx Workspace file: %s", absPath)
+	}
 
-// Load reads and parses the APW file, populating all internal state.
-func (a *APW) Load() error {
-	data, err := a.read()
+	clean, err := stripDTD(data)
 	if err != nil {
-		return fmt.Errorf("failed to load APW file: %w", err)
+		return nil, err
 	}
 
-	id, err := parseID(data)
-	if err != nil {
-		return fmt.Errorf("failed to load APW file: %w", err)
+	ws := &Workspace{}
+	if err := xml.Unmarshal(clean, ws); err != nil {
+		return nil, fmt.Errorf("failed to parse APW file: %w", err)
 	}
 
-	a.id = id
+	name := filepath.Base(absPath)
 
-	refs, err := a.parseFileReferences(data)
-	if err != nil {
-		return fmt.Errorf("failed to load APW file: %w", err)
+	a := &APW{
+		path:  absPath,
+		name:  name,
+		id:    strings.TrimSuffix(name, filepath.Ext(name)),
+		dir:   filepath.Dir(absPath),
+		files: make(map[string]File),
+		ws:    ws,
 	}
 
-	a.fileReferences = refs
-	a.uniqueFileReferences = deduplicateFileReferences(refs)
+	a.buildFiles()
 
-	return nil
+	return a, nil
 }
 
-func (a *APW) read() (string, error) {
-	if _, err := os.Stat(a.filePath); os.IsNotExist(err) {
-		return "", fmt.Errorf("file does not exist")
+// stripDTD removes the inline <!DOCTYPE ... ]> block so that encoding/xml
+// can parse the remaining document without error.
+func stripDTD(data []byte) ([]byte, error) {
+	start := bytes.Index(data, []byte("<!DOCTYPE"))
+	if start == -1 {
+		return data, nil
 	}
 
-	data, err := os.ReadFile(a.filePath)
-	if err != nil {
-		return "", err
+	rest := data[start:]
+	_, after, ok := bytes.Cut(rest, []byte("]>"))
+
+	if !ok {
+		return nil, fmt.Errorf("malformed APW file: no closing ]> for DOCTYPE")
 	}
 
-	content := string(data)
-
-	matched, _ := regexp.MatchString(`<!DOCTYPE Workspace \[`, content)
-	if !matched {
-		return "", fmt.Errorf("not a Netlinx Workspace file")
-	}
-
-	return content, nil
+	return append(data[:start], after...), nil
 }
 
-// parseID extracts the workspace <Identifier> value.
-// Mirrors: /<Workspace.+\r?\n?.*?<Identifier>(?<id>.+)<.+>/m
-func parseID(data string) (string, error) {
-	re := regexp.MustCompile(`<Workspace.+\r?\n?.*?<Identifier>(.+)<.+>`)
+// buildFiles walks the parsed Workspace tree and populates a.files with
+// absolute path → File entries. Duplicate paths are deduplicated by nature of the map.
+func (a *APW) buildFiles() {
+	for _, project := range a.ws.Projects {
+		for _, system := range project.Systems {
+			for _, fr := range system.Files {
+				relPath := filepath.FromSlash(strings.ReplaceAll(fr.FilePathName, `\`, `/`))
+				absPath := filepath.Join(a.dir, relPath)
 
-	match := re.FindStringSubmatch(data)
-	if match == nil {
-		return "", fmt.Errorf("no Workspace ID found")
-	}
+				_, statErr := os.Stat(absPath)
 
-	return strings.TrimSpace(match[1]), nil
-}
-
-// parseFileReferences extracts all <File> entries from the workspace data.
-// Mirrors the TypeScript multi-line gm regex for file references.
-func (a *APW) parseFileReferences(data string) ([]File, error) {
-	// This pattern is intentionally close to the TS original, relying on `.`
-	// not matching newlines and explicit \r?\n? for line crossings.
-	re := regexp.MustCompile(
-		`<File.+Type="(.+?)".+\r?\n?.*?` +
-			`<Identifier>(.+?)<\/Identifier>\r?\n?.*?>(.+?)<.+` +
-			`\r?\n?.*?\r?\n?.*?(?:<DeviceMap.+\r?\n?.*?\r?\n?.*?\r?\n?)?.*?<\/File>`,
-	)
-
-	var refs []File
-
-	for _, match := range re.FindAllStringSubmatch(data, -1) {
-		if len(match) < 4 {
-			continue
-		}
-
-		fileType := strings.TrimSpace(match[1])
-		id := strings.TrimSpace(match[2])
-		filePath := strings.TrimSpace(match[3])
-
-		_, statErr := os.Stat(filePath)
-		exists := statErr == nil
-
-		refs = append(refs, File{
-			ID:      id,
-			Type:    fileType,
-			Path:    filePath,
-			Exists:  exists,
-			IsExtra: false,
-		})
-	}
-
-	sort.Slice(refs, func(i, j int) bool {
-		return refs[i].Path < refs[j].Path
-	})
-
-	return refs, nil
-}
-
-func deduplicateFileReferences(refs []File) []File {
-	seen := make(map[string]bool)
-	var unique []File
-
-	for _, f := range refs {
-		if !seen[f.Path] {
-			seen[f.Path] = true
-			unique = append(unique, f)
+				a.files[absPath] = File{
+					ID:      fr.Identifier,
+					Type:    fr.Type,
+					Path:    absPath,
+					Exists:  statErr == nil,
+					IsExtra: false,
+				}
+			}
 		}
 	}
-
-	return unique
 }
 
 // FileIsReadable reports whether the file can be scanned for #include / define_module references.
 func FileIsReadable(file string) bool {
 	ext := strings.ToLower(filepath.Ext(file))
-	return ext == ".axs" || ext == ".axi"
+	return ext == FileExtensionAXS || ext == FileExtensionAXI
 }
 
 // FileIsOfInterest reports whether the file should be considered as a candidate
 // during an extra-file disk search (.axs, .axi, .jar, .xdd).
 func FileIsOfInterest(file string) bool {
 	ext := strings.ToLower(filepath.Ext(file))
-	return ext == ".axs" || ext == ".axi" || ext == ".jar" || ext == ".xdd"
+	return ext == FileExtensionAXS || ext == FileExtensionAXI || ext == FileExtensionJAR || ext == FileExtensionXDD
 }
 
-// GetFileType returns the AmxFileType constant for a file path based on its extension.
-func GetFileType(file string) string {
+// GetFileType returns the FileType constant for a file path based on its extension.
+func GetFileType(file string) FileType {
 	ext := strings.ToLower(filepath.Ext(file))
 
 	for fileType, fileExt := range AmxExtensions {
@@ -250,7 +133,7 @@ func GetFileType(file string) string {
 
 // isInWorkspace reports whether the given id/name already appears in the workspace.
 func (a *APW) isInWorkspace(id string) bool {
-	for _, f := range a.uniqueFileReferences {
+	for _, f := range a.files {
 		if f.ID == id || strings.Contains(f.Path, id) {
 			return true
 		}
@@ -329,7 +212,7 @@ func (a *APW) GetExtraFileReferences() ([]string, error) {
 	seen := make(map[string]bool)
 	var refs []string
 
-	for _, f := range a.uniqueFileReferences {
+	for _, f := range a.files {
 		if !f.Exists {
 			continue
 		}
@@ -350,17 +233,24 @@ func (a *APW) GetExtraFileReferences() ([]string, error) {
 	return refs, nil
 }
 
-// AllFiles returns all unique workspace file references plus the workspace file itself.
+// AllFiles returns all unique workspace file references plus the workspace file itself,
+// sorted by path.
 func (a *APW) AllFiles() []File {
-	files := make([]File, len(a.uniqueFileReferences))
-	copy(files, a.uniqueFileReferences)
+	files := make([]File, 0, len(a.files)+1)
+	for _, f := range a.files {
+		files = append(files, f)
+	}
 
 	files = append(files, File{
 		ID:      a.id,
 		Type:    FileTypeWorkspace,
-		Path:    a.filePath,
+		Path:    a.path,
 		Exists:  true,
 		IsExtra: false,
+	})
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Path < files[j].Path
 	})
 
 	return files
@@ -368,65 +258,44 @@ func (a *APW) AllFiles() []File {
 
 // MasterSrcPath returns the directories that contain MasterSrc files.
 func (a *APW) MasterSrcPath() []string {
-	seen := make(map[string]bool)
-	var dirs []string
+	return a.getFileDirectories(a.filesByType(FileTypeMasterSrc))
+}
 
-	for _, f := range a.uniqueFileReferences {
-		if f.Type != FileTypeMasterSrc {
-			continue
-		}
+// filesByType returns all files matching t, sorted by path.
+func (a *APW) filesByType(t FileType) []File {
+	var files []File
 
-		rootDir := filepath.Dir(a.filePath)
-		absPath := filepath.Join(rootDir, f.Path)
-		dir := filepath.Dir(absPath)
-
-		if !seen[dir] {
-			dirs = append(dirs, dir)
-			seen[dir] = true
+	for _, f := range a.files {
+		if f.Type == t {
+			files = append(files, f)
 		}
 	}
 
-	return dirs
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Path < files[j].Path
+	})
+
+	return files
 }
 
 // ModuleFiles returns all unique file references with type Module.
 func (a *APW) ModuleFiles() []File {
-	var files []File
-
-	for _, f := range a.uniqueFileReferences {
-		if f.Type == FileTypeModule {
-			files = append(files, f)
-		}
-	}
-
-	return files
+	return a.filesByType(FileTypeModule)
 }
 
 // MasterSrcFiles returns all unique file references with type MasterSrc.
 func (a *APW) MasterSrcFiles() []File {
-	var files []File
-
-	for _, f := range a.uniqueFileReferences {
-		if f.Type == FileTypeMasterSrc {
-			files = append(files, f)
-		}
-	}
-
-	return files
+	return a.filesByType(FileTypeMasterSrc)
 }
 
-// getFileDirectories returns the unique directory paths for the given files,
-// resolving relative paths against the workspace file's directory.
+// getFileDirectories returns the unique directory paths for the given files.
+// Paths in File are already absolute.
 func (a *APW) getFileDirectories(files []File) []string {
 	seen := make(map[string]bool)
 	var dirs []string
 
-	rootDir := filepath.Dir(a.filePath)
-
 	for _, f := range files {
-		absPath := filepath.Join(rootDir, f.Path)
-		dir := filepath.Dir(absPath)
-
+		dir := filepath.Dir(f.Path)
 		if !seen[dir] {
 			dirs = append(dirs, dir)
 			seen[dir] = true
@@ -438,22 +307,13 @@ func (a *APW) getFileDirectories(files []File) []string {
 
 // IncludePath returns the unique directories containing Include files.
 func (a *APW) IncludePath() []string {
-	var files []File
-
-	for _, f := range a.uniqueFileReferences {
-		if f.Type == FileTypeInclude {
-			files = append(files, f)
-		}
-	}
-
-	return a.getFileDirectories(files)
+	return a.getFileDirectories(a.filesByType(FileTypeInclude))
 }
 
 // ModulePath returns the unique directories containing Module, Duet, and XDD files.
 func (a *APW) ModulePath() []string {
 	var files []File
-
-	for _, f := range a.uniqueFileReferences {
+	for _, f := range a.files {
 		if f.Type == FileTypeModule || f.Type == FileTypeDuet || f.Type == FileTypeXDD {
 			files = append(files, f)
 		}
@@ -462,12 +322,12 @@ func (a *APW) ModulePath() []string {
 	return a.getFileDirectories(files)
 }
 
-// ID returns the workspace identifier with spaces replaced by hyphens.
+// ID returns the workspace identifier derived from the filename stem.
 func (a *APW) ID() string {
-	return strings.ReplaceAll(a.id, " ", "-")
+	return a.id
 }
 
 // FilePath returns the absolute path of the workspace file.
 func (a *APW) FilePath() string {
-	return a.filePath
+	return a.path
 }

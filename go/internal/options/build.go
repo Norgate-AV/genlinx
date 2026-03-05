@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/Norgate-AV/genlinx-go/internal/config"
 	"github.com/Norgate-AV/genlinx-go/internal/utils"
@@ -157,28 +158,46 @@ func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, erro
 	return opts, configInfo, nil
 }
 
-// GlobalConfigDir returns the directory where the global config file lives.
-// It respects $GENLINX_CONFIG_DIR if set.
-func GlobalConfigDir() (string, error) {
+// globalConfigDirs returns an ordered list of candidate directories to search
+// for the global config file. The first existing config file found wins.
+//
+//   - If $GENLINX_CONFIG_DIR is set it is the only candidate.
+//   - On Windows: %APPDATA%\genlinx is checked first, then ~/.config/genlinx.
+//   - On Linux/macOS: only ~/.config/genlinx is checked.
+func globalConfigDirs() ([]string, error) {
 	if dir := os.Getenv("GENLINX_CONFIG_DIR"); dir != "" {
-		return dir, nil
-	}
-
-	if utils.IsWindows() {
-		appData := os.Getenv("APPDATA")
-		if appData == "" {
-			return "", fmt.Errorf("APPDATA environment variable not set")
-		}
-
-		return filepath.Join(appData, "genlinx"), nil
+		return []string{dir}, nil
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("failed to get user home directory: %w", err)
+		return nil, fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	return filepath.Join(homeDir, ".config", "genlinx"), nil
+	dotConfig := filepath.Join(homeDir, ".config", "genlinx")
+
+	if runtime.GOOS == "windows" {
+		var dirs []string
+		if appData := os.Getenv("APPDATA"); appData != "" {
+			dirs = append(dirs, filepath.Join(appData, "genlinx"))
+		}
+		dirs = append(dirs, dotConfig)
+		return dirs, nil
+	}
+
+	return []string{dotConfig}, nil
+}
+
+// GlobalConfigDir returns the primary (canonical) directory used when creating
+// or editing the global config file. On Windows this is %APPDATA%\genlinx;
+// elsewhere it is ~/.config/genlinx. $GENLINX_CONFIG_DIR overrides both.
+func GlobalConfigDir() (string, error) {
+	dirs, err := globalConfigDirs()
+	if err != nil {
+		return "", err
+	}
+
+	return dirs[0], nil
 }
 
 // GlobalConfigPath returns the canonical path for the global JSON config file
@@ -189,7 +208,7 @@ func GlobalConfigPath() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(dir, "genlinx.json"), nil
+	return filepath.Join(dir, "config.json"), nil
 }
 
 // LoadGlobalConfig is an exported wrapper around the internal loadGlobalConfig.
@@ -202,48 +221,45 @@ func LoadLocalConfig() (ConfigLoadResult, error) {
 	return loadLocalConfig()
 }
 
-// loadGlobalConfig loads the global configuration file
+// loadGlobalConfig loads the global configuration file.
+// It searches each candidate directory (from globalConfigDirs) for config.json,
+// config.yaml, or config.yml and returns the first one successfully loaded.
 func loadGlobalConfig() (ConfigLoadResult, error) {
 	v := viper.New()
 
-	// Determine global config directory based on OS
-	globalConfigDir, err := GlobalConfigDir()
+	dirs, err := globalConfigDirs()
 	if err != nil {
 		return ConfigLoadResult{Config: &config.Config{}, Path: "", Found: false}, err
 	}
 
-	// Try different config file names and formats
-	configFiles := []string{
-		filepath.Join(globalConfigDir, "genlinx.json"),
-		filepath.Join(globalConfigDir, "genlinx.yaml"),
-		filepath.Join(globalConfigDir, "genlinx.yml"),
-	}
+	fileNames := []string{"config.json", "config.yaml", "config.yml"}
 
 	var cfg config.Config
-	configFound := false
-	var configPath string
 
-	for _, configFile := range configFiles {
-		if utils.FileExists(configFile) {
+	for _, dir := range dirs {
+		for _, name := range fileNames {
+			configFile := filepath.Join(dir, name)
+			if !utils.FileExists(configFile) {
+				continue
+			}
+
 			v.SetConfigFile(configFile)
 			if err := v.ReadInConfig(); err != nil {
-				continue // Try next file
+				continue
 			}
 			if err := v.Unmarshal(&cfg); err != nil {
-				continue // Try next file
+				continue
 			}
-			// Successfully loaded config
-			configFound = true
-			configPath = configFile
-			break
+
+			return ConfigLoadResult{
+				Config: &cfg,
+				Path:   configFile,
+				Found:  true,
+			}, nil
 		}
 	}
 
-	return ConfigLoadResult{
-		Config: &cfg,
-		Path:   configPath,
-		Found:  configFound,
-	}, nil
+	return ConfigLoadResult{Config: &config.Config{}, Path: "", Found: false}, nil
 }
 
 // loadLocalConfig loads the local configuration file using find-up approach
@@ -274,9 +290,18 @@ func loadLocalConfig() (ConfigLoadResult, error) {
 			configFilePath := filepath.Join(currentDir, configFileName)
 			if utils.FileExists(configFilePath) {
 				v.SetConfigFile(configFilePath)
-				if err := v.ReadInConfig(); err != nil {
-					continue // Try next file
+
+				readErr := v.ReadInConfig()
+
+				// An empty file isn't an error — treat it as an empty config.
+				if readErr != nil {
+					// Check if it's just an empty file.
+					info, statErr := os.Stat(configFilePath)
+					if statErr != nil || info.Size() > 0 {
+						continue // Genuinely unreadable or malformed — skip.
+					}
 				}
+
 				var cfg config.Config
 				if err := v.Unmarshal(&cfg); err != nil {
 					continue // Try next file

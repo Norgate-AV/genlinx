@@ -124,8 +124,14 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 			fmt.Printf("Generating archive for %s...\n", workspaceFile)
 		}
 
-		workspace := apw.New(workspaceFile)
-		if err := workspace.Load(); err != nil {
+		data, err := os.ReadFile(workspaceFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading workspace %s: %v\n", workspaceFile, err)
+			continue
+		}
+
+		workspace, err := apw.Parse(workspaceFile, data)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error loading workspace %s: %v\n", workspaceFile, err)
 			continue
 		}

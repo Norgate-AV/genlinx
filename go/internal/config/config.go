@@ -11,55 +11,55 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	CFG     CFGConfig     `mapstructure:"cfg"`
-	Archive ArchiveConfig `mapstructure:"archive"`
-	Build   BuildConfig   `mapstructure:"build"`
+	CFG     CFGConfig     `mapstructure:"cfg"     json:"cfg"`
+	Archive ArchiveConfig `mapstructure:"archive" json:"archive"`
+	Build   BuildConfig   `mapstructure:"build"   json:"build"`
 }
 
 // CFGConfig represents CFG command configuration
 type CFGConfig struct {
-	OutputFile                string   `mapstructure:"outputFile"`
-	OutputLogFile             string   `mapstructure:"outputLogFile"`
-	OutputLogFileOption       string   `mapstructure:"outputLogFileOption"`
-	OutputLogConsoleOption    bool     `mapstructure:"outputLogConsoleOption"`
-	BuildWithDebugInformation bool     `mapstructure:"buildWithDebugInformation"`
-	BuildWithSource           bool     `mapstructure:"buildWithSource"`
-	IncludePath               []string `mapstructure:"includePath"`
-	ModulePath                []string `mapstructure:"modulePath"`
-	LibraryPath               []string `mapstructure:"libraryPath"`
-	All                       bool     `mapstructure:"all"`
+	OutputFile                string   `mapstructure:"outputFile"                json:"outputFile"`
+	OutputLogFile             string   `mapstructure:"outputLogFile"              json:"outputLogFile"`
+	OutputLogFileOption       string   `mapstructure:"outputLogFileOption"        json:"outputLogFileOption"`
+	OutputLogConsoleOption    bool     `mapstructure:"outputLogConsoleOption"     json:"outputLogConsoleOption"`
+	BuildWithDebugInformation bool     `mapstructure:"buildWithDebugInformation" json:"buildWithDebugInformation"`
+	BuildWithSource           bool     `mapstructure:"buildWithSource"            json:"buildWithSource"`
+	IncludePath               []string `mapstructure:"includePath"                json:"includePath"`
+	ModulePath                []string `mapstructure:"modulePath"                 json:"modulePath"`
+	LibraryPath               []string `mapstructure:"libraryPath"                json:"libraryPath"`
+	All                       bool     `mapstructure:"all"                        json:"all"`
 }
 
 // ArchiveConfig represents archive command configuration
 type ArchiveConfig struct {
-	OutputFile                 string   `mapstructure:"outputFile"`
-	IncludeCompiledSourceFiles bool     `mapstructure:"includeCompiledSourceFiles"`
-	IncludeCompiledModuleFiles bool     `mapstructure:"includeCompiledModuleFiles"`
-	IncludeFilesNotInWorkspace bool     `mapstructure:"includeFilesNotInWorkspace"`
-	ExtraFileSearchLocations   []string `mapstructure:"extraFileSearchLocations"`
-	ExtraFileArchiveLocation   string   `mapstructure:"extraFileArchiveLocation"`
-	All                        bool     `mapstructure:"all"`
-	IgnoredFiles               []string `mapstructure:"ignoredFiles"`
+	OutputFile                 string   `mapstructure:"outputFile"                 json:"outputFile"`
+	IncludeCompiledSourceFiles bool     `mapstructure:"includeCompiledSourceFiles" json:"includeCompiledSourceFiles"`
+	IncludeCompiledModuleFiles bool     `mapstructure:"includeCompiledModuleFiles" json:"includeCompiledModuleFiles"`
+	IncludeFilesNotInWorkspace bool     `mapstructure:"includeFilesNotInWorkspace" json:"includeFilesNotInWorkspace"`
+	ExtraFileSearchLocations   []string `mapstructure:"extraFileSearchLocations"   json:"extraFileSearchLocations"`
+	ExtraFileArchiveLocation   string   `mapstructure:"extraFileArchiveLocation"   json:"extraFileArchiveLocation"`
+	All                        bool     `mapstructure:"all"                        json:"all"`
+	IgnoredFiles               []string `mapstructure:"ignoredFiles"               json:"ignoredFiles"`
 }
 
 // BuildConfig represents build command configuration
 type BuildConfig struct {
-	NLRC  NLRCConfig  `mapstructure:"nlrc"`
-	Shell ShellConfig `mapstructure:"shell"`
-	All   bool        `mapstructure:"all"`
+	NLRC  NLRCConfig  `mapstructure:"nlrc"  json:"nlrc"`
+	Shell ShellConfig `mapstructure:"shell" json:"shell"`
+	All   bool        `mapstructure:"all"   json:"all"`
 }
 
 // NLRCConfig represents NetLinx compiler configuration
 type NLRCConfig struct {
-	Path        string   `mapstructure:"path"`
-	IncludePath []string `mapstructure:"includePath"`
-	ModulePath  []string `mapstructure:"modulePath"`
-	LibraryPath []string `mapstructure:"libraryPath"`
+	Path        string   `mapstructure:"path"        json:"path"`
+	IncludePath []string `mapstructure:"includePath" json:"includePath"`
+	ModulePath  []string `mapstructure:"modulePath"  json:"modulePath"`
+	LibraryPath []string `mapstructure:"libraryPath" json:"libraryPath"`
 }
 
 // ShellConfig represents shell configuration
 type ShellConfig struct {
-	Path string `mapstructure:"path"`
+	Path string `mapstructure:"path" json:"path"`
 }
 
 var defaultConfig = Config{

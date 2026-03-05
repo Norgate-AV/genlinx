@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/Norgate-AV/genlinx-go/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +18,7 @@ var rootCmd = &cobra.Command{
 Open source CLI tool for NetLinx projects
 Copyright (c) 2025, Norgate AV
 https://github.com/Norgate-AV/genlinx`,
-	Version: "2.7.0",
+	Version: version.Version,
 }
 
 func Execute() error {

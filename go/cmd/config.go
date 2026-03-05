@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	internalconfig "github.com/Norgate-AV/genlinx-go/internal/config"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
 	"github.com/spf13/cobra"
 )
@@ -69,7 +71,7 @@ func configList(global, local bool) error {
 		return nil
 	}
 
-	printConfig(r.Config)
+	printRawFileConfig(r.Path)
 	return nil
 }
 
@@ -250,16 +252,29 @@ func getByDottedKey(m map[string]any, key string) (any, bool) {
 
 // mergePrintConfigs returns a combined map for key lookup (default + global + local).
 func mergePrintConfigs(global, local options.ConfigLoadResult) map[string]any {
-	// Load default as base, then overlay global and local.
+	// Start with defaults as the base layer.
 	m := map[string]any{}
 
+	if def, err := internalconfig.LoadDefaultConfig(); err == nil {
+		if base, err := structToMap(def); err == nil {
+			deepMerge(m, base)
+		}
+	}
+
+	// Overlay raw file contents — only keys explicitly present in the file
+	// are applied, so an empty file (or missing file) contributes nothing.
 	for _, r := range []options.ConfigLoadResult{global, local} {
-		if !r.Found || r.Config == nil {
+		if !r.Found || r.Path == "" {
 			continue
 		}
 
-		overlay, err := structToMap(r.Config)
-		if err != nil {
+		data, err := os.ReadFile(r.Path)
+		if err != nil || len(bytes.TrimSpace(data)) == 0 {
+			continue
+		}
+
+		var overlay map[string]any
+		if err := json.Unmarshal(data, &overlay); err != nil {
 			continue
 		}
 
@@ -290,6 +305,25 @@ func printConfig(v any) {
 		return
 	}
 
+	fmt.Println(string(b))
+}
+
+// printRawFileConfig reads the config file at path and pretty-prints its
+// exact JSON contents. If the file is absent or empty it prints "{}".
+func printRawFileConfig(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil || len(bytes.TrimSpace(data)) == 0 {
+		fmt.Println("{}")
+		return
+	}
+
+	var m any
+	if err := json.Unmarshal(data, &m); err != nil {
+		fmt.Println("{}")
+		return
+	}
+
+	b, _ := json.MarshalIndent(m, "", "  ")
 	fmt.Println(string(b))
 }
 

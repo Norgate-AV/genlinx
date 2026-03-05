@@ -1,91 +1,51 @@
-.PHONY: all build clean test fmt vet mod-tidy
+BIN_DIR := bin
 
-# Go parameters
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
-GOMOD=$(GOCMD) mod
-GOFMT=$(GOCMD) fmt
-GOVET=$(GOCMD) vet
+MODULE := github.com/Norgate-AV/genlinx
 
-# Main package
-MAIN_PACKAGE=.
-BINARY_NAME=genlinx
-BINARY_UNIX=$(BINARY_NAME)_unix
+ifeq ($(OS),Windows_NT)
+	TARGET := genlinx.exe
+else
+	TARGET := genlinx
+endif
 
-# Build the project
-all: clean mod-tidy fmt vet test build
+# Get GOBIN, fallback to GOPATH/bin, then HOME/go/bin
+GOBIN ?= $(shell go env GOBIN)
+ifeq ($(GOBIN),)
+GOBIN := $(shell go env GOPATH)/bin
+endif
+ifeq ($(GOBIN),)
+GOBIN := $(HOME)/go/bin
+endif
 
+# Version info
+VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+GIT_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+VERSION_PKG := $(MODULE)/internal/version
+
+# Compiler Flags
+GOFLAGS := -ldflags="-s -w -extldflags=-static \
+	-X '$(VERSION_PKG).Version=$(VERSION)' \
+	-X '$(VERSION_PKG).GitCommit=$(GIT_COMMIT)' \
+	-X '$(VERSION_PKG).BuildDate=$(BUILD_DATE)'" \
+	-trimpath
+
+.PHONY: build
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v $(MAIN_PACKAGE)
+	CGO_ENABLED=0 go build $(GOFLAGS) -o $(BIN_DIR)/$(TARGET) main.go
 
-build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v $(MAIN_PACKAGE)
-
-build-windows:
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME).exe -v $(MAIN_PACKAGE)
-
+.PHONY: test
 test:
-	$(GOTEST) -v ./...
+	go test -v ./...
 
-test-coverage:
-	$(GOTEST) -race -coverprofile=coverage.out -covermode=atomic ./...
-
+.PHONY: clean
 clean:
-	$(GOCLEAN)
-	rm -f $(BINARY_NAME)
-	rm -f $(BINARY_NAME).exe
-	rm -f $(BINARY_UNIX)
-	rm -f coverage.out
+	rm -rf $(BIN_DIR)
 
-fmt:
-	$(GOFMT) ./...
+.PHONY: run
+run: build
+	./$(BIN_DIR)/$(TARGET)
 
-vet:
-	$(GOVET) ./...
-
-mod-tidy:
-	$(GOMOD) tidy
-
-mod-download:
-	$(GOMOD) download
-
-# Run the application
-run:
-	$(GOBUILD) -o $(BINARY_NAME) -v $(MAIN_PACKAGE)
-	./$(BINARY_NAME)
-
-# Development helpers
-dev: fmt vet test build
-
-# Install dependencies
-deps:
-	$(GOGET) -v ./...
-
-# Cross-platform build
-build-all: build-linux build-windows
-
-# Docker build (if needed)
-docker-build:
-	docker build -t genlinx .
-
-# Help
-help:
-	@echo "Available targets:"
-	@echo "  all          - Run clean, mod-tidy, fmt, vet, test, and build"
-	@echo "  build        - Build the binary for current platform"
-	@echo "  build-linux  - Build for Linux"
-	@echo "  build-windows- Build for Windows"
-	@echo "  test         - Run tests"
-	@echo "  test-coverage- Run tests with coverage"
-	@echo "  clean        - Clean build artifacts"
-	@echo "  fmt          - Format code"
-	@echo "  vet          - Run go vet"
-	@echo "  mod-tidy     - Tidy go modules"
-	@echo "  run          - Build and run the application"
-	@echo "  dev          - Development build (fmt, vet, test, build)"
-	@echo "  deps         - Install dependencies"
-	@echo "  build-all    - Build for Linux and Windows"
-	@echo "  help         - Show this help"
+install: build
+	cp $(BIN_DIR)/$(TARGET) $(GOBIN)/$(TARGET)

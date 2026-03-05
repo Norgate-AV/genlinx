@@ -36,5 +36,11 @@
     },
     "[dotenv]": {
         "editor.formatOnSave": false
+    },
+    "[xml]": {
+        "editor.defaultFormatter": "redhat.vscode-xml"
+    },
+    "[ignore]": {
+        "editor.defaultFormatter": "lumirelle.shell-format-rev"
     }
 }
