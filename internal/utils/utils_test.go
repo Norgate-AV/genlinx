@@ -24,7 +24,7 @@ func (suite *UtilsTestSuite) SetupTest() {
 
 // TearDownTest cleans up the test environment
 func (suite *UtilsTestSuite) TearDownTest() {
-	os.RemoveAll(suite.tempDir)
+	_ = os.RemoveAll(suite.tempDir)
 }
 
 // TestNormalizePath tests path normalization

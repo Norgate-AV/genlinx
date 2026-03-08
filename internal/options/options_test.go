@@ -27,7 +27,7 @@ func (suite *OptionsTestSuite) SetupTest() {
 
 // TearDownTest cleans up the test environment
 func (suite *OptionsTestSuite) TearDownTest() {
-	os.RemoveAll(suite.tempDir)
+	_ = os.RemoveAll(suite.tempDir)
 }
 
 // TestLoadBuildOptions tests loading and merging build options
@@ -127,7 +127,7 @@ func (suite *OptionsTestSuite) TestResolvePaths() {
 	// Change to temp directory for relative path testing
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(suite.tempDir)
 	suite.Require().NoError(err)
@@ -225,7 +225,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfig() {
 	// Change to temp directory
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer func() { _ = os.Chdir(oldWd) }()
 
 	err = os.Chdir(suite.tempDir)
 	suite.Require().NoError(err)
@@ -320,7 +320,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfigFindUp() {
 	// Change to child directory
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(childDir)
 	suite.Require().NoError(err)
@@ -338,7 +338,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfigNoConfig() {
 	// Change to temp directory (no config files)
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(suite.tempDir)
 	suite.Require().NoError(err)

@@ -19,7 +19,7 @@ func Discover(timeout time.Duration) ([]Device, error) {
 		return nil, err
 	}
 
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	if err := conn.SetReadDeadline(time.Now().Add(timeout)); err != nil {
 		return nil, fmt.Errorf("failed to set read deadline: %w", err)
@@ -36,7 +36,7 @@ func DiscoverWithContext(ctx context.Context) ([]Device, error) {
 		return nil, err
 	}
 
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Poll the deadline every 200 ms so the context cancellation is noticed
 	// promptly without blocking indefinitely on ReadFromUDP.
@@ -47,7 +47,7 @@ func DiscoverWithContext(ctx context.Context) ([]Device, error) {
 		case <-ctx.Done():
 			return true
 		default:
-			conn.SetReadDeadline(time.Now().Add(pollInterval))
+			_ = conn.SetReadDeadline(time.Now().Add(pollInterval))
 			return false
 		}
 	}), nil
@@ -69,11 +69,7 @@ func collect(conn *net.UDPConn, done func() bool) []Device {
 	seen := make(map[string]Device)
 	buf := make([]byte, 4096)
 
-	for {
-		if done != nil && done() {
-			break
-		}
-
+	for done == nil || !done() {
 		n, remoteAddr, err := conn.ReadFromUDP(buf)
 		if err != nil {
 			if done != nil && isTimeout(err) {

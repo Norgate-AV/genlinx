@@ -90,7 +90,7 @@ func setupWorkspace(t *testing.T, id string) *apw.APW {
 	// Build() writes the zip to the current working directory.
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
-	t.Cleanup(func() { os.Chdir(oldWd) })
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
 	require.NoError(t, os.Chdir(dir))
 
 	return a
@@ -168,7 +168,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipContains_WorkspaceFile() {
 	zipPath := filepath.Join(wd, "TestWorkspace.zip")
 	zr, err := zip.OpenReader(zipPath)
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found bool
 	for _, f := range zr.File {
@@ -189,7 +189,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipContains_SourceFile() {
 	zipPath := filepath.Join(wd, "TestWorkspace.zip")
 	zr, err := zip.OpenReader(zipPath)
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found bool
 	for _, f := range zr.File {
@@ -209,7 +209,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipEntry_ModuleUsesRelativePath() {
 	wd, _ := os.Getwd()
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found bool
 	for _, f := range zr.File {
@@ -229,7 +229,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipEntry_IncludeUsesRelativePath() {
 	wd, _ := os.Getwd()
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found bool
 	for _, f := range zr.File {
@@ -577,7 +577,7 @@ func captureStdout(t *testing.T, fn func()) string {
 	orig := os.Stdout
 	os.Stdout = w
 	fn()
-	w.Close()
+	require.NoError(t, w.Close())
 	os.Stdout = orig
 
 	var buf bytes.Buffer

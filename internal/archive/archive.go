@@ -69,19 +69,19 @@ func (b *Builder) Build() error {
 	b.zipWriter = zip.NewWriter(f)
 
 	if err := b.addWorkspaceFiles(); err != nil {
-		b.zipWriter.Close()
-		f.Close()
+		_ = b.zipWriter.Close()
+		_ = f.Close()
 		return err
 	}
 
 	if err := b.addExtraFiles(); err != nil {
-		b.zipWriter.Close()
-		f.Close()
+		_ = b.zipWriter.Close()
+		_ = f.Close()
 		return err
 	}
 
 	if err := b.zipWriter.Close(); err != nil {
-		f.Close()
+		_ = f.Close()
 		return fmt.Errorf("failed to finalise zip: %w", err)
 	}
 

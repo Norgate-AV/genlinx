@@ -44,8 +44,8 @@ func PrintTable(devices []Device) {
 	table.Header("IP Address", "System", "Date", "Time", "MAC Address", "Hostname", "ID")
 
 	for _, d := range devices {
-		table.Append(d.IP, d.System, d.Date.Text, d.Time, d.MAC, d.Hostname, d.ID)
+		_ = table.Append(d.IP, d.System, d.Date.Text, d.Time, d.MAC, d.Hostname, d.ID)
 	}
 
-	table.Render()
+	_ = table.Render()
 }

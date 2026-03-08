@@ -25,7 +25,7 @@ func (suite *ConfigTestSuite) SetupTest() {
 
 // TearDownTest cleans up the test environment
 func (suite *ConfigTestSuite) TearDownTest() {
-	os.RemoveAll(suite.tempDir)
+	_ = os.RemoveAll(suite.tempDir)
 }
 
 // TestLoadDefaultConfig tests loading default configuration

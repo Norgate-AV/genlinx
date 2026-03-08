@@ -191,10 +191,7 @@ func (suite *IntegrationTestSuite) TestFindUpIntegration() {
 	assert.True(suite.T(), fileExists(parentConfigPath), "Config file should exist in parent directory")
 
 	// Simple find-up: check if we can find the config by going up one level
-	found := false
-	if fileExists("../.genlinxrc.json") {
-		found = true
-	}
+	found := fileExists("../.genlinxrc.json")
 
 	assert.True(suite.T(), found, "Should find config file via find-up traversal")
 }
