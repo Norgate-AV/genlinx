@@ -53,10 +53,15 @@ func (suite *CompilerTestSuite) TestNewNLRCCompiler() {
 
 // TestBuildArgs tests building command line arguments
 func (suite *CompilerTestSuite) TestBuildArgs() {
+	file1 := filepath.Join(suite.tempDir, "file1.axs")
+	file2 := filepath.Join(suite.tempDir, "file2.axi")
+	suite.Require().NoError(os.WriteFile(file1, []byte{}, 0o644))
+	suite.Require().NoError(os.WriteFile(file2, []byte{}, 0o644))
+
 	compiler := NewNLRCCompiler("test.exe")
 
 	options := CompileOptions{
-		SourceFiles: []string{"file1.axs", "file2.axi"},
+		SourceFiles: []string{file1, file2},
 		CFGFiles:    []string{}, // Empty to test source files path
 		IncludePath: []string{"C:/Include/Path1", "C:/Include/Path2"},
 		ModulePath:  []string{"C:/Module/Path1", "C:/Module/Path2"},
@@ -68,9 +73,9 @@ func (suite *CompilerTestSuite) TestBuildArgs() {
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// Verify source files come first
-	assert.Equal(suite.T(), "file1.axs", args[0])
-	assert.Equal(suite.T(), "file2.axi", args[1])
+	// Verify source files come first as absolute paths
+	assert.Equal(suite.T(), file1, args[0])
+	assert.Equal(suite.T(), file2, args[1])
 
 	// Verify include paths (joined into single arg)
 	assert.Contains(suite.T(), args, "-I\"C:/Include/Path1;C:/Include/Path2\"")
@@ -92,11 +97,16 @@ func (suite *CompilerTestSuite) TestBuildArgs() {
 
 // TestBuildArgsWithCFG tests building arguments with CFG files
 func (suite *CompilerTestSuite) TestBuildArgsWithCFG() {
+	cfg1 := filepath.Join(suite.tempDir, "config1.cfg")
+	cfg2 := filepath.Join(suite.tempDir, "config2.cfg")
+	suite.Require().NoError(os.WriteFile(cfg1, []byte{}, 0o644))
+	suite.Require().NoError(os.WriteFile(cfg2, []byte{}, 0o644))
+
 	compiler := NewNLRCCompiler("test.exe")
 
 	options := CompileOptions{
-		SourceFiles: []string{}, // Empty to test CFG path
-		CFGFiles:    []string{"config1.cfg", "config2.cfg"},
+		SourceFiles: []string{},
+		CFGFiles:    []string{cfg1, cfg2},
 		IncludePath: []string{"C:/Include"},
 		Verbose:     false,
 	}
@@ -104,19 +114,33 @@ func (suite *CompilerTestSuite) TestBuildArgsWithCFG() {
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// Verify CFG files are combined with correct flag
-	assert.Contains(suite.T(), args, "-CFGconfig1.cfg;config2.cfg")
+	// Verify CFG files are combined with correct flag using absolute paths
+	assert.Contains(suite.T(), args, "-CFG"+cfg1+";"+cfg2)
 
 	// Verify include paths are still included
 	assert.Contains(suite.T(), args, "-I\"C:/Include\"")
 }
 
+// TestBuildArgs_CFGFileNotFound verifies that a CFG file that does not exist
+// on disk is rejected before the compiler runs.
+func (suite *CompilerTestSuite) TestBuildArgs_CFGFileNotFound() {
+	compiler := NewNLRCCompiler("test.exe")
+
+	_, err := compiler.BuildArgs(CompileOptions{
+		CFGFiles: []string{filepath.Join(suite.tempDir, "nonexistent.cfg")},
+	})
+	assert.ErrorContains(suite.T(), err, "CFG file not found")
+}
+
 // TestBuildArgsEmptyPaths tests building arguments with empty paths
 func (suite *CompilerTestSuite) TestBuildArgsEmptyPaths() {
+	testFile := filepath.Join(suite.tempDir, "test.axs")
+	suite.Require().NoError(os.WriteFile(testFile, []byte{}, 0o644))
+
 	compiler := NewNLRCCompiler("test.exe")
 
 	options := CompileOptions{
-		SourceFiles: []string{"test.axs"},
+		SourceFiles: []string{testFile},
 		CFGFiles:    []string{},
 		IncludePath: []string{"", "valid/path"}, // Empty string should be ignored
 		ModulePath:  []string{},                 // Empty slice
@@ -127,8 +151,8 @@ func (suite *CompilerTestSuite) TestBuildArgsEmptyPaths() {
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// Should contain source file
-	assert.Contains(suite.T(), args, "test.axs")
+	// Should contain source file as absolute path
+	assert.Contains(suite.T(), args, testFile)
 
 	// Should contain valid include path but not empty one
 	assert.Contains(suite.T(), args, "-I\"valid/path\"")
@@ -145,10 +169,13 @@ func (suite *CompilerTestSuite) TestBuildArgsEmptyPaths() {
 
 // TestBuildArgsNoOptions tests building arguments with minimal options
 func (suite *CompilerTestSuite) TestBuildArgsNoOptions() {
+	minimalFile := filepath.Join(suite.tempDir, "minimal.axs")
+	suite.Require().NoError(os.WriteFile(minimalFile, []byte{}, 0o644))
+
 	compiler := NewNLRCCompiler("test.exe")
 
 	options := CompileOptions{
-		SourceFiles: []string{"minimal.axs"},
+		SourceFiles: []string{minimalFile},
 		CFGFiles:    []string{},
 		Verbose:     false,
 	}
@@ -156,9 +183,9 @@ func (suite *CompilerTestSuite) TestBuildArgsNoOptions() {
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// Should only contain the source file
+	// Should only contain the source file as an absolute path
 	assert.Len(suite.T(), args, 1)
-	assert.Equal(suite.T(), "minimal.axs", args[0])
+	assert.Equal(suite.T(), minimalFile, args[0])
 }
 
 // TestCompileOptionsStruct tests the CompileOptions struct
@@ -220,10 +247,13 @@ func (suite *CompilerTestSuite) TestCompilerInterface() {
 
 // TestBuildArgsOrder tests that arguments are built in the correct order
 func (suite *CompilerTestSuite) TestBuildArgsOrder() {
+	sourceFile := filepath.Join(suite.tempDir, "source.axs")
+	suite.Require().NoError(os.WriteFile(sourceFile, []byte{}, 0o644))
+
 	compiler := NewNLRCCompiler("test.exe")
 
 	options := CompileOptions{
-		SourceFiles: []string{"source.axs"},
+		SourceFiles: []string{sourceFile},
 		CFGFiles:    []string{}, // Empty to use source files
 		IncludePath: []string{"include"},
 		ModulePath:  []string{"module"},
@@ -235,8 +265,8 @@ func (suite *CompilerTestSuite) TestBuildArgsOrder() {
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// Source files should be first
-	assert.Equal(suite.T(), "source.axs", args[0])
+	// Source file should be first as an absolute path
+	assert.Equal(suite.T(), sourceFile, args[0])
 
 	// Find positions of different argument types
 	sourcePos := -1
@@ -247,7 +277,7 @@ func (suite *CompilerTestSuite) TestBuildArgsOrder() {
 
 	for i, arg := range args {
 		switch {
-		case arg == "source.axs":
+		case arg == sourceFile:
 			sourcePos = i
 		case strings.HasPrefix(arg, "-I"):
 			includePos = i
@@ -356,21 +386,24 @@ func (suite *CompilerTestSuite) TestParseOutput_ErrorPrecedesWarningKeyword() {
 // CFGFiles and SourceFiles are provided, CFG mode is used exclusively and the
 // source files are not added to the argument list.
 func (suite *CompilerTestSuite) TestBuildArgs_CFGTakesPrecedenceOverSourceFiles() {
+	cfgFile := filepath.Join(suite.tempDir, "project.cfg")
+	suite.Require().NoError(os.WriteFile(cfgFile, []byte{}, 0o644))
+
 	compiler := NewNLRCCompiler("test.exe")
 	options := CompileOptions{
 		SourceFiles: []string{"should_be_ignored.axs"},
-		CFGFiles:    []string{"project.cfg"},
+		CFGFiles:    []string{cfgFile},
 	}
 
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// The -CFG flag must be present
-	assert.Contains(suite.T(), args, "-CFGproject.cfg")
+	// The -CFG flag must be present with the absolute path
+	assert.Contains(suite.T(), args, "-CFG"+cfgFile)
 
 	// Source files must NOT appear
 	for _, arg := range args {
-		assert.NotEqual(suite.T(), "should_be_ignored.axs", arg,
+		assert.NotContains(suite.T(), arg, "should_be_ignored.axs",
 			"source file should be ignored when CFG files are provided")
 	}
 }
@@ -397,7 +430,6 @@ func (suite *CompilerTestSuite) TestBuildArgs_BothSourceAndCFGEmpty() {
 // TestBuildArgs_SourceFileExistsOnDisk verifies that a source file that exists
 // on the filesystem is resolved to its absolute path in the argument list.
 func (suite *CompilerTestSuite) TestBuildArgs_SourceFileExistsOnDisk() {
-	// Create a real source file in the temp directory
 	sourceFile := filepath.Join(suite.tempDir, "TestMain.axs")
 	suite.Require().NoError(os.WriteFile(sourceFile, []byte("PROGRAM_NAME='TestMain'\n"), 0o644))
 
@@ -416,12 +448,38 @@ func (suite *CompilerTestSuite) TestBuildArgs_SourceFileExistsOnDisk() {
 	assert.Equal(suite.T(), sourceFile, args[0])
 }
 
+// TestBuildArgs_InvalidExtension verifies that a file with an unsupported
+// extension (including bare flags like "-") is rejected before the compiler runs.
+func (suite *CompilerTestSuite) TestBuildArgs_InvalidExtension() {
+	compiler := NewNLRCCompiler("test.exe")
+
+	for _, name := range []string{"-", "file.txt", "file", "file.cfg"} {
+		_, err := compiler.BuildArgs(CompileOptions{SourceFiles: []string{name}})
+		assert.ErrorContains(suite.T(), err, ".axs or .axi extension",
+			"expected extension error for %q", name)
+	}
+}
+
+// TestBuildArgs_SourceFileNotFound verifies that a well-formed filename that
+// does not exist on disk is rejected before the compiler runs.
+func (suite *CompilerTestSuite) TestBuildArgs_SourceFileNotFound() {
+	compiler := NewNLRCCompiler("test.exe")
+
+	_, err := compiler.BuildArgs(CompileOptions{
+		SourceFiles: []string{filepath.Join(suite.tempDir, "nonexistent.axs")},
+	})
+	assert.ErrorContains(suite.T(), err, "source file not found")
+}
+
 // TestCompile_BadExecutable verifies that Compile returns an error whose message
 // contains "failed to start compiler" when the executable does not exist.
 func (suite *CompilerTestSuite) TestCompile_BadExecutable() {
+	sourceFile := filepath.Join(suite.tempDir, "test.axs")
+	suite.Require().NoError(os.WriteFile(sourceFile, []byte{}, 0o644))
+
 	compiler := NewNLRCCompiler("/no/such/compiler/nlrc.exe")
 	options := CompileOptions{
-		SourceFiles: []string{"test.axs"},
+		SourceFiles: []string{sourceFile},
 	}
 
 	result, err := compiler.Compile(options)
@@ -479,13 +537,18 @@ func (suite *CompilerTestSuite) TestReadOutput_StreamsAllOutput() {
 func (suite *CompilerTestSuite) TestCompile_AlwaysStreamsOutput() {
 	const fakeOutput = "Compiling placeholder.axs..."
 
+	// BuildArgs now validates that source files exist on disk, so we need a
+	// real file to pass through the validation before the fake compiler runs.
+	placeholder := filepath.Join(suite.tempDir, "placeholder.axs")
+	suite.Require().NoError(os.WriteFile(placeholder, []byte{}, 0o644))
+
 	captured := captureStdout(func() {
 		c := &NLRCCompiler{
 			ExecutablePath: os.Args[0],
 			env:            append(os.Environ(), "GENLINX_FAKE_COMPILER="+fakeOutput),
 		}
 		_, _ = c.Compile(CompileOptions{
-			SourceFiles: []string{"placeholder.axs"},
+			SourceFiles: []string{placeholder},
 			Verbose:     false, // output must still stream regardless
 		})
 	})

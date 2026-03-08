@@ -131,22 +131,40 @@ func (c *NLRCCompiler) BuildArgs(options CompileOptions) ([]string, error) {
 	var args []string
 
 	// Add source files first (they must come before options and be absolute paths)
-	if len(options.CFGFiles) > 0 {
-		cfgArg := cfgFlag + strings.Join(options.CFGFiles, pathDelimiter)
-		args = append(args, cfgArg)
-	} else if len(options.SourceFiles) > 0 {
-		// Convert source files to absolute paths if they exist
-		for i, file := range options.SourceFiles {
-			if path, err := filepath.Abs(file); err == nil {
-				// Check if the file exists or if it's an absolute path already
-				if _, err := os.Stat(file); err == nil || filepath.IsAbs(file) {
-					options.SourceFiles[i] = path
-				}
-
-				// If file doesn't exist and is relative, keep the original path
+	switch {
+	case len(options.CFGFiles) > 0:
+		for i, file := range options.CFGFiles {
+			abs, err := filepath.Abs(file)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve path for %q: %w", file, err)
 			}
 
-			// If we can't get absolute path, keep the original
+			if _, err := os.Stat(abs); err != nil {
+				return nil, fmt.Errorf("CFG file not found: %s", abs)
+			}
+
+			options.CFGFiles[i] = abs
+		}
+
+		cfgArg := cfgFlag + strings.Join(options.CFGFiles, pathDelimiter)
+		args = append(args, cfgArg)
+	case len(options.SourceFiles) > 0:
+		for i, file := range options.SourceFiles {
+			ext := strings.ToLower(filepath.Ext(file))
+			if ext != ".axs" && ext != ".axi" {
+				return nil, fmt.Errorf("invalid source file %q: must have .axs or .axi extension", file)
+			}
+
+			abs, err := filepath.Abs(file)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve path for %q: %w", file, err)
+			}
+
+			if _, err := os.Stat(abs); err != nil {
+				return nil, fmt.Errorf("source file not found: %s", abs)
+			}
+
+			options.SourceFiles[i] = abs
 		}
 
 		args = append(args, options.SourceFiles...)
