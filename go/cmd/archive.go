@@ -1,17 +1,15 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/Norgate-AV/genlinx-go/internal/apw"
 	"github.com/Norgate-AV/genlinx-go/internal/archive"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
+	"github.com/Norgate-AV/genlinx-go/internal/prompt"
 	"github.com/Norgate-AV/genlinx-go/internal/utils"
 )
 
@@ -108,7 +106,7 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 	// -----------------------------------------------------------------------
 
 	if !opts.All && len(workspaceFiles) > 1 {
-		selected, err := selectWorkspaceFiles(workspaceFiles)
+		selected, err := prompt.SelectFiles(workspaceFiles)
 		if err != nil {
 			return fmt.Errorf("file selection failed: %w", err)
 		}
@@ -145,48 +143,6 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 	}
 
 	return nil
-}
-
-// selectWorkspaceFiles presents a numbered list of workspace files and asks the
-// user to pick one or more by index (comma-separated). Pressing Enter without
-// input selects all files. This mirrors the TypeScript @inquirer/prompts
-// checkbox behaviour.
-func selectWorkspaceFiles(files []string) ([]string, error) {
-	fmt.Println("Select workspace file(s):")
-
-	for i, f := range files {
-		fmt.Printf("  [%d] %s\n", i, f)
-	}
-
-	fmt.Print("Enter comma-separated indices (or press Enter to select all): ")
-
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-
-	line := strings.TrimSpace(scanner.Text())
-
-	if line == "" {
-		return files, nil
-	}
-
-	var selected []string
-
-	for _, part := range strings.Split(line, ",") {
-		part = strings.TrimSpace(part)
-
-		idx, err := strconv.Atoi(part)
-		if err != nil || idx < 0 || idx >= len(files) {
-			return nil, fmt.Errorf("invalid selection %q", part)
-		}
-
-		selected = append(selected, files[idx])
-	}
-
-	if len(selected) == 0 {
-		return nil, fmt.Errorf("you must choose at least one file")
-	}
-
-	return selected, nil
 }
 
 func init() {

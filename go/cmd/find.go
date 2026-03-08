@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"
 
 	"github.com/Norgate-AV/genlinx-go/internal/find"
@@ -25,22 +27,42 @@ func runFind(cmd *cobra.Command, args []string) error {
 	watch, _ := cmd.Flags().GetBool("watch")
 
 	var devices []find.Device
-	var err error
+	var discoverErr error
 
 	if watch {
-		fmt.Fprintln(os.Stderr, "Listening for NetLinx devices... (press Ctrl+C to stop)")
-
 		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
 
-		devices, err = find.DiscoverWithContext(ctx)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			devices, discoverErr = find.DiscoverWithContext(ctx)
+		}()
+
+		spinErr := spinner.New().
+			Title("Listening for NetLinx devices... (press Ctrl+C to stop)").
+			Context(ctx).
+			Run()
+		if spinErr != nil && ctx.Err() == nil {
+			return spinErr
+		}
+
+		wg.Wait()
 	} else {
-		fmt.Fprintln(os.Stderr, "Listening for NetLinx devices...")
-		devices, err = find.Discover(time.Duration(timeoutMs) * time.Millisecond)
+		err := spinner.New().
+			Title("Listening for NetLinx devices...").
+			Action(func() {
+				devices, discoverErr = find.Discover(time.Duration(timeoutMs) * time.Millisecond)
+			}).
+			Run()
+		if err != nil {
+			return err
+		}
 	}
 
-	if err != nil {
-		return err
+	if discoverErr != nil {
+		return discoverErr
 	}
 
 	if len(devices) == 0 {

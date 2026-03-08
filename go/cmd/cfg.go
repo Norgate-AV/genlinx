@@ -9,6 +9,7 @@ import (
 	"github.com/Norgate-AV/genlinx-go/internal/apw"
 	gocfg "github.com/Norgate-AV/genlinx-go/internal/cfg"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
+	"github.com/Norgate-AV/genlinx-go/internal/prompt"
 	"github.com/Norgate-AV/genlinx-go/internal/utils"
 )
 
@@ -113,7 +114,7 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 	// -----------------------------------------------------------------------
 
 	if !opts.All && len(workspaceFiles) > 1 {
-		selected, err := selectWorkspaceFiles(workspaceFiles)
+		selected, err := prompt.SelectFiles(workspaceFiles)
 		if err != nil {
 			return fmt.Errorf("file selection failed: %w", err)
 		}

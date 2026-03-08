@@ -13,10 +13,12 @@ import (
 const AppName = "genlinx"
 
 var rootCmd = &cobra.Command{
-	Use:     AppName,
-	Short:   "CLI utility for NetLinx projects 🚀🚀🚀",
-	Long:    getBanner(),
-	Version: version.Version,
+	Use:           AppName,
+	Short:         "CLI utility for NetLinx projects 🚀🚀🚀",
+	Long:          getBanner(),
+	Version:       version.Version,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 func getBanner() string {
