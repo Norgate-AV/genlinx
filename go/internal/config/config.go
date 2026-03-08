@@ -166,7 +166,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Normalize all paths in the configuration
-	normalizeConfigPaths(&config)
+	NormalizeConfigPaths(&config)
 
 	return &config, nil
 }
@@ -181,8 +181,8 @@ func SaveConfig(config *Config, filename string) error {
 	return v.WriteConfigAs(filename)
 }
 
-// normalizeConfigPaths normalizes all paths in the configuration to OS-specific format
-func normalizeConfigPaths(config *Config) {
+// NormalizeConfigPaths normalizes all paths in the configuration to OS-specific format
+func NormalizeConfigPaths(config *Config) {
 	// Normalize CFG paths
 	config.CFG.IncludePath = utils.NormalizePaths(config.CFG.IncludePath)
 	config.CFG.ModulePath = utils.NormalizePaths(config.CFG.ModulePath)
@@ -205,7 +205,7 @@ func LoadDefaultConfig() (*Config, error) {
 	config := defaultConfig
 
 	// Normalize all paths in the default configuration
-	normalizeConfigPaths(&config)
+	NormalizeConfigPaths(&config)
 
 	return &config, nil
 }

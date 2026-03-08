@@ -49,6 +49,13 @@ func (suite *UtilsTestSuite) TestNormalizePath() {
 			input:    "./foo/../bar",
 			expected: filepath.FromSlash("bar"),
 		},
+		{
+			// Regression: filepath.Clean("") returns "." which would then be
+			// treated as a non-empty path and override config defaults.
+			name:     "empty string stays empty",
+			input:    "",
+			expected: "",
+		},
 	}
 
 	for _, tt := range tests {

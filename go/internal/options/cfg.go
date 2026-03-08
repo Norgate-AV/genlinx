@@ -1,10 +1,7 @@
 package options
 
 import (
-	"fmt"
-
 	gocfg "github.com/Norgate-AV/genlinx-go/internal/cfg"
-	"github.com/Norgate-AV/genlinx-go/internal/config"
 )
 
 // CfgCLIOptions holds the raw values parsed from the cfg command flags.
@@ -32,28 +29,10 @@ type CfgCLIOptions struct {
 // LoadCfgOptions loads and merges CFG options from defaults, global config,
 // local config, and CLI flags – in that order of precedence.
 func LoadCfgOptions(cliOpts *CfgCLIOptions) (*gocfg.Options, *ConfigLoadInfo, error) {
-	defaultCfg, err := config.LoadDefaultConfig()
+	mergedCfg, configInfo, err := LoadMergedConfig()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load default config: %w", err)
+		return nil, nil, err
 	}
-
-	globalResult, err := loadGlobalConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load global config: %w", err)
-	}
-
-	localResult, err := loadLocalConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load local config: %w", err)
-	}
-
-	configInfo := &ConfigLoadInfo{
-		DefaultLoaded: true,
-		GlobalResult:  globalResult,
-		LocalResult:   localResult,
-	}
-
-	mergedCfg := mergeConfigs(defaultCfg, globalResult.Config, localResult.Config)
 
 	opts := &gocfg.Options{
 		OutputFileSuffix:          mergedCfg.CFG.OutputFile,

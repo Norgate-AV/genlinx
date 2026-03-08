@@ -66,7 +66,7 @@ func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 		},
 	}
 
-	normalizeConfigPaths(config)
+	NormalizeConfigPaths(config)
 
 	// Test normalized paths
 	assert.Equal(suite.T(), filepath.FromSlash("C:/normalized"), config.CFG.IncludePath[0])

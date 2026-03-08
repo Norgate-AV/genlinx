@@ -139,10 +139,10 @@ func (c *NLRCCompiler) BuildArgs(options CompileOptions) ([]string, error) {
 		}
 	}
 
-	// Add module paths (flag with nested quotes for -M format)
+	// Add module paths as semicolon-joined list with -M flag
 	if len(options.ModulePath) > 0 {
 		combinedModulePath := strings.Join(options.ModulePath, ";")
-		args = append(args, "-M\"-M"+combinedModulePath+"\"")
+		args = append(args, "-M\""+combinedModulePath+"\"")
 	}
 
 	// Add library paths (flag with quoted path)

@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
-	internalconfig "github.com/Norgate-AV/genlinx-go/internal/config"
 	"github.com/Norgate-AV/genlinx-go/internal/options"
 )
 
@@ -55,10 +55,14 @@ func runConfig(cmd *cobra.Command, args []string) error {
 
 func configList(global, local bool) error {
 	if !global && !local {
-		// Combined config (global + local merged).
-		globalResult, _ := options.LoadGlobalConfig()
-		localResult, _ := options.LoadLocalConfig()
-		printMergedConfig(globalResult, localResult)
+		// Combined config: default < global < local, fully normalized and deduplicated.
+		// Use the same merge path as the actual build/archive/cfg commands so the
+		// display always matches what those commands will use.
+		mergedCfg, _, err := options.LoadMergedConfig()
+		if err != nil {
+			return err
+		}
+		printConfig(mergedCfg)
 		return nil
 	}
 
@@ -131,10 +135,10 @@ func configEdit(global, local bool) error {
 func configGet(key string, global, local bool) error {
 	if !global && !local {
 		// Query the merged config.
-		globalResult, _ := options.LoadGlobalConfig()
-		localResult, _ := options.LoadLocalConfig()
-
-		merged := mergePrintConfigs(globalResult, localResult)
+		merged, err := mergePrintConfigs()
+		if err != nil {
+			return err
+		}
 
 		value, found := getByDottedKey(merged, key)
 		if !found {
@@ -252,51 +256,13 @@ func getByDottedKey(m map[string]any, key string) (any, bool) {
 }
 
 // mergePrintConfigs returns a combined map for key lookup (default + global + local).
-func mergePrintConfigs(global, local options.ConfigLoadResult) map[string]any {
-	// Start with defaults as the base layer.
-	m := map[string]any{}
-
-	if def, err := internalconfig.LoadDefaultConfig(); err == nil {
-		if base, err := structToMap(def); err == nil {
-			deepMerge(m, base)
-		}
+func mergePrintConfigs() (map[string]any, error) {
+	mergedCfg, _, err := options.LoadMergedConfig()
+	if err != nil {
+		return nil, err
 	}
 
-	// Overlay raw file contents — only keys explicitly present in the file
-	// are applied, so an empty file (or missing file) contributes nothing.
-	for _, r := range []options.ConfigLoadResult{global, local} {
-		if !r.Found || r.Path == "" {
-			continue
-		}
-
-		data, err := os.ReadFile(r.Path)
-		if err != nil || len(bytes.TrimSpace(data)) == 0 {
-			continue
-		}
-
-		var overlay map[string]any
-		if err := json.Unmarshal(data, &overlay); err != nil {
-			continue
-		}
-
-		deepMerge(m, overlay)
-	}
-
-	return m
-}
-
-// deepMerge merges src into dst, recursing into nested maps.
-func deepMerge(dst, src map[string]any) {
-	for k, v := range src {
-		if srcMap, ok := v.(map[string]any); ok {
-			if dstMap, ok := dst[k].(map[string]any); ok {
-				deepMerge(dstMap, srcMap)
-				continue
-			}
-		}
-
-		dst[k] = v
-	}
+	return structToMap(mergedCfg)
 }
 
 func printConfig(v any) {
@@ -310,7 +276,9 @@ func printConfig(v any) {
 }
 
 // printRawFileConfig reads the config file at path and pretty-prints its
-// exact JSON contents. If the file is absent or empty it prints "{}".
+// contents as JSON. Supports both JSON and YAML file formats, preserving the
+// original key casing from the file.
+// If the file is absent or empty it prints "{}".
 func printRawFileConfig(path string) {
 	data, err := os.ReadFile(path)
 	if err != nil || len(bytes.TrimSpace(data)) == 0 {
@@ -318,20 +286,23 @@ func printRawFileConfig(path string) {
 		return
 	}
 
+	ext := strings.ToLower(filepath.Ext(path))
+
 	var m any
-	if err := json.Unmarshal(data, &m); err != nil {
-		fmt.Println("{}")
-		return
+	if ext == ".yaml" || ext == ".yml" {
+		if err := yaml.Unmarshal(data, &m); err != nil {
+			fmt.Println("{}")
+			return
+		}
+	} else {
+		if err := json.Unmarshal(data, &m); err != nil {
+			fmt.Println("{}")
+			return
+		}
 	}
 
 	b, _ := json.MarshalIndent(m, "", "  ")
 	fmt.Println(string(b))
-}
-
-// printMergedConfig pretty-prints the merged (global + local) configuration.
-func printMergedConfig(global, local options.ConfigLoadResult) {
-	m := mergePrintConfigs(global, local)
-	printConfig(m)
 }
 
 func printValue(v any) {

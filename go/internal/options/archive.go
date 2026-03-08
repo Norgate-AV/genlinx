@@ -1,10 +1,7 @@
 package options
 
 import (
-	"fmt"
-
 	"github.com/Norgate-AV/genlinx-go/internal/archive"
-	"github.com/Norgate-AV/genlinx-go/internal/config"
 )
 
 // ArchiveCLIOptions holds the raw values parsed from archive command flags.
@@ -29,28 +26,10 @@ type ArchiveCLIOptions struct {
 // LoadArchiveOptions loads and merges archive options from defaults, global
 // config, local config, and CLI flags – in that order of precedence.
 func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLoadInfo, error) {
-	defaultCfg, err := config.LoadDefaultConfig()
+	mergedCfg, configInfo, err := LoadMergedConfig()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load default config: %w", err)
+		return nil, nil, err
 	}
-
-	globalResult, err := loadGlobalConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load global config: %w", err)
-	}
-
-	localResult, err := loadLocalConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load local config: %w", err)
-	}
-
-	configInfo := &ConfigLoadInfo{
-		DefaultLoaded: true,
-		GlobalResult:  globalResult,
-		LocalResult:   localResult,
-	}
-
-	mergedCfg := mergeConfigs(defaultCfg, globalResult.Config, localResult.Config)
 
 	opts := &archive.Options{
 		OutputFileSuffix:           mergedCfg.Archive.OutputFile,

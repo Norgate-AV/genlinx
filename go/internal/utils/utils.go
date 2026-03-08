@@ -42,14 +42,16 @@ func FindFilesByExtension(dir, ext string) ([]string, error) {
 	return files, nil
 }
 
-// NormalizePath converts a path to the OS-specific format
-// This allows users to use forward slashes in config files on Windows
+// NormalizePath converts a path to the OS-specific format.
+// This allows users to use forward slashes in config files on Windows.
+// An empty string is returned unchanged; filepath.Clean("") returns "."
+// which would otherwise be treated as a non-empty path.
 func NormalizePath(path string) string {
-	// Clean the path first to handle any inconsistencies
-	cleanPath := filepath.Clean(path)
+	if path == "" {
+		return ""
+	}
 
-	// Convert to OS-specific separators
-	return filepath.FromSlash(cleanPath)
+	return filepath.FromSlash(filepath.Clean(path))
 }
 
 // NormalizePaths normalizes a slice of paths

@@ -83,35 +83,49 @@ type ConfigLoadInfo struct {
 	LocalResult   ConfigLoadResult
 }
 
-// LoadBuildOptions loads and merges build options from all sources
-func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, error) {
-	// Load default configuration
+// LoadMergedConfig is the central config-merge entry point, equivalent to
+// getAppConfig() in the TypeScript implementation.  It loads the default,
+// global, and local configs, merges them in order of increasing precedence
+// (default < global < local) and returns the fully-merged config together
+// with load metadata.  Every command-specific Load*Options function calls
+// this rather than duplicating the load/merge boilerplate.
+func LoadMergedConfig() (*config.Config, *ConfigLoadInfo, error) {
 	defaultCfg, err := config.LoadDefaultConfig()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load default config: %w", err)
 	}
 
-	// Load global configuration
-	globalResult, err := loadGlobalConfig()
+	globalResult, err := LoadGlobalConfig()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load global config: %w", err)
 	}
 
-	// Load local configuration
-	localResult, err := loadLocalConfig()
+	localResult, err := LoadLocalConfig()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load local config: %w", err)
 	}
 
-	// Create config load info
 	configInfo := &ConfigLoadInfo{
 		DefaultLoaded: true,
 		GlobalResult:  globalResult,
 		LocalResult:   localResult,
 	}
 
-	// Merge configurations in order of precedence: default -> global -> local -> CLI
 	mergedCfg := mergeConfigs(defaultCfg, globalResult.Config, localResult.Config)
+
+	if err := resolveConfigPaths(mergedCfg); err != nil {
+		return nil, nil, fmt.Errorf("failed to resolve config paths: %w", err)
+	}
+
+	return mergedCfg, configInfo, nil
+}
+
+// LoadBuildOptions loads and merges build options from all sources
+func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, error) {
+	mergedCfg, configInfo, err := LoadMergedConfig()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Create build options from merged config
 	opts := &BuildOptions{
@@ -212,20 +226,10 @@ func GlobalConfigPath() (string, error) {
 	return filepath.Join(dir, "config.json"), nil
 }
 
-// LoadGlobalConfig is an exported wrapper around the internal loadGlobalConfig.
-func LoadGlobalConfig() (ConfigLoadResult, error) {
-	return loadGlobalConfig()
-}
-
-// LoadLocalConfig is an exported wrapper around the internal loadLocalConfig.
-func LoadLocalConfig() (ConfigLoadResult, error) {
-	return loadLocalConfig()
-}
-
-// loadGlobalConfig loads the global configuration file.
+// LoadGlobalConfig loads the global configuration file.
 // It searches each candidate directory (from globalConfigDirs) for config.json,
 // config.yaml, or config.yml and returns the first one successfully loaded.
-func loadGlobalConfig() (ConfigLoadResult, error) {
+func LoadGlobalConfig() (ConfigLoadResult, error) {
 	v := viper.New()
 
 	dirs, err := globalConfigDirs()
@@ -252,6 +256,8 @@ func loadGlobalConfig() (ConfigLoadResult, error) {
 				continue
 			}
 
+			config.NormalizeConfigPaths(&cfg)
+
 			return ConfigLoadResult{
 				Config: &cfg,
 				Path:   configFile,
@@ -263,8 +269,8 @@ func loadGlobalConfig() (ConfigLoadResult, error) {
 	return ConfigLoadResult{Config: &config.Config{}, Path: "", Found: false}, nil
 }
 
-// loadLocalConfig loads the local configuration file using find-up approach
-func loadLocalConfig() (ConfigLoadResult, error) {
+// LoadLocalConfig loads the local configuration file using find-up approach
+func LoadLocalConfig() (ConfigLoadResult, error) {
 	v := viper.New()
 
 	// Get current working directory
@@ -307,6 +313,7 @@ func loadLocalConfig() (ConfigLoadResult, error) {
 				if err := v.Unmarshal(&cfg); err != nil {
 					continue // Try next file
 				}
+				config.NormalizeConfigPaths(&cfg)
 				// Successfully loaded config
 				return ConfigLoadResult{
 					Config: &cfg,
@@ -333,6 +340,65 @@ func loadLocalConfig() (ConfigLoadResult, error) {
 	}, nil
 }
 
+// resolveConfigPaths resolves all relative paths in cfg to absolute paths
+// using the current working directory. This mirrors the TS implementation which
+// resolves paths at merge time so that config --list and the build commands
+// always show/use fully-qualified paths.
+func resolveConfigPaths(cfg *config.Config) error {
+	abs := func(p string) (string, error) {
+		if p == "" {
+			return p, nil
+		}
+		return filepath.Abs(p)
+	}
+
+	absSlice := func(paths []string) error {
+		for i, p := range paths {
+			resolved, err := abs(p)
+			if err != nil {
+				return err
+			}
+			paths[i] = resolved
+		}
+		return nil
+	}
+
+	var err error
+
+	if cfg.Build.NLRC.Path, err = abs(cfg.Build.NLRC.Path); err != nil {
+		return fmt.Errorf("build.nlrc.path: %w", err)
+	}
+	if err = absSlice(cfg.Build.NLRC.IncludePath); err != nil {
+		return fmt.Errorf("build.nlrc.includePath: %w", err)
+	}
+	if err = absSlice(cfg.Build.NLRC.ModulePath); err != nil {
+		return fmt.Errorf("build.nlrc.modulePath: %w", err)
+	}
+	if err = absSlice(cfg.Build.NLRC.LibraryPath); err != nil {
+		return fmt.Errorf("build.nlrc.libraryPath: %w", err)
+	}
+	if cfg.Build.Shell.Path, err = abs(cfg.Build.Shell.Path); err != nil {
+		return fmt.Errorf("build.shell.path: %w", err)
+	}
+	if err = absSlice(cfg.CFG.IncludePath); err != nil {
+		return fmt.Errorf("cfg.includePath: %w", err)
+	}
+	if err = absSlice(cfg.CFG.ModulePath); err != nil {
+		return fmt.Errorf("cfg.modulePath: %w", err)
+	}
+	if err = absSlice(cfg.CFG.LibraryPath); err != nil {
+		return fmt.Errorf("cfg.libraryPath: %w", err)
+	}
+	if err = absSlice(cfg.Archive.ExtraFileSearchLocations); err != nil {
+		return fmt.Errorf("archive.extraFileSearchLocations: %w", err)
+	}
+	// NOTE: ExtraFileArchiveLocation is an output destination resolved at
+	// command execution time (relative to the project root), not at config
+	// load time — leave it as-is, mirroring the TS implementation.
+
+	return nil
+}
+
 // mergeConfigs merges multiple configurations with precedence (later configs override earlier ones)
 func mergeConfigs(configs ...*config.Config) *config.Config {
 	if len(configs) == 0 {
@@ -353,13 +419,13 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 			result.Build.NLRC.Path = cfg.Build.NLRC.Path
 		}
 		if len(cfg.Build.NLRC.IncludePath) > 0 {
-			result.Build.NLRC.IncludePath = append(result.Build.NLRC.IncludePath, cfg.Build.NLRC.IncludePath...)
+			result.Build.NLRC.IncludePath = prependAndDeduplicate(result.Build.NLRC.IncludePath, cfg.Build.NLRC.IncludePath)
 		}
 		if len(cfg.Build.NLRC.ModulePath) > 0 {
-			result.Build.NLRC.ModulePath = append(result.Build.NLRC.ModulePath, cfg.Build.NLRC.ModulePath...)
+			result.Build.NLRC.ModulePath = prependAndDeduplicate(result.Build.NLRC.ModulePath, cfg.Build.NLRC.ModulePath)
 		}
 		if len(cfg.Build.NLRC.LibraryPath) > 0 {
-			result.Build.NLRC.LibraryPath = append(result.Build.NLRC.LibraryPath, cfg.Build.NLRC.LibraryPath...)
+			result.Build.NLRC.LibraryPath = prependAndDeduplicate(result.Build.NLRC.LibraryPath, cfg.Build.NLRC.LibraryPath)
 		}
 		if cfg.Build.Shell.Path != "" {
 			result.Build.Shell.Path = cfg.Build.Shell.Path
@@ -373,13 +439,13 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 			result.CFG.OutputFile = cfg.CFG.OutputFile
 		}
 		if len(cfg.CFG.IncludePath) > 0 {
-			result.CFG.IncludePath = append(result.CFG.IncludePath, cfg.CFG.IncludePath...)
+			result.CFG.IncludePath = prependAndDeduplicate(result.CFG.IncludePath, cfg.CFG.IncludePath)
 		}
 		if len(cfg.CFG.ModulePath) > 0 {
-			result.CFG.ModulePath = append(result.CFG.ModulePath, cfg.CFG.ModulePath...)
+			result.CFG.ModulePath = prependAndDeduplicate(result.CFG.ModulePath, cfg.CFG.ModulePath)
 		}
 		if len(cfg.CFG.LibraryPath) > 0 {
-			result.CFG.LibraryPath = append(result.CFG.LibraryPath, cfg.CFG.LibraryPath...)
+			result.CFG.LibraryPath = prependAndDeduplicate(result.CFG.LibraryPath, cfg.CFG.LibraryPath)
 		}
 
 		// Merge Archive config
@@ -387,7 +453,7 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 			result.Archive.OutputFile = cfg.Archive.OutputFile
 		}
 		if len(cfg.Archive.ExtraFileSearchLocations) > 0 {
-			result.Archive.ExtraFileSearchLocations = append(result.Archive.ExtraFileSearchLocations, cfg.Archive.ExtraFileSearchLocations...)
+			result.Archive.ExtraFileSearchLocations = prependAndDeduplicate(result.Archive.ExtraFileSearchLocations, cfg.Archive.ExtraFileSearchLocations)
 		}
 		if cfg.Archive.ExtraFileArchiveLocation != "" {
 			result.Archive.ExtraFileArchiveLocation = cfg.Archive.ExtraFileArchiveLocation

@@ -62,17 +62,13 @@ func (suite *CompilerTestSuite) TestBuildArgs() {
 	assert.Contains(suite.T(), args, "-I\"C:/Include/Path1\"")
 	assert.Contains(suite.T(), args, "-I\"C:/Include/Path2\"")
 
-	// Verify module paths (should be combined with -M flag)
-	moduleArg := ""
+	// Verify module paths (should be combined into single -M"path1;path2" flag)
+	assert.Contains(suite.T(), args, "-M\"C:/Module/Path1;C:/Module/Path2\"")
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "-M\"-M") {
-			moduleArg = arg
-			break
+		if strings.HasPrefix(arg, "-M") {
+			assert.False(suite.T(), strings.HasPrefix(arg, "-M\"-M"), "module arg must not have double -M prefix: %s", arg)
 		}
 	}
-	assert.NotEmpty(suite.T(), moduleArg)
-	assert.Contains(suite.T(), moduleArg, "C:/Module/Path1")
-	assert.Contains(suite.T(), moduleArg, "C:/Module/Path2")
 
 	// Verify library paths
 	assert.Contains(suite.T(), args, "-L\"C:/Library/Path1\"")
