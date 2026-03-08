@@ -1,7 +1,7 @@
 APP_NAME := genlinx
 BIN_DIR := bin
 
-MODULE := github.com/Norgate-AV/genlinx-go
+MODULE := github.com/Norgate-AV/genlinx
 
 TARGET := $(APP_NAME)
 ifeq ($(OS),Windows_NT)
@@ -31,13 +31,9 @@ GOFLAGS := -ldflags="-s -w -extldflags=-static \
 	-X '$(VERSION_PKG).BuildDate=$(BUILD_DATE)'" \
 	-trimpath
 
-.PHONY: fmt
-fmt:
-	goimports -local $(MODULE) -w $(shell go list -f {{.Dir}} ./...)
-
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build $(GOFLAGS) -o $(BIN_DIR)/$(TARGET) main.go
+	CGO_ENABLED=0 go build $(GOFLAGS) -o $(BIN_DIR)/$(TARGET) .
 
 .PHONY: test
 test:
@@ -54,5 +50,14 @@ run: build
 install: build
 	cp $(BIN_DIR)/$(TARGET) $(GOBIN)/$(APP_NAME)-go.exe
 
+.PHONY: fmt
+fmt:
+	goimports -local $(MODULE) -w $(shell go list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}{{range .TestGoFiles}}{{$$.Dir}}/{{.}} {{end}}' ./...)
+
+.PHONY: lint
+lint:
+	golangci-lint run
+
+.PHONY:
 man:
 	@pandoc docs/genlinx.1.md --to man docs/genlinx.1 > docs/genlinx.1

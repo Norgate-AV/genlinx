@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Norgate-AV/genlinx-go/internal/config"
+	"github.com/Norgate-AV/genlinx/internal/config"
 )
 
 // OptionsTestSuite defines the test suite for options functions

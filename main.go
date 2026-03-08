@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Norgate-AV/genlinx-go/cmd"
+	"github.com/Norgate-AV/genlinx/cmd"
 )
 
 func main() {

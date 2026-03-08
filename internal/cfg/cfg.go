@@ -8,7 +8,7 @@ import (
 
 	"github.com/damienbutt/figlet"
 
-	"github.com/Norgate-AV/genlinx-go/internal/apw"
+	"github.com/Norgate-AV/genlinx/internal/apw"
 )
 
 //go:embed LICENSE

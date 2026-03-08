@@ -7,7 +7,7 @@ import (
 	"github.com/damienbutt/figlet"
 	"github.com/spf13/cobra"
 
-	"github.com/Norgate-AV/genlinx-go/internal/version"
+	"github.com/Norgate-AV/genlinx/internal/version"
 )
 
 const AppName = "genlinx"

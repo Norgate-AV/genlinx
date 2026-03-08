@@ -52,6 +52,7 @@ type CompileResult struct {
 // NLRCCompiler implements the Compiler interface for NetLinx compiler
 type NLRCCompiler struct {
 	ExecutablePath string
+	env            []string // override subprocess environment (tests only; nil = inherit)
 }
 
 // NewNLRCCompiler creates a new NLRC compiler instance
@@ -71,6 +72,9 @@ func (c *NLRCCompiler) Compile(options CompileOptions) (*CompileResult, error) {
 	// Create the command with the executable path and arguments
 	// Don't wrap the executable path in quotes - let Go handle it
 	cmd := exec.Command(c.ExecutablePath, args...)
+	if c.env != nil {
+		cmd.Env = c.env
+	}
 
 	// Capture stdout and stderr
 	stdout, err := cmd.StdoutPipe()
@@ -89,7 +93,7 @@ func (c *NLRCCompiler) Compile(options CompileOptions) (*CompileResult, error) {
 	}
 
 	// Read output
-	output, err := c.readOutput(stdout, stderr, options.Verbose)
+	output, err := c.readOutput(stdout, stderr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read output: %w", err)
 	}
@@ -174,8 +178,9 @@ func joinNonEmpty(paths []string) string {
 	return strings.Join(filtered, pathDelimiter)
 }
 
-// readOutput reads from stdout and stderr pipes
-func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader, verbose bool) (string, error) {
+// readOutput streams stdout and stderr line-by-line as the compiler runs,
+// printing every line immediately and also accumulating them for parseOutput.
+func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
 	var output strings.Builder
 
 	// Read stdout
@@ -183,9 +188,7 @@ func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader, verbose bool) (strin
 	for stdoutScanner.Scan() {
 		line := stdoutScanner.Text()
 		output.WriteString(line + "\n")
-		if verbose {
-			fmt.Println(line)
-		}
+		fmt.Println(line)
 	}
 
 	// Read stderr
@@ -193,9 +196,7 @@ func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader, verbose bool) (strin
 	for stderrScanner.Scan() {
 		line := stderrScanner.Text()
 		output.WriteString(line + "\n")
-		if verbose {
-			fmt.Println(line)
-		}
+		fmt.Println(line)
 	}
 
 	if err := stdoutScanner.Err(); err != nil {

@@ -1,4 +1,4 @@
-# genlinx-go
+# genlinx
 
 <div align="center">
     <img src="../assets/img/AMX_NS_03.png" alt="netlinx-studio-logo" width="150" />
@@ -6,8 +6,8 @@
 
 ---
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/Norgate-AV/genlinx-go)](https://goreportcard.com/report/github.com/Norgate-AV/genlinx-go)
-[![GoDoc](https://godoc.org/github.com/Norgate-AV/genlinx-go?status.svg)](https://godoc.org/github.com/Norgate-AV/genlinx-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Norgate-AV/genlinx)](https://goreportcard.com/report/github.com/Norgate-AV/genlinx)
+[![GoDoc](https://godoc.org/github.com/Norgate-AV/genlinx?status.svg)](https://godoc.org/github.com/Norgate-AV/genlinx)
 
 ---
 
@@ -36,7 +36,7 @@ make build
 ### Using Go Install
 
 ```bash
-go install github.com/Norgate-AV/genlinx-go@latest
+go install github.com/Norgate-AV/genlinx@latest
 ```
 
 ## Usage

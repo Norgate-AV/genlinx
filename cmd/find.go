@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"
 
-	"github.com/Norgate-AV/genlinx-go/internal/find"
+	"github.com/Norgate-AV/genlinx/internal/find"
 )
 
 var findCmd = &cobra.Command{
@@ -34,11 +34,9 @@ func runFind(cmd *cobra.Command, args []string) error {
 		defer stop()
 
 		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			devices, discoverErr = find.DiscoverWithContext(ctx)
-		}()
+		})
 
 		spinErr := spinner.New().
 			Title("Listening for NetLinx devices... (press Ctrl+C to stop)").

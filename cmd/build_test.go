@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Norgate-AV/genlinx-go/internal/options"
+	"github.com/Norgate-AV/genlinx/internal/options"
 )
 
 func TestBuildCompileOpts_MapsAllFields(t *testing.T) {
@@ -39,4 +39,18 @@ func TestBuildCompileOpts_EmptyOutputPath(t *testing.T) {
 	got := buildCompileOpts(opts)
 
 	assert.Empty(t, got.OutputPath)
+}
+
+func TestBuildCmd_NoArgs_ReturnsError(t *testing.T) {
+	err := buildCmd.RunE(buildCmd, []string{})
+	assert.EqualError(t, err, "no source or CFG files specified")
+}
+
+func TestBuildCmd_WithSourceFileArg_PassesGuard(t *testing.T) {
+	err := buildCmd.RunE(buildCmd, []string{"main.axs"})
+	// Guard must not fire; a different error (OS check, missing compiler, etc.) may follow.
+	if err != nil {
+		assert.NotEqual(t, "no source or CFG files specified", err.Error(),
+			"guard must not fire when source files are provided")
+	}
 }

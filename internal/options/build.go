@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/Norgate-AV/genlinx-go/internal/config"
-	"github.com/Norgate-AV/genlinx-go/internal/utils"
+	"github.com/Norgate-AV/genlinx/internal/config"
+	"github.com/Norgate-AV/genlinx/internal/utils"
 )
 
 // BuildOptions represents the merged options for the build command
@@ -81,6 +81,20 @@ type ConfigLoadInfo struct {
 	DefaultLoaded bool
 	GlobalResult  ConfigLoadResult
 	LocalResult   ConfigLoadResult
+}
+
+// Print writes a human-readable summary of which config files were loaded.
+func (info *ConfigLoadInfo) Print() {
+	fmt.Println("Configuration loading:")
+	fmt.Println("  Default config: Built-in defaults loaded")
+
+	if info.GlobalResult.Found {
+		fmt.Printf("  Global config: Loaded from %s\n", info.GlobalResult.Path)
+	}
+
+	if info.LocalResult.Found {
+		fmt.Printf("  Local config: Loaded from %s\n", info.LocalResult.Path)
+	}
 }
 
 // LoadMergedConfig is the central config-merge entry point, equivalent to

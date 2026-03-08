@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Norgate-AV/genlinx-go/internal/apw"
+	"github.com/Norgate-AV/genlinx/internal/apw"
 )
 
 // ---------------------------------------------------------------------------

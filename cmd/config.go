@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/Norgate-AV/genlinx-go/internal/options"
+	"github.com/Norgate-AV/genlinx/internal/options"
 )
 
 var configCmd = &cobra.Command{
@@ -62,6 +62,7 @@ func configList(global, local bool) error {
 		if err != nil {
 			return err
 		}
+
 		printConfig(mergedCfg)
 		return nil
 	}

@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Norgate-AV/genlinx-go/internal/apw"
-	gocfg "github.com/Norgate-AV/genlinx-go/internal/cfg"
-	"github.com/Norgate-AV/genlinx-go/internal/options"
-	"github.com/Norgate-AV/genlinx-go/internal/prompt"
-	"github.com/Norgate-AV/genlinx-go/internal/utils"
+	"github.com/Norgate-AV/genlinx/internal/apw"
+	"github.com/Norgate-AV/genlinx/internal/cfg"
+	"github.com/Norgate-AV/genlinx/internal/options"
+	"github.com/Norgate-AV/genlinx/internal/prompt"
+	"github.com/Norgate-AV/genlinx/internal/utils"
 )
 
 var cfgCmd = &cobra.Command{
@@ -65,20 +65,7 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 	}
 
 	if verbose {
-		fmt.Println("Configuration loading:")
-		fmt.Println("  Default config: Built-in defaults loaded")
-
-		if configInfo.GlobalResult.Found {
-			fmt.Printf("  Global config: Loaded from %s\n", configInfo.GlobalResult.Path)
-		} else {
-			fmt.Println("  Global config: No config found")
-		}
-
-		if configInfo.LocalResult.Found {
-			fmt.Printf("  Local config: Loaded from %s\n", configInfo.LocalResult.Path)
-		} else {
-			fmt.Println("  Local config: No config found")
-		}
+		configInfo.Print()
 	}
 
 	// -----------------------------------------------------------------------
@@ -143,7 +130,7 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
-		builder := gocfg.NewBuilder(workspace, opts)
+		builder := cfg.NewBuilder(workspace, opts)
 		content := builder.Build()
 
 		outputFile := fmt.Sprintf("%s.%s", workspace.ID(), opts.OutputFileSuffix)

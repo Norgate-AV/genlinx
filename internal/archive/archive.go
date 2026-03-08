@@ -12,7 +12,7 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/Norgate-AV/genlinx-go/internal/apw"
+	"github.com/Norgate-AV/genlinx/internal/apw"
 )
 
 //go:embed scripts/symlink.bat

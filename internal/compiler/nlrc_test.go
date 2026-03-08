@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +12,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
+
+// TestMain acts as a fake NLRC compiler when GENLINX_FAKE_COMPILER is set.
+// This allows TestCompile_AlwaysStreamsOutput to use the test binary itself
+// as a controllable subprocess without requiring a real NLRC installation.
+func TestMain(m *testing.M) {
+	if msg := os.Getenv("GENLINX_FAKE_COMPILER"); msg != "" {
+		fmt.Println(msg)
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
 
 // CompilerTestSuite defines the test suite for compiler functions
 type CompilerTestSuite struct {
@@ -434,16 +446,15 @@ func captureStdout(fn func()) string {
 	return buf.String()
 }
 
-// TestReadOutput_VerboseTrue verifies that readOutput prints each line to
-// stdout when verbose is true.
-func (suite *CompilerTestSuite) TestReadOutput_VerboseTrue() {
+// TestReadOutput_StreamsAllOutput verifies that readOutput prints every line
+// immediately (streams in real time) and returns the full accumulated output.
+func (suite *CompilerTestSuite) TestReadOutput_StreamsAllOutput() {
 	c := NewNLRCCompiler("test.exe")
 
 	captured := captureStdout(func() {
 		out, err := c.readOutput(
 			strings.NewReader("line1\nline2\n"),
 			strings.NewReader("err1\n"),
-			true,
 		)
 		suite.Require().NoError(err)
 		suite.Contains(out, "line1")
@@ -456,24 +467,31 @@ func (suite *CompilerTestSuite) TestReadOutput_VerboseTrue() {
 	assert.Contains(suite.T(), captured, "err1")
 }
 
-// TestReadOutput_VerboseFalse verifies that readOutput does not print anything
-// to stdout when verbose is false, but still returns full output.
-func (suite *CompilerTestSuite) TestReadOutput_VerboseFalse() {
-	c := NewNLRCCompiler("test.exe")
+// TestCompile_AlwaysStreamsOutput is a regression test for the bug where
+// readOutput was changed to accept a `verbose bool` parameter and only printed
+// when verbose=true. Because the verbose flag was never registered in the build
+// command's init(), it always defaulted to false, silencing all output.
+//
+// This test exercises the full Compile path using the test binary itself as a
+// fake NLRC compiler (via the GENLINX_FAKE_COMPILER env var handled in
+// TestMain) and asserts that every output line is streamed to stdout even when
+// CompileOptions.Verbose is false.
+func (suite *CompilerTestSuite) TestCompile_AlwaysStreamsOutput() {
+	const fakeOutput = "Compiling placeholder.axs..."
 
 	captured := captureStdout(func() {
-		out, err := c.readOutput(
-			strings.NewReader("line1\nline2\n"),
-			strings.NewReader("err1\n"),
-			false,
-		)
-		suite.Require().NoError(err)
-		suite.Contains(out, "line1")
-		suite.Contains(out, "line2")
-		suite.Contains(out, "err1")
+		c := &NLRCCompiler{
+			ExecutablePath: os.Args[0],
+			env:            append(os.Environ(), "GENLINX_FAKE_COMPILER="+fakeOutput),
+		}
+		_, _ = c.Compile(CompileOptions{
+			SourceFiles: []string{"placeholder.axs"},
+			Verbose:     false, // output must still stream regardless
+		})
 	})
 
-	assert.Empty(suite.T(), captured, "nothing should be printed to stdout when verbose=false")
+	assert.Contains(suite.T(), captured, fakeOutput,
+		"Compile must always stream output to stdout regardless of the Verbose option")
 }
 
 // TestCompilerTestSuite runs the test suite

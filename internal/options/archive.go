@@ -1,7 +1,7 @@
 package options
 
 import (
-	"github.com/Norgate-AV/genlinx-go/internal/archive"
+	"github.com/Norgate-AV/genlinx/internal/archive"
 )
 
 // ArchiveCLIOptions holds the raw values parsed from archive command flags.

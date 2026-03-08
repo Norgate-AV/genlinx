@@ -1,7 +1,7 @@
 package options
 
 import (
-	gocfg "github.com/Norgate-AV/genlinx-go/internal/cfg"
+	gocfg "github.com/Norgate-AV/genlinx/internal/cfg"
 )
 
 // CfgCLIOptions holds the raw values parsed from the cfg command flags.

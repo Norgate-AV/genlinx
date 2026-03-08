@@ -8,8 +8,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/Norgate-AV/genlinx-go/internal/compiler"
-	"github.com/Norgate-AV/genlinx-go/internal/options"
+	"github.com/Norgate-AV/genlinx/internal/compiler"
+	"github.com/Norgate-AV/genlinx/internal/options"
 )
 
 var buildCmd = &cobra.Command{
@@ -18,10 +18,6 @@ var buildCmd = &cobra.Command{
 	Long:  `Build NetLinx source files (.axs, .axi) or compile from CFG files`,
 	Args:  cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if runtime.GOOS != "windows" {
-			return fmt.Errorf("the build command is only supported on Windows")
-		}
-
 		// Get CLI flags
 		cfgFiles, _ := cmd.Flags().GetStringSlice("cfg-files")
 		sourceFiles, _ := cmd.Flags().GetStringSlice("source-files")
@@ -35,6 +31,14 @@ var buildCmd = &cobra.Command{
 		// If source files provided as arguments, add them to sourceFiles
 		if len(args) > 0 {
 			sourceFiles = append(sourceFiles, args...)
+		}
+
+		if len(sourceFiles) == 0 && len(cfgFiles) == 0 {
+			return fmt.Errorf("no source or CFG files specified")
+		}
+
+		if runtime.GOOS != "windows" {
+			return fmt.Errorf("the build command is only supported on Windows")
 		}
 
 		// Create CLI options struct
@@ -57,33 +61,7 @@ var buildCmd = &cobra.Command{
 
 		// Print configuration loading information if verbose
 		if verbose {
-			fmt.Println("🔧 Configuration loading:")
-			fmt.Println("  📋 Default config: Built-in defaults loaded")
-
-			if configInfo.GlobalResult.Found {
-				fmt.Printf("  📂 Global config: Loaded from %s\n", configInfo.GlobalResult.Path)
-			} else {
-				fmt.Printf("  📂 Global config: No config found\n")
-			}
-
-			if configInfo.LocalResult.Found {
-				fmt.Printf("  📂 Local config: Loaded from %s\n", configInfo.LocalResult.Path)
-			} else {
-				fmt.Printf("  📂 Local config: No config found\n")
-			}
-		}
-
-		if opts.Verbose {
-			fmt.Println("🔧 Final merged options:")
-			fmt.Printf("  Source files: %v\n", opts.SourceFiles)
-			fmt.Printf("  CFG files: %v\n", opts.CFGFiles)
-			fmt.Printf("  Include paths: %v\n", opts.IncludePath)
-			fmt.Printf("  Module paths: %v\n", opts.ModulePath)
-			fmt.Printf("  Library paths: %v\n", opts.LibraryPath)
-			fmt.Printf("  Output path: %s\n", opts.OutputPath)
-			fmt.Printf("  NLRC path: %s\n", opts.NLRCPath)
-			fmt.Printf("  All: %v\n", opts.All)
-			fmt.Printf("  Verbose: %v\n", opts.Verbose)
+			configInfo.Print()
 		}
 
 		// TODO: Use the 'all' flag for file selection
@@ -110,6 +88,7 @@ var buildCmd = &cobra.Command{
 			for _, e := range result.Errors {
 				fmt.Fprintln(os.Stderr, color.RedString(e))
 			}
+
 			return fmt.Errorf("the build process failed with a total of %d error(s)", len(result.Errors))
 		}
 

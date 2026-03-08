@@ -17,7 +17,7 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/*.js.map": true,
-        "node_modules": true
+        "**/node_modules": true
     },
     "markdownlint.config": {
         // "default": true,
@@ -45,7 +45,7 @@
     },
     "gopls": {
         "ui.semanticTokens": true,
-        "formatting.local": "github.com/Norgate-AV/genlinx-go"
+        "formatting.local": "github.com/Norgate-AV/genlinx"
     },
     "[go]": {
         "editor.defaultFormatter": "golang.go",
@@ -53,5 +53,7 @@
         "editor.codeActionsOnSave": {
             "source.organizeImports": "explicit"
         }
-    }
+    },
+    "go.lintTool": "golangci-lint",
+    "go.lintOnSave": "workspace"
 }
