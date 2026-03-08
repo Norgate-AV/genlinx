@@ -1,8 +1,9 @@
 module github.com/Norgate-AV/genlinx-go
 
-go 1.23.0
+go 1.26.0
 
 require (
+	github.com/damienbutt/figlet v0.1.0
 	github.com/fatih/color v1.18.0
 	github.com/olekukonko/tablewriter v1.1.3
 	github.com/spf13/cobra v1.10.2

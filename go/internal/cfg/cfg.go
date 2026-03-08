@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/damienbutt/figlet"
+
 	"github.com/Norgate-AV/genlinx-go/internal/apw"
 )
 
@@ -104,10 +106,7 @@ func (b *Builder) convertToComment(text string) string {
 }
 
 func (b *Builder) addBanner(text string) {
-	// Produce a simple ASCII banner using a box-style layout because Go's
-	// standard library does not include figlet. The output remains commented
-	// so it won't break NLRC parsing.
-	banner := asciiArt(text)
+	banner, _ := figlet.Text(text)
 	b.writeLine(b.convertToComment(banner))
 }
 
@@ -259,7 +258,7 @@ func (b *Builder) addAdditionalModulePaths() {
 }
 
 func (b *Builder) addAdditionalLibraryPaths() {
-	for _, p := range b.opts.LibraryPath {
+	for _, p := range deduplicate(b.opts.LibraryPath) {
 		b.writeLine(fmt.Sprintf("AdditionalLibraryPath=%s", p))
 	}
 
@@ -295,18 +294,12 @@ func deduplicate(items []string) []string {
 	var result []string
 
 	for _, item := range items {
-		if !seen[item] {
-			result = append(result, item)
-			seen[item] = true
+		normalized := filepath.FromSlash(item)
+		if !seen[normalized] {
+			result = append(result, normalized)
+			seen[normalized] = true
 		}
 	}
 
 	return result
-}
-
-// asciiArt returns a simple commented banner for the given text.
-func asciiArt(text string) string {
-	line := strings.Repeat("-", len(text)+4)
-
-	return fmt.Sprintf("%s\n| %s |\n%s", line, text, line)
 }

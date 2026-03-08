@@ -1,25 +1,39 @@
 package cmd
 
 import (
+	"strconv"
+	"time"
+
+	"github.com/damienbutt/figlet"
 	"github.com/spf13/cobra"
 
 	"github.com/Norgate-AV/genlinx-go/internal/version"
 )
 
+const AppName = "genlinx"
+
 var rootCmd = &cobra.Command{
-	Use:   "genlinx",
-	Short: "CLI utility for NetLinx projects 🚀🚀🚀",
-	Long: `                   _ _
-   __ _  ___ _ __ | (_)_ __ __  __
-  / _` + "`" + ` |/ _ \ '_ \| | | '_ / \/ /
- | (_| |  __/ | | | | | | | |>  <
-  \__, |\___|_| |_|_|_|_| |_/_/\_\
-  |___/
+	Use:     AppName,
+	Short:   "CLI utility for NetLinx projects 🚀🚀🚀",
+	Long:    getBanner(),
+	Version: version.Version,
+}
+
+func getBanner() string {
+	year := strconv.Itoa(time.Now().Year())
+
+	banner, err := figlet.Text(AppName)
+	if err != nil {
+		banner = AppName
+	}
+
+	banner += `
 
 Open source CLI tool for NetLinx projects
-Copyright (c) 2025, Norgate AV
-https://github.com/Norgate-AV/genlinx`,
-	Version: version.Version,
+Copyright (c) 2010-` + year + `, Norgate AV
+https://github.com/Norgate-AV/genlinx`
+
+	return banner
 }
 
 func Execute() error {
