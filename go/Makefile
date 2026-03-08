@@ -53,3 +53,6 @@ run: build
 
 install: build
 	cp $(BIN_DIR)/$(TARGET) $(GOBIN)/$(APP_NAME)-go.exe
+
+man:
+	@pandoc docs/genlinx.1.md --to man docs/genlinx.1 > docs/genlinx.1
