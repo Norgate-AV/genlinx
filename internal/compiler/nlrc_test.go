@@ -39,7 +39,7 @@ func (suite *CompilerTestSuite) SetupTest() {
 
 // TearDownTest cleans up the test environment
 func (suite *CompilerTestSuite) TearDownTest() {
-	os.RemoveAll(suite.tempDir)
+	_ = os.RemoveAll(suite.tempDir)
 }
 
 // TestNewNLRCCompiler tests creating a new NLRC compiler instance

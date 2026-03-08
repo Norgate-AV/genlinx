@@ -249,7 +249,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipEntry_NoAbsolutePaths() {
 	wd, _ := os.Getwd()
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
 		// A zip entry must never start with a drive letter (C:/) or a leading slash.
@@ -290,7 +290,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_AddedWithRelativePath() 
 
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found bool
 	for _, f := range zr.File {
@@ -319,7 +319,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_SkippedWhenOptionFalse()
 
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
 		s.NotEqual("Module/TestModule.tko", f.Name,
@@ -342,7 +342,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_AddedWithRelativePath() 
 
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found bool
 	for _, f := range zr.File {
@@ -398,7 +398,7 @@ func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToExtraLocation() {
 
 	zr, err := zip.OpenReader(zipPath)
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var axsFound, tkoFound bool
 	for _, zf := range zr.File {
@@ -453,7 +453,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_SkippedWhenOptionFalse()
 
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
 		s.NotEqual("Source/TestMain.tkn", f.Name,
@@ -477,7 +477,7 @@ func (s *ArchiveTestSuite) TestBuild_IncludeFilesNotInWorkspace_False_NoExtraFil
 
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
 		s.False(strings.HasPrefix(f.Name, ".genlinx/"),
@@ -500,7 +500,7 @@ func (s *ArchiveTestSuite) TestBuild_IncludeFilesNotInWorkspace_True_AddsExtraFi
 
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	var found bool
 	for _, f := range zr.File {
@@ -528,7 +528,7 @@ func (s *ArchiveTestSuite) TestBuild_IgnoredFiles_ExcludesFromExtraSearch() {
 
 	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
 	s.Require().NoError(err)
-	defer zr.Close()
+	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
 		s.NotEqual(".genlinx/ExtraLib.axs", f.Name,

@@ -24,7 +24,7 @@ func (suite *IntegrationTestSuite) SetupTest() {
 
 // TearDownTest cleans up the test environment
 func (suite *IntegrationTestSuite) TearDownTest() {
-	os.RemoveAll(suite.tempDir)
+	_ = os.RemoveAll(suite.tempDir)
 }
 
 // TestBuildCommandIntegration tests the full build command integration
@@ -49,7 +49,7 @@ data_event[dvTP] {
 	// Change to temp directory
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(suite.tempDir)
 	suite.Require().NoError(err)
@@ -87,7 +87,7 @@ func (suite *IntegrationTestSuite) TestConfigurationIntegration() {
 	// Change to temp directory
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(suite.tempDir)
 	suite.Require().NoError(err)
@@ -122,7 +122,7 @@ func (suite *IntegrationTestSuite) TestPathResolutionIntegration() {
 	// Change to subdir
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(subDir)
 	suite.Require().NoError(err)
@@ -173,7 +173,7 @@ func (suite *IntegrationTestSuite) TestFindUpIntegration() {
 	// Change to subdir
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(subDir)
 	suite.Require().NoError(err)
@@ -225,7 +225,7 @@ func (suite *IntegrationTestSuite) TestMultipleConfigFormats() {
 	// Change to temp directory
 	oldWd, err := os.Getwd()
 	suite.Require().NoError(err)
-	defer os.Chdir(oldWd)
+	defer os.Chdir(oldWd) //nolint:errcheck
 
 	err = os.Chdir(suite.tempDir)
 	suite.Require().NoError(err)
