@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/fatih/color"
@@ -398,13 +399,7 @@ func (b *Builder) displayExtraFileReferences(refs []string) {
 func (b *Builder) isIgnored(filePath string) bool {
 	base := filepath.Base(filePath)
 
-	for _, ignored := range b.opts.IgnoredFiles {
-		if base == ignored {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(b.opts.IgnoredFiles, base)
 }
 
 // searchForExtraFiles tries to locate each referenced ID on disk and records
@@ -470,14 +465,7 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 		var newRefs []string
 
 		for _, r := range refs {
-			alreadyKnown := false
-
-			for _, existing := range b.extraFileReferences {
-				if existing == r {
-					alreadyKnown = true
-					break
-				}
-			}
+			alreadyKnown := slices.Contains(b.extraFileReferences, r)
 
 			if !alreadyKnown {
 				newRefs = append(newRefs, r)

@@ -156,24 +156,31 @@ func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, erro
 		if len(cliOpts.SourceFiles) > 0 {
 			opts.SourceFiles = cliOpts.SourceFiles
 		}
+
 		if len(cliOpts.CFGFiles) > 0 {
 			opts.CFGFiles = cliOpts.CFGFiles
 		}
+
 		if len(cliOpts.IncludePath) > 0 {
 			opts.IncludePath = prependAndDeduplicate(opts.IncludePath, cliOpts.IncludePath)
 		}
+
 		if len(cliOpts.ModulePath) > 0 {
 			opts.ModulePath = prependAndDeduplicate(opts.ModulePath, cliOpts.ModulePath)
 		}
+
 		if len(cliOpts.LibraryPath) > 0 {
 			opts.LibraryPath = prependAndDeduplicate(opts.LibraryPath, cliOpts.LibraryPath)
 		}
+
 		if cliOpts.OutputPath != "" {
 			opts.OutputPath = cliOpts.OutputPath
 		}
+
 		if cliOpts.All {
 			opts.All = cliOpts.All
 		}
+
 		if cliOpts.Verbose {
 			opts.Verbose = cliOpts.Verbose
 		}
@@ -207,9 +214,11 @@ func globalConfigDirs() ([]string, error) {
 
 	if runtime.GOOS == "windows" {
 		var dirs []string
+
 		if appData := os.Getenv("APPDATA"); appData != "" {
 			dirs = append(dirs, filepath.Join(appData, "genlinx"))
 		}
+
 		dirs = append(dirs, dotConfig)
 		return dirs, nil
 	}
@@ -327,6 +336,7 @@ func LoadLocalConfig() (ConfigLoadResult, error) {
 				if err := v.Unmarshal(&cfg); err != nil {
 					continue // Try next file
 				}
+
 				config.NormalizeConfigPaths(&cfg)
 				// Successfully loaded config
 				return ConfigLoadResult{
@@ -343,6 +353,7 @@ func LoadLocalConfig() (ConfigLoadResult, error) {
 			// Reached root directory, stop searching
 			break
 		}
+
 		currentDir = parentDir
 	}
 
@@ -363,6 +374,7 @@ func resolveConfigPaths(cfg *config.Config) error {
 		if p == "" {
 			return p, nil
 		}
+
 		return filepath.Abs(p)
 	}
 
@@ -372,8 +384,10 @@ func resolveConfigPaths(cfg *config.Config) error {
 			if err != nil {
 				return err
 			}
+
 			paths[i] = resolved
 		}
+
 		return nil
 	}
 
@@ -382,30 +396,39 @@ func resolveConfigPaths(cfg *config.Config) error {
 	if cfg.Build.NLRC.Path, err = abs(cfg.Build.NLRC.Path); err != nil {
 		return fmt.Errorf("build.nlrc.path: %w", err)
 	}
+
 	if err = absSlice(cfg.Build.NLRC.IncludePath); err != nil {
 		return fmt.Errorf("build.nlrc.includePath: %w", err)
 	}
+
 	if err = absSlice(cfg.Build.NLRC.ModulePath); err != nil {
 		return fmt.Errorf("build.nlrc.modulePath: %w", err)
 	}
+
 	if err = absSlice(cfg.Build.NLRC.LibraryPath); err != nil {
 		return fmt.Errorf("build.nlrc.libraryPath: %w", err)
 	}
+
 	if cfg.Build.Shell.Path, err = abs(cfg.Build.Shell.Path); err != nil {
 		return fmt.Errorf("build.shell.path: %w", err)
 	}
+
 	if err = absSlice(cfg.CFG.IncludePath); err != nil {
 		return fmt.Errorf("cfg.includePath: %w", err)
 	}
+
 	if err = absSlice(cfg.CFG.ModulePath); err != nil {
 		return fmt.Errorf("cfg.modulePath: %w", err)
 	}
+
 	if err = absSlice(cfg.CFG.LibraryPath); err != nil {
 		return fmt.Errorf("cfg.libraryPath: %w", err)
 	}
+
 	if err = absSlice(cfg.Archive.ExtraFileSearchLocations); err != nil {
 		return fmt.Errorf("archive.extraFileSearchLocations: %w", err)
 	}
+
 	// NOTE: ExtraFileArchiveLocation is an output destination resolved at
 	// command execution time (relative to the project root), not at config
 	// load time — leave it as-is, mirroring the TS implementation.
@@ -432,18 +455,23 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 		if cfg.Build.NLRC.Path != "" {
 			result.Build.NLRC.Path = cfg.Build.NLRC.Path
 		}
+
 		if len(cfg.Build.NLRC.IncludePath) > 0 {
 			result.Build.NLRC.IncludePath = prependAndDeduplicate(result.Build.NLRC.IncludePath, cfg.Build.NLRC.IncludePath)
 		}
+
 		if len(cfg.Build.NLRC.ModulePath) > 0 {
 			result.Build.NLRC.ModulePath = prependAndDeduplicate(result.Build.NLRC.ModulePath, cfg.Build.NLRC.ModulePath)
 		}
+
 		if len(cfg.Build.NLRC.LibraryPath) > 0 {
 			result.Build.NLRC.LibraryPath = prependAndDeduplicate(result.Build.NLRC.LibraryPath, cfg.Build.NLRC.LibraryPath)
 		}
+
 		if cfg.Build.Shell.Path != "" {
 			result.Build.Shell.Path = cfg.Build.Shell.Path
 		}
+
 		if cfg.Build.All {
 			result.Build.All = cfg.Build.All
 		}
@@ -452,12 +480,15 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 		if cfg.CFG.OutputFile != "" {
 			result.CFG.OutputFile = cfg.CFG.OutputFile
 		}
+
 		if len(cfg.CFG.IncludePath) > 0 {
 			result.CFG.IncludePath = prependAndDeduplicate(result.CFG.IncludePath, cfg.CFG.IncludePath)
 		}
+
 		if len(cfg.CFG.ModulePath) > 0 {
 			result.CFG.ModulePath = prependAndDeduplicate(result.CFG.ModulePath, cfg.CFG.ModulePath)
 		}
+
 		if len(cfg.CFG.LibraryPath) > 0 {
 			result.CFG.LibraryPath = prependAndDeduplicate(result.CFG.LibraryPath, cfg.CFG.LibraryPath)
 		}
@@ -466,9 +497,11 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 		if cfg.Archive.OutputFile != "" {
 			result.Archive.OutputFile = cfg.Archive.OutputFile
 		}
+
 		if len(cfg.Archive.ExtraFileSearchLocations) > 0 {
 			result.Archive.ExtraFileSearchLocations = prependAndDeduplicate(result.Archive.ExtraFileSearchLocations, cfg.Archive.ExtraFileSearchLocations)
 		}
+
 		if cfg.Archive.ExtraFileArchiveLocation != "" {
 			result.Archive.ExtraFileArchiveLocation = cfg.Archive.ExtraFileArchiveLocation
 		}

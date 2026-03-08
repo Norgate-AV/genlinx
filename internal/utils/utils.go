@@ -47,8 +47,10 @@ func NormalizePath(path string) string {
 // NormalizePaths normalizes a slice of paths
 func NormalizePaths(paths []string) []string {
 	normalized := make([]string, len(paths))
+
 	for i, path := range paths {
 		normalized[i] = NormalizePath(path)
 	}
+
 	return normalized
 }

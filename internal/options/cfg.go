@@ -1,7 +1,7 @@
 package options
 
 import (
-	gocfg "github.com/Norgate-AV/genlinx/internal/cfg"
+	"github.com/Norgate-AV/genlinx/internal/cfg"
 )
 
 // CfgCLIOptions holds the raw values parsed from the cfg command flags.
@@ -28,13 +28,13 @@ type CfgCLIOptions struct {
 
 // LoadCfgOptions loads and merges CFG options from defaults, global config,
 // local config, and CLI flags – in that order of precedence.
-func LoadCfgOptions(cliOpts *CfgCLIOptions) (*gocfg.Options, *ConfigLoadInfo, error) {
+func LoadCfgOptions(cliOpts *CfgCLIOptions) (*cfg.Options, *ConfigLoadInfo, error) {
 	mergedCfg, configInfo, err := LoadMergedConfig()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	opts := &gocfg.Options{
+	opts := &cfg.Options{
 		OutputFileSuffix:          mergedCfg.CFG.OutputFile,
 		OutputLogFileSuffix:       mergedCfg.CFG.OutputLogFile,
 		OutputLogFileOption:       mergedCfg.CFG.OutputLogFileOption,

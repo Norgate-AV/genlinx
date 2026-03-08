@@ -107,9 +107,11 @@ func (c *NLRCCompiler) Compile(options CompileOptions) (*CompileResult, error) {
 				Output:   output,
 				ExitCode: exitErr.ExitCode(),
 			}
+
 			result.Errors, result.Warnings = c.parseOutput(output)
 			return result, nil
 		}
+
 		return nil, fmt.Errorf("compiler execution failed: %w", err)
 	}
 
@@ -140,8 +142,10 @@ func (c *NLRCCompiler) BuildArgs(options CompileOptions) ([]string, error) {
 				if _, err := os.Stat(file); err == nil || filepath.IsAbs(file) {
 					options.SourceFiles[i] = path
 				}
+
 				// If file doesn't exist and is relative, keep the original path
 			}
+
 			// If we can't get absolute path, keep the original
 		}
 
@@ -170,11 +174,13 @@ func (c *NLRCCompiler) BuildArgs(options CompileOptions) ([]string, error) {
 // joinNonEmpty filters out empty strings and joins the remainder with pathDelimiter.
 func joinNonEmpty(paths []string) string {
 	var filtered []string
+
 	for _, p := range paths {
 		if p != "" {
 			filtered = append(filtered, p)
 		}
 	}
+
 	return strings.Join(filtered, pathDelimiter)
 }
 
@@ -219,7 +225,7 @@ func (c *NLRCCompiler) parseOutput(output string) ([]string, []string) {
 
 	var errors, warnings []string
 
-	for _, line := range strings.Split(output, "\n") {
+	for line := range strings.SplitSeq(output, "\n") {
 		match := logPattern.FindString(line)
 		if match == "" {
 			continue
