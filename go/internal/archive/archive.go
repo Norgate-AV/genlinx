@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
+
 	"github.com/Norgate-AV/genlinx-go/internal/apw"
 )
 
@@ -105,6 +107,12 @@ func (b *Builder) logVerbose(format string, args ...any) {
 	}
 }
 
+// warnf prints a yellow warning to stderr so it is always visible regardless
+// of verbose mode and does not pollute stdout.
+func warnf(format string, args ...any) {
+	fmt.Fprintln(os.Stderr, color.YellowString("Warning: "+format, args...))
+}
+
 // ---------------------------------------------------------------------------
 // Zip entry helpers
 // ---------------------------------------------------------------------------
@@ -144,12 +152,25 @@ func (b *Builder) addDiskFile(diskPath, entryName string) error {
 
 // archiveDir returns the zip directory for a file — mirrors the TS archivePath
 // logic used in GeneralItem / SourceItem / ModuleItem constructors.
+//
+// For workspace-referened files the returned path is relative to the workspace
+// directory (e.g. "Source", "Module", "Include"). This matches the behaviour of
+// the TypeScript implementation where file.path is stored as a relative path and
+// path.dirname(file.path) gives the subdirectory name directly.
 func (b *Builder) archiveDir(file apw.File) string {
 	if file.IsExtra {
 		return b.opts.ExtraFileArchiveLocation
 	}
 
-	return filepath.Dir(file.Path)
+	workspaceDir := filepath.Dir(b.apw.FilePath())
+
+	relDir, err := filepath.Rel(workspaceDir, filepath.Dir(file.Path))
+	if err != nil {
+		// Should never happen with valid absolute paths, but fall back gracefully.
+		return filepath.Base(filepath.Dir(file.Path))
+	}
+
+	return relDir
 }
 
 // addWorkspaceItem places the .apw file at the zip root (no subdirectory).
@@ -201,7 +222,7 @@ func (b *Builder) addSourceItem(file apw.File) error {
 	compiledEntry := zipEntryPath(filepath.Join(dir, filepath.Base(compiledPath)))
 
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
-		b.logVerbose("Compiled file not found, skipping: %s", compiledPath)
+		warnf("compiled file not found, skipping: %s", compiledPath)
 	} else {
 		b.logVerbose("Added file: %s", compiledPath)
 	}
@@ -230,7 +251,7 @@ func (b *Builder) addModuleItem(file apw.File) error {
 	compiledEntry := zipEntryPath(filepath.Join(dir, filepath.Base(compiledPath)))
 
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
-		b.logVerbose("Compiled file not found, skipping: %s", compiledPath)
+		warnf("compiled file not found, skipping: %s", compiledPath)
 	} else {
 		b.logVerbose("Added file: %s", compiledPath)
 	}
@@ -275,8 +296,13 @@ func (b *Builder) addFileToArchive(file apw.File) error {
 
 func (b *Builder) addWorkspaceFiles() error {
 	for _, file := range b.apw.AllFiles() {
+		if !file.Exists {
+			warnf("file referenced in workspace does not exist on disk, skipping: %s", file.Path)
+			continue
+		}
+
 		if err := b.addFileToArchive(file); err != nil {
-			fmt.Printf("Warning: could not add %s: %v\n", file.Path, err)
+			warnf("could not add %s: %v", file.Path, err)
 		}
 	}
 
@@ -306,7 +332,7 @@ func (b *Builder) addEnvFile() {
 	}
 
 	if err := b.addEnvItem(file); err != nil {
-		fmt.Printf("Warning: could not add .env: %v\n", err)
+		warnf("could not add .env: %v", err)
 	}
 }
 
@@ -322,7 +348,7 @@ func (b *Builder) addSymlinkScripts() {
 		entryName := zipEntryPath(filepath.Join(b.opts.ExtraFileArchiveLocation, name))
 
 		if err := b.writeEntry(entryName, content); err != nil {
-			fmt.Printf("Warning: could not add script %s: %v\n", name, err)
+			warnf("could not add script %s: %v", name, err)
 		} else {
 			b.logVerbose("Added file: %s", entryName)
 		}
@@ -513,15 +539,27 @@ func (b *Builder) addExtraFiles() error {
 	}
 
 	for _, ref := range b.locatedExtraRefs {
+		fileType := apw.GetFileType(ref)
+
+		// GetFileType is ambiguous for .axs: it can return FileTypeModule,
+		// FileTypeSource, or FileTypeMasterSrc (all share the .axs extension).
+		// Extra .axs files are always Module files — they were discovered via
+		// define_module directives in workspace source files, so we normalise
+		// to FileTypeModule here to ensure the correct compiled counterpart
+		// (.tko) is included when IncludeCompiledModuleFiles is set.
+		if fileType == apw.FileTypeSource || fileType == apw.FileTypeMasterSrc {
+			fileType = apw.FileTypeModule
+		}
+
 		file := apw.File{
-			Type:    apw.GetFileType(ref),
+			Type:    fileType,
 			Path:    ref,
 			Exists:  true,
 			IsExtra: true,
 		}
 
 		if err := b.addFileToArchive(file); err != nil {
-			fmt.Printf("Warning: could not add %s: %v\n", ref, err)
+			warnf("could not add %s: %v", ref, err)
 		}
 	}
 

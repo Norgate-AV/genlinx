@@ -117,21 +117,20 @@ func (suite *UtilsTestSuite) TestFindFilesByExtension() {
 	err = os.WriteFile(filepath.Join(suite.tempDir, "test3.txt"), []byte("test"), 0o644)
 	suite.Require().NoError(err)
 
-	// Create subdirectory with more files
+	// Create subdirectory with a file that must NOT be returned (non-recursive).
 	subDir := filepath.Join(suite.tempDir, "subdir")
 	err = os.MkdirAll(subDir, 0o755)
 	suite.Require().NoError(err)
 	err = os.WriteFile(filepath.Join(subDir, "test4.axs"), []byte("test"), 0o644)
 	suite.Require().NoError(err)
 
-	// Test finding .axs files
+	// Test finding .axs files — only the top-level file should be returned.
 	files, err := FindFilesByExtension(suite.tempDir, ".axs")
 	suite.Require().NoError(err)
-	assert.Len(suite.T(), files, 2)
+	assert.Len(suite.T(), files, 1)
 
 	expectedFiles := []string{
 		filepath.Join(suite.tempDir, "test1.axs"),
-		filepath.Join(subDir, "test4.axs"),
 	}
 	assert.ElementsMatch(suite.T(), expectedFiles, files)
 

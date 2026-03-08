@@ -22,23 +22,24 @@ func DirExists(path string) bool {
 	return info.IsDir()
 }
 
-// FindFilesByExtension finds all files with the specified extension in a directory
+// FindFilesByExtension finds all files with the specified extension in dir.
+// Only the immediate directory is searched — subdirectories are not descended
+// into, matching the behaviour of the TypeScript implementation.
 func FindFilesByExtension(dir, ext string) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
 	var files []string
 
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(strings.ToLower(entry.Name()), ext) {
+			files = append(files, filepath.Join(dir, entry.Name()))
 		}
+	}
 
-		if !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), ext) {
-			files = append(files, path)
-		}
-
-		return nil
-	})
-
-	return files, err
+	return files, nil
 }
 
 // NormalizePath converts a path to the OS-specific format
