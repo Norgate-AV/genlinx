@@ -7,8 +7,22 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+const (
+	cfgFlag       = "-CFG"
+	includeFlag   = "-I"
+	moduleFlag    = "-M"
+	libraryFlag   = "-L"
+	outputFlag    = "-O"
+	pathDelimiter = ";"
+)
+
+// logPattern matches the NLRC compiler log prefix: "ERROR: ..." or "WARNING: ..."
+// This mirrors the TypeScript regex (?<level>ERROR|WARNING): .+
+var logPattern = regexp.MustCompile(`(ERROR|WARNING): .+`)
 
 // Compiler represents a NetLinx compiler
 type Compiler interface {
@@ -75,7 +89,7 @@ func (c *NLRCCompiler) Compile(options CompileOptions) (*CompileResult, error) {
 	}
 
 	// Read output
-	output, err := c.readOutput(stdout, stderr)
+	output, err := c.readOutput(stdout, stderr, options.Verbose)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read output: %w", err)
 	}
@@ -112,8 +126,7 @@ func (c *NLRCCompiler) BuildArgs(options CompileOptions) ([]string, error) {
 
 	// Add source files first (they must come before options and be absolute paths)
 	if len(options.CFGFiles) > 0 {
-		// Combine CFG files with -C flag
-		cfgArg := "-C" + strings.Join(options.CFGFiles, ";")
+		cfgArg := cfgFlag + strings.Join(options.CFGFiles, pathDelimiter)
 		args = append(args, cfgArg)
 	} else if len(options.SourceFiles) > 0 {
 		// Convert source files to absolute paths if they exist
@@ -131,37 +144,38 @@ func (c *NLRCCompiler) BuildArgs(options CompileOptions) ([]string, error) {
 		args = append(args, options.SourceFiles...)
 	}
 
-	// Add include paths (flag with quoted path)
-	for _, path := range options.IncludePath {
-		// Only add include path if it exists and is not empty
-		if path != "" {
-			args = append(args, "-I\""+path+"\"")
-		}
+	if joined := joinNonEmpty(options.IncludePath); joined != "" {
+		args = append(args, includeFlag+"\""+joined+"\"")
 	}
 
-	// Add module paths as semicolon-joined list with -M flag
-	if len(options.ModulePath) > 0 {
-		combinedModulePath := strings.Join(options.ModulePath, ";")
-		args = append(args, "-M\""+combinedModulePath+"\"")
+	if joined := joinNonEmpty(options.ModulePath); joined != "" {
+		args = append(args, moduleFlag+"\""+joined+"\"")
 	}
 
-	// Add library paths (flag with quoted path)
-	for _, path := range options.LibraryPath {
-		if path != "" {
-			args = append(args, "-L\""+path+"\"")
-		}
+	if joined := joinNonEmpty(options.LibraryPath); joined != "" {
+		args = append(args, libraryFlag+"\""+joined+"\"")
 	}
 
-	// Add output path if specified
 	if options.OutputPath != "" {
-		args = append(args, "-O\""+options.OutputPath+"\"")
+		args = append(args, outputFlag+"\""+options.OutputPath+"\"")
 	}
 
 	return args, nil
 }
 
+// joinNonEmpty filters out empty strings and joins the remainder with pathDelimiter.
+func joinNonEmpty(paths []string) string {
+	var filtered []string
+	for _, p := range paths {
+		if p != "" {
+			filtered = append(filtered, p)
+		}
+	}
+	return strings.Join(filtered, pathDelimiter)
+}
+
 // readOutput reads from stdout and stderr pipes
-func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
+func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader, verbose bool) (string, error) {
 	var output strings.Builder
 
 	// Read stdout
@@ -169,7 +183,7 @@ func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
 	for stdoutScanner.Scan() {
 		line := stdoutScanner.Text()
 		output.WriteString(line + "\n")
-		if c.ExecutablePath != "" { // Assuming verbose flag check
+		if verbose {
 			fmt.Println(line)
 		}
 	}
@@ -179,7 +193,7 @@ func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
 	for stderrScanner.Scan() {
 		line := stderrScanner.Text()
 		output.WriteString(line + "\n")
-		if c.ExecutablePath != "" { // Assuming verbose flag check
+		if verbose {
 			fmt.Println(line)
 		}
 	}
@@ -195,22 +209,31 @@ func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
 	return output.String(), nil
 }
 
-// parseOutput parses compiler output for errors and warnings
+// parseOutput parses compiler output for errors and warnings.
+// It mirrors the TypeScript regex (?<level>ERROR|WARNING): .+ and deduplicates
+// results, matching NLRC's output format exactly.
 func (c *NLRCCompiler) parseOutput(output string) ([]string, []string) {
-	var errors, warnings []string
-	lines := strings.Split(output, "\n")
+	seenErrors := make(map[string]struct{})
+	seenWarnings := make(map[string]struct{})
 
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
+	var errors, warnings []string
+
+	for _, line := range strings.Split(output, "\n") {
+		match := logPattern.FindString(line)
+		if match == "" {
 			continue
 		}
 
-		// Check for error patterns (customize based on actual compiler output)
-		if strings.Contains(strings.ToLower(line), "error") {
-			errors = append(errors, line)
-		} else if strings.Contains(strings.ToLower(line), "warning") {
-			warnings = append(warnings, line)
+		if strings.HasPrefix(match, "ERROR:") {
+			if _, seen := seenErrors[match]; !seen {
+				seenErrors[match] = struct{}{}
+				errors = append(errors, match)
+			}
+		} else {
+			if _, seen := seenWarnings[match]; !seen {
+				seenWarnings[match] = struct{}{}
+				warnings = append(warnings, match)
+			}
 		}
 	}
 

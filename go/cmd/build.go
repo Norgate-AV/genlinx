@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
 	"github.com/Norgate-AV/genlinx-go/internal/compiler"
@@ -90,50 +92,43 @@ var buildCmd = &cobra.Command{
 		// Create compiler
 		nlrc := compiler.NewNLRCCompiler(opts.NLRCPath)
 
-		// Prepare compilation options
-		compileOpts := compiler.CompileOptions{
-			SourceFiles: opts.SourceFiles,
-			CFGFiles:    opts.CFGFiles,
-			IncludePath: opts.IncludePath,
-			ModulePath:  opts.ModulePath,
-			LibraryPath: opts.LibraryPath,
-			Verbose:     opts.Verbose,
-		}
-
 		// Compile
-		result, err := nlrc.Compile(compileOpts)
+		result, err := nlrc.Compile(buildCompileOpts(opts))
 		if err != nil {
 			return fmt.Errorf("compilation failed: %w", err)
 		}
 
-		// Display results
-		// if result.Success {
-		// 	fmt.Println("✅ Compilation successful!")
-		// } else {
-		// 	fmt.Println("❌ Compilation failed!")
-		// }
-
-		if opts.Verbose || !result.Success {
-			fmt.Println("\nOutput:")
-			fmt.Println(result.Output)
+		if len(result.Warnings) > 0 {
+			fmt.Fprintln(os.Stderr, color.YellowString("A total of %d warning(s) occurred.", len(result.Warnings)))
+			for _, w := range result.Warnings {
+				fmt.Fprintln(os.Stderr, color.YellowString(w))
+			}
 		}
 
-		// if len(result.Errors) > 0 {
-		// 	fmt.Println("\nErrors:")
-		// 	for _, err := range result.Errors {
-		// 		fmt.Printf("  ❌ %s\n", err)
-		// 	}
-		// }
-
-		if len(result.Warnings) > 0 {
-			fmt.Println("\nWarnings:")
-			for _, warning := range result.Warnings {
-				fmt.Printf("  ⚠️  %s\n", warning)
+		if len(result.Errors) > 0 {
+			fmt.Fprintln(os.Stderr, color.RedString("A total of %d error(s) occurred.", len(result.Errors)))
+			for _, e := range result.Errors {
+				fmt.Fprintln(os.Stderr, color.RedString(e))
 			}
+			return fmt.Errorf("the build process failed with a total of %d error(s)", len(result.Errors))
 		}
 
 		return nil
 	},
+}
+
+// buildCompileOpts maps BuildOptions onto compiler.CompileOptions.
+// Extracted so the field mapping can be unit-tested without a real compiler.
+func buildCompileOpts(opts *options.BuildOptions) compiler.CompileOptions {
+	return compiler.CompileOptions{
+		SourceFiles: opts.SourceFiles,
+		CFGFiles:    opts.CFGFiles,
+		IncludePath: opts.IncludePath,
+		ModulePath:  opts.ModulePath,
+		LibraryPath: opts.LibraryPath,
+		OutputPath:  opts.OutputPath,
+		Verbose:     opts.Verbose,
+	}
 }
 
 func init() {

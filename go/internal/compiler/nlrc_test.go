@@ -1,6 +1,8 @@
 package compiler
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,9 +60,8 @@ func (suite *CompilerTestSuite) TestBuildArgs() {
 	assert.Equal(suite.T(), "file1.axs", args[0])
 	assert.Equal(suite.T(), "file2.axi", args[1])
 
-	// Verify include paths
-	assert.Contains(suite.T(), args, "-I\"C:/Include/Path1\"")
-	assert.Contains(suite.T(), args, "-I\"C:/Include/Path2\"")
+	// Verify include paths (joined into single arg)
+	assert.Contains(suite.T(), args, "-I\"C:/Include/Path1;C:/Include/Path2\"")
 
 	// Verify module paths (should be combined into single -M"path1;path2" flag)
 	assert.Contains(suite.T(), args, "-M\"C:/Module/Path1;C:/Module/Path2\"")
@@ -70,9 +71,8 @@ func (suite *CompilerTestSuite) TestBuildArgs() {
 		}
 	}
 
-	// Verify library paths
-	assert.Contains(suite.T(), args, "-L\"C:/Library/Path1\"")
-	assert.Contains(suite.T(), args, "-L\"C:/Library/Path2\"")
+	// Verify library paths (joined into single arg)
+	assert.Contains(suite.T(), args, "-L\"C:/Library/Path1;C:/Library/Path2\"")
 
 	// Verify output path
 	assert.Contains(suite.T(), args, "-O\"C:/Output/Path\"")
@@ -92,8 +92,8 @@ func (suite *CompilerTestSuite) TestBuildArgsWithCFG() {
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// Verify CFG files are combined
-	assert.Contains(suite.T(), args, "-Cconfig1.cfg;config2.cfg")
+	// Verify CFG files are combined with correct flag
+	assert.Contains(suite.T(), args, "-CFGconfig1.cfg;config2.cfg")
 
 	// Verify include paths are still included
 	assert.Contains(suite.T(), args, "-I\"C:/Include\"")
@@ -272,58 +272,69 @@ func (suite *CompilerTestSuite) TestParseOutput_Empty() {
 	assert.Empty(suite.T(), warnings)
 }
 
-// TestParseOutput_Errors verifies that lines containing "error" are classified
-// as errors.
+// TestParseOutput_Errors verifies that lines containing the NLRC "ERROR: "
+// prefix are classified as errors.
 func (suite *CompilerTestSuite) TestParseOutput_Errors() {
 	compiler := NewNLRCCompiler("test.exe")
-	output := "Error: undefined variable 'foo'\nError: missing semicolon"
+	output := "ERROR: undefined variable 'foo'\nERROR: missing semicolon"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 2)
 	assert.Empty(suite.T(), warnings)
-	assert.Contains(suite.T(), errors, "Error: undefined variable 'foo'")
-	assert.Contains(suite.T(), errors, "Error: missing semicolon")
+	assert.Contains(suite.T(), errors, "ERROR: undefined variable 'foo'")
+	assert.Contains(suite.T(), errors, "ERROR: missing semicolon")
 }
 
-// TestParseOutput_Warnings verifies that lines containing "warning" are
-// classified as warnings.
+// TestParseOutput_Warnings verifies that lines containing the NLRC "WARNING: "
+// prefix are classified as warnings.
 func (suite *CompilerTestSuite) TestParseOutput_Warnings() {
 	compiler := NewNLRCCompiler("test.exe")
-	output := "Warning: unused variable 'x'\nWARNING: deprecated function"
+	output := "WARNING: unused variable 'x'\nWARNING: deprecated function"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Empty(suite.T(), errors)
 	assert.Len(suite.T(), warnings, 2)
-	assert.Contains(suite.T(), warnings, "Warning: unused variable 'x'")
+	assert.Contains(suite.T(), warnings, "WARNING: unused variable 'x'")
 	assert.Contains(suite.T(), warnings, "WARNING: deprecated function")
 }
 
-// TestParseOutput_Mixed verifies that a realistic compiler output block is
+// TestParseOutput_Mixed verifies that a realistic NLRC output block is
 // classified correctly — plain lines are ignored.
 func (suite *CompilerTestSuite) TestParseOutput_Mixed() {
 	compiler := NewNLRCCompiler("test.exe")
-	output := "Compiling test.axs\nError: undefined variable\nWarning: deprecated usage\nCompilation complete"
+	output := "Compiling test.axs\nERROR: undefined variable\nWARNING: deprecated usage\nCompilation complete"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 1)
 	assert.Len(suite.T(), warnings, 1)
-	assert.Contains(suite.T(), errors, "Error: undefined variable")
-	assert.Contains(suite.T(), warnings, "Warning: deprecated usage")
+	assert.Contains(suite.T(), errors, "ERROR: undefined variable")
+	assert.Contains(suite.T(), warnings, "WARNING: deprecated usage")
 }
 
-// TestParseOutput_CaseInsensitive verifies that error/warning matching is
-// case-insensitive.
-func (suite *CompilerTestSuite) TestParseOutput_CaseInsensitive() {
+// TestParseOutput_NonNLRCFormatIgnored verifies that lines using mixed-case or
+// non-NLRC prefixes (e.g. "Error:", "warning:", "0 errors found") are not
+// matched, preventing false positives.
+func (suite *CompilerTestSuite) TestParseOutput_NonNLRCFormatIgnored() {
 	compiler := NewNLRCCompiler("test.exe")
-	output := "ERROR: critical failure\nwarning: minor issue"
+	output := "Error: wrong case\nwarning: also wrong\n0 error(s) found\nBuild succeeded with 0 warnings"
+	errors, warnings := compiler.parseOutput(output)
+	assert.Empty(suite.T(), errors)
+	assert.Empty(suite.T(), warnings)
+}
+
+// TestParseOutput_DuplicatesDeduped verifies that duplicate log lines are only
+// reported once, matching the TypeScript Set deduplication behaviour.
+func (suite *CompilerTestSuite) TestParseOutput_DuplicatesDeduped() {
+	compiler := NewNLRCCompiler("test.exe")
+	output := "ERROR: undefined variable\nERROR: undefined variable\nWARNING: deprecated usage\nWARNING: deprecated usage"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 1)
 	assert.Len(suite.T(), warnings, 1)
 }
 
-// TestParseOutput_ErrorBeforeWarning verifies that when a line contains both
-// the word "error" and "warning", it is classified as an error (error check
-// comes first in the implementation).
-func (suite *CompilerTestSuite) TestParseOutput_ErrorBeforeWarning() {
+// TestParseOutput_ErrorPrecedesWarningKeyword verifies that a line with NLRC
+// "ERROR: " prefix is classified as an error even if it also contains the word
+// "warning" in its message.
+func (suite *CompilerTestSuite) TestParseOutput_ErrorPrecedesWarningKeyword() {
 	compiler := NewNLRCCompiler("test.exe")
-	output := "error/warning: ambiguous message"
+	output := "ERROR: this warning-like message is still an error"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 1)
 	assert.Empty(suite.T(), warnings)
@@ -342,8 +353,8 @@ func (suite *CompilerTestSuite) TestBuildArgs_CFGTakesPrecedenceOverSourceFiles(
 	args, err := compiler.BuildArgs(options)
 	suite.Require().NoError(err)
 
-	// The -C flag must be present
-	assert.Contains(suite.T(), args, "-Cproject.cfg")
+	// The -CFG flag must be present
+	assert.Contains(suite.T(), args, "-CFGproject.cfg")
 
 	// Source files must NOT appear
 	for _, arg := range args {
@@ -365,8 +376,8 @@ func (suite *CompilerTestSuite) TestBuildArgs_BothSourceAndCFGEmpty() {
 	suite.Require().NoError(err)
 
 	for _, arg := range args {
-		assert.False(suite.T(), strings.HasPrefix(arg, "-C"),
-			"should not contain a -C arg when no CFG files are provided")
+		assert.False(suite.T(), strings.HasPrefix(arg, "-CFG"),
+			"should not contain a -CFG arg when no CFG files are provided")
 	}
 	assert.Empty(suite.T(), args)
 }
@@ -405,6 +416,64 @@ func (suite *CompilerTestSuite) TestCompile_BadExecutable() {
 	assert.Error(suite.T(), err)
 	assert.Nil(suite.T(), result)
 	assert.Contains(suite.T(), err.Error(), "failed to start compiler")
+}
+
+// captureStdout runs fn and returns whatever it wrote to os.Stdout.
+func captureStdout(fn func()) string {
+	r, w, _ := os.Pipe()
+	old := os.Stdout
+	os.Stdout = w
+
+	fn()
+
+	w.Close()
+	os.Stdout = old
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r) //nolint:errcheck
+	return buf.String()
+}
+
+// TestReadOutput_VerboseTrue verifies that readOutput prints each line to
+// stdout when verbose is true.
+func (suite *CompilerTestSuite) TestReadOutput_VerboseTrue() {
+	c := NewNLRCCompiler("test.exe")
+
+	captured := captureStdout(func() {
+		out, err := c.readOutput(
+			strings.NewReader("line1\nline2\n"),
+			strings.NewReader("err1\n"),
+			true,
+		)
+		suite.Require().NoError(err)
+		suite.Contains(out, "line1")
+		suite.Contains(out, "line2")
+		suite.Contains(out, "err1")
+	})
+
+	assert.Contains(suite.T(), captured, "line1")
+	assert.Contains(suite.T(), captured, "line2")
+	assert.Contains(suite.T(), captured, "err1")
+}
+
+// TestReadOutput_VerboseFalse verifies that readOutput does not print anything
+// to stdout when verbose is false, but still returns full output.
+func (suite *CompilerTestSuite) TestReadOutput_VerboseFalse() {
+	c := NewNLRCCompiler("test.exe")
+
+	captured := captureStdout(func() {
+		out, err := c.readOutput(
+			strings.NewReader("line1\nline2\n"),
+			strings.NewReader("err1\n"),
+			false,
+		)
+		suite.Require().NoError(err)
+		suite.Contains(out, "line1")
+		suite.Contains(out, "line2")
+		suite.Contains(out, "err1")
+	})
+
+	assert.Empty(suite.T(), captured, "nothing should be printed to stdout when verbose=false")
 }
 
 // TestCompilerTestSuite runs the test suite
