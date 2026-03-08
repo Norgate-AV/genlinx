@@ -331,6 +331,108 @@ func (suite *OptionsTestSuite) TestCLIOptionsStruct() {
 	assert.True(suite.T(), cliOpts.Verbose)
 }
 
+// TestMergeConfigs_LaterConfigWins verifies that a later (higher-precedence)
+// config's non-empty Path field overrides earlier configs, mirroring the
+// default < global < local precedence used in LoadBuildOptions.
+func (suite *OptionsTestSuite) TestMergeConfigs_LaterConfigWins() {
+	defaultCfg := &config.Config{
+		Build: config.BuildConfig{
+			NLRC: config.NLRCConfig{Path: "default.exe"},
+		},
+	}
+	globalCfg := &config.Config{
+		Build: config.BuildConfig{
+			NLRC: config.NLRCConfig{Path: "global.exe"},
+		},
+	}
+	localCfg := &config.Config{
+		Build: config.BuildConfig{
+			NLRC: config.NLRCConfig{Path: "local.exe"},
+		},
+	}
+
+	merged := mergeConfigs(defaultCfg, globalCfg, localCfg)
+
+	// local is last — it must win
+	assert.Equal(suite.T(), "local.exe", merged.Build.NLRC.Path)
+}
+
+// TestMergeConfigs_EmptyLaterDoesNotOverride verifies that an empty string field
+// in a later config does not wipe out a value set by an earlier config.
+func (suite *OptionsTestSuite) TestMergeConfigs_EmptyLaterDoesNotOverride() {
+	config1 := &config.Config{
+		Build: config.BuildConfig{
+			NLRC: config.NLRCConfig{Path: "config1.exe"},
+		},
+	}
+	config2 := &config.Config{} // Path is "" (zero value)
+
+	merged := mergeConfigs(config1, config2)
+
+	assert.Equal(suite.T(), "config1.exe", merged.Build.NLRC.Path)
+}
+
+// TestMergeConfigs_IncludePathAccumulates verifies that include paths from
+// multiple configs are accumulated (not overwritten) in precedence order.
+func (suite *OptionsTestSuite) TestMergeConfigs_IncludePathAccumulates() {
+	config1 := &config.Config{
+		Build: config.BuildConfig{
+			NLRC: config.NLRCConfig{IncludePath: []string{"global/include"}},
+		},
+	}
+	config2 := &config.Config{
+		Build: config.BuildConfig{
+			NLRC: config.NLRCConfig{IncludePath: []string{"local/include"}},
+		},
+	}
+
+	merged := mergeConfigs(config1, config2)
+
+	assert.Contains(suite.T(), merged.Build.NLRC.IncludePath, "global/include")
+	assert.Contains(suite.T(), merged.Build.NLRC.IncludePath, "local/include")
+	assert.Len(suite.T(), merged.Build.NLRC.IncludePath, 2)
+}
+
+// TestLoadBuildOptions_CLIPathsPrependedBeforeConfig verifies that CLI-supplied
+// include paths appear before config-file paths in the merged result.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_CLIPathsPrependedBeforeConfig() {
+	// Prevent any real global config from being discovered
+	noGlobalDir := filepath.Join(suite.tempDir, "no_global")
+	suite.Require().NoError(os.MkdirAll(noGlobalDir, 0o755))
+	suite.T().Setenv("GENLINX_CONFIG_DIR", noGlobalDir)
+
+	// Write a local config with an include path
+	configContent := `{"build":{"nlrc":{"includePath":["config/include"]}}}`
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(configContent),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadBuildOptions(&CLIOptions{IncludePath: []string{"cli/include"}})
+	suite.Require().NoError(err)
+
+	// Find positions — paths will be absolute after resolvePaths()
+	cliIdx, cfgIdx := -1, -1
+	for i, p := range opts.IncludePath {
+		if strings.Contains(p, "cli") {
+			cliIdx = i
+		}
+		if strings.Contains(p, "config") {
+			cfgIdx = i
+		}
+	}
+
+	assert.NotEqual(suite.T(), -1, cliIdx, "CLI include path should be present")
+	assert.NotEqual(suite.T(), -1, cfgIdx, "config include path should be present")
+	assert.Less(suite.T(), cliIdx, cfgIdx, "CLI path should appear before config path")
+}
+
 // TestOptionsTestSuite runs the test suite
 func TestOptionsTestSuite(t *testing.T) {
 	suite.Run(t, new(OptionsTestSuite))

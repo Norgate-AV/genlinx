@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -265,6 +266,149 @@ func (suite *CompilerTestSuite) TestBuildArgsOrder() {
 	if outputPos >= 0 {
 		assert.Greater(suite.T(), outputPos, sourcePos)
 	}
+}
+
+// TestParseOutput_Empty verifies that empty output produces no errors or warnings.
+func (suite *CompilerTestSuite) TestParseOutput_Empty() {
+	compiler := NewNLRCCompiler("test.exe")
+	errors, warnings := compiler.parseOutput("")
+	assert.Empty(suite.T(), errors)
+	assert.Empty(suite.T(), warnings)
+}
+
+// TestParseOutput_Errors verifies that lines containing "error" are classified
+// as errors.
+func (suite *CompilerTestSuite) TestParseOutput_Errors() {
+	compiler := NewNLRCCompiler("test.exe")
+	output := "Error: undefined variable 'foo'\nError: missing semicolon"
+	errors, warnings := compiler.parseOutput(output)
+	assert.Len(suite.T(), errors, 2)
+	assert.Empty(suite.T(), warnings)
+	assert.Contains(suite.T(), errors, "Error: undefined variable 'foo'")
+	assert.Contains(suite.T(), errors, "Error: missing semicolon")
+}
+
+// TestParseOutput_Warnings verifies that lines containing "warning" are
+// classified as warnings.
+func (suite *CompilerTestSuite) TestParseOutput_Warnings() {
+	compiler := NewNLRCCompiler("test.exe")
+	output := "Warning: unused variable 'x'\nWARNING: deprecated function"
+	errors, warnings := compiler.parseOutput(output)
+	assert.Empty(suite.T(), errors)
+	assert.Len(suite.T(), warnings, 2)
+	assert.Contains(suite.T(), warnings, "Warning: unused variable 'x'")
+	assert.Contains(suite.T(), warnings, "WARNING: deprecated function")
+}
+
+// TestParseOutput_Mixed verifies that a realistic compiler output block is
+// classified correctly — plain lines are ignored.
+func (suite *CompilerTestSuite) TestParseOutput_Mixed() {
+	compiler := NewNLRCCompiler("test.exe")
+	output := "Compiling test.axs\nError: undefined variable\nWarning: deprecated usage\nCompilation complete"
+	errors, warnings := compiler.parseOutput(output)
+	assert.Len(suite.T(), errors, 1)
+	assert.Len(suite.T(), warnings, 1)
+	assert.Contains(suite.T(), errors, "Error: undefined variable")
+	assert.Contains(suite.T(), warnings, "Warning: deprecated usage")
+}
+
+// TestParseOutput_CaseInsensitive verifies that error/warning matching is
+// case-insensitive.
+func (suite *CompilerTestSuite) TestParseOutput_CaseInsensitive() {
+	compiler := NewNLRCCompiler("test.exe")
+	output := "ERROR: critical failure\nwarning: minor issue"
+	errors, warnings := compiler.parseOutput(output)
+	assert.Len(suite.T(), errors, 1)
+	assert.Len(suite.T(), warnings, 1)
+}
+
+// TestParseOutput_ErrorBeforeWarning verifies that when a line contains both
+// the word "error" and "warning", it is classified as an error (error check
+// comes first in the implementation).
+func (suite *CompilerTestSuite) TestParseOutput_ErrorBeforeWarning() {
+	compiler := NewNLRCCompiler("test.exe")
+	output := "error/warning: ambiguous message"
+	errors, warnings := compiler.parseOutput(output)
+	assert.Len(suite.T(), errors, 1)
+	assert.Empty(suite.T(), warnings)
+}
+
+// TestBuildArgs_CFGTakesPrecedenceOverSourceFiles verifies that when both
+// CFGFiles and SourceFiles are provided, CFG mode is used exclusively and the
+// source files are not added to the argument list.
+func (suite *CompilerTestSuite) TestBuildArgs_CFGTakesPrecedenceOverSourceFiles() {
+	compiler := NewNLRCCompiler("test.exe")
+	options := CompileOptions{
+		SourceFiles: []string{"should_be_ignored.axs"},
+		CFGFiles:    []string{"project.cfg"},
+	}
+
+	args, err := compiler.BuildArgs(options)
+	suite.Require().NoError(err)
+
+	// The -C flag must be present
+	assert.Contains(suite.T(), args, "-Cproject.cfg")
+
+	// Source files must NOT appear
+	for _, arg := range args {
+		assert.NotEqual(suite.T(), "should_be_ignored.axs", arg,
+			"source file should be ignored when CFG files are provided")
+	}
+}
+
+// TestBuildArgs_BothSourceAndCFGEmpty verifies that when both SourceFiles and
+// CFGFiles are empty, no source or cfg arguments are generated.
+func (suite *CompilerTestSuite) TestBuildArgs_BothSourceAndCFGEmpty() {
+	compiler := NewNLRCCompiler("test.exe")
+	options := CompileOptions{
+		SourceFiles: []string{},
+		CFGFiles:    []string{},
+	}
+
+	args, err := compiler.BuildArgs(options)
+	suite.Require().NoError(err)
+
+	for _, arg := range args {
+		assert.False(suite.T(), strings.HasPrefix(arg, "-C"),
+			"should not contain a -C arg when no CFG files are provided")
+	}
+	assert.Empty(suite.T(), args)
+}
+
+// TestBuildArgs_SourceFileExistsOnDisk verifies that a source file that exists
+// on the filesystem is resolved to its absolute path in the argument list.
+func (suite *CompilerTestSuite) TestBuildArgs_SourceFileExistsOnDisk() {
+	// Create a real source file in the temp directory
+	sourceFile := filepath.Join(suite.tempDir, "TestMain.axs")
+	suite.Require().NoError(os.WriteFile(sourceFile, []byte("PROGRAM_NAME='TestMain'\n"), 0o644))
+
+	compiler := NewNLRCCompiler("test.exe")
+	options := CompileOptions{
+		SourceFiles: []string{sourceFile},
+		CFGFiles:    []string{},
+	}
+
+	args, err := compiler.BuildArgs(options)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(args)
+
+	assert.True(suite.T(), filepath.IsAbs(args[0]),
+		"source file arg should be an absolute path, got: %s", args[0])
+	assert.Equal(suite.T(), sourceFile, args[0])
+}
+
+// TestCompile_BadExecutable verifies that Compile returns an error whose message
+// contains "failed to start compiler" when the executable does not exist.
+func (suite *CompilerTestSuite) TestCompile_BadExecutable() {
+	compiler := NewNLRCCompiler("/no/such/compiler/nlrc.exe")
+	options := CompileOptions{
+		SourceFiles: []string{"test.axs"},
+	}
+
+	result, err := compiler.Compile(options)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), result)
+	assert.Contains(suite.T(), err.Error(), "failed to start compiler")
 }
 
 // TestCompilerTestSuite runs the test suite
