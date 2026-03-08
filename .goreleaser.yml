@@ -1,0 +1,187 @@
+version: 2
+
+project_name: genlinx
+
+before:
+  hooks:
+    - go mod tidy
+    - ./scripts/generate-changelog.sh {{ .Tag }}
+    - ./scripts/generate-release-notes.sh {{ .Tag }}
+
+builds:
+  - id: genlinx
+    main: .
+    env:
+      - CGO_ENABLED=0
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -extldflags=-static
+      - -X 'github.com/Norgate-AV/genlinx/internal/version.Version={{ .Version }}'
+      - -X 'github.com/Norgate-AV/genlinx/internal/version.GitCommit={{ .Commit }}'
+      - -X 'github.com/Norgate-AV/genlinx/internal/version.BuildDate={{ .Date }}'
+    flags:
+      - -trimpath
+
+archives:
+  - format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+source:
+  enabled: true
+  # Override default ('{{ .ProjectName }}-{{ .Version }}') to use underscores
+  # for consistency with binary archive names, and to add a _source suffix so
+  # the asset is clearly distinguishable from binary archives in the release.
+  name_template: "{{ .ProjectName }}_{{ .Version }}_source"
+
+signs:
+  - artifacts: checksum
+    args: [
+        # CI/CD required extras for non-interactive GPG signing in a
+        # containerised environment
+        "--pinentry-mode",
+        "loopback",
+        "--batch",
+        "-u",
+        "{{ .Env.GPG_FINGERPRINT }}",
+
+        # Defaults
+        "--output",
+        "${signature}",
+        "--detach-sign",
+        "${artifact}",
+      ]
+
+nfpms:
+  - homepage: https://github.com/Norgate-AV/genlinx
+    description: CLI utility for NetLinx projects 🚀🚀🚀
+    maintainer: Damien Butt <22627489+damienbutt@users.noreply.github.com>
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    contents:
+      - src: LICENSE
+        dst: /usr/share/licenses/genlinx/LICENSE
+      - src: README.md
+        dst: /usr/share/doc/genlinx/README.md
+
+changelog:
+  disable: true
+
+release:
+  # Using `git-cliff` to generate release notes.
+  # Release notes are given via args in the action.
+  mode: replace
+  prerelease: auto
+
+homebrew_casks:
+  - name: genlinx
+    ids:
+      - default
+    binaries:
+      - genlinx
+    repository:
+      owner: Norgate-AV
+      name: homebrew-tap
+      token: "{{ .Env.RELEASE_TOKEN }}"
+    commit_author:
+      name: github-actions[bot]
+      email: github-actions[bot]@users.noreply.github.com
+    commit_msg_template: "chore(brew): update cask for {{ .ProjectName }} {{ .Tag }}"
+    homepage: "https://github.com/Norgate-AV/genlinx"
+    description: "CLI utility for NetLinx projects 🚀🚀🚀"
+    license: "MIT"
+
+scoops:
+  - name: genlinx
+    ids:
+      - default
+    repository:
+      owner: Norgate-AV
+      name: scoop-bucket
+      token: "{{ .Env.RELEASE_TOKEN }}"
+    commit_author:
+      name: github-actions[bot]
+      email: github-actions[bot]@users.noreply.github.com
+    commit_msg_template: "chore(scoop): update manifest for {{ .ProjectName }} {{ .Tag }}"
+    homepage: "https://github.com/Norgate-AV/genlinx"
+    description: "CLI utility for NetLinx projects 🚀🚀🚀"
+    license: MIT
+
+aurs:
+  - name: genlinx-bin
+    homepage: https://github.com/Norgate-AV/genlinx
+    description: CLI utility for NetLinx projects 🚀🚀🚀
+    maintainers:
+      - Damien Butt <22627489+damienbutt@users.noreply.github.com>
+    license: MIT
+    private_key: "{{ .Env.AUR_SSH_PRIVATE_KEY }}"
+    git_url: ssh://aur@aur.archlinux.org/genlinx-bin.git
+    provides:
+      - genlinx
+    conflicts:
+      - genlinx
+    package: |-
+      # bin
+      install -Dm755 "./genlinx" "${pkgdir}/usr/bin/genlinx"
+
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/genlinx/LICENSE"
+
+      # documentation
+      install -Dm644 "./README.md" "${pkgdir}/usr/share/doc/genlinx/README.md"
+    skip_upload: false
+
+aur_sources:
+  - name: genlinx
+    homepage: https://github.com/Norgate-AV/genlinx
+    description: CLI utility for NetLinx projects 🚀🚀🚀
+    maintainers:
+      - Damien Butt <22627489+damienbutt@users.noreply.github.com>
+    license: MIT
+    private_key: "{{ .Env.AUR_SSH_PRIVATE_KEY }}"
+    git_url: ssh://aur@aur.archlinux.org/genlinx.git
+    provides:
+      - genlinx
+    conflicts:
+      - genlinx
+    makedepends:
+      - go
+      - git
+    prepare: |-
+      cd "$srcdir"
+
+      # Download dependencies
+      go mod download
+    build: |-
+      cd "$srcdir"
+
+      # Build the binary with proper flags
+      export CGO_ENABLED=0
+
+      go build \
+        -trimpath \
+        -ldflags="-s -w -extldflags=-static \
+          -X github.com/Norgate-AV/genlinx/internal/version.Version={{ .Version }} \
+          -X github.com/Norgate-AV/genlinx/internal/version.GitCommit={{ .Commit }} \
+          -X github.com/Norgate-AV/genlinx/internal/version.BuildDate={{ .Date }}" \
+        -o genlinx \
+        .
+    package: |-
+      cd "$srcdir"
+
+      # Install binary
+      install -Dm755 genlinx "${pkgdir}/usr/bin/genlinx"
+
+      # Install license
+      install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+
+      # Install documentation
+      install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+    skip_upload: false

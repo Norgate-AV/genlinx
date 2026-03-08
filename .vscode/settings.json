@@ -56,5 +56,8 @@
     },
     "go.lintTool": "golangci-lint",
     "go.lintOnSave": "workspace",
-    "github-actions.workflows.pinned.workflows": [".github/workflows/ci.yml"]
+    "github-actions.workflows.pinned.workflows": [".github/workflows/ci.yml"],
+    "[shellscript]": {
+        "editor.defaultFormatter": "lumirelle.shell-format-rev"
+    }
 }
