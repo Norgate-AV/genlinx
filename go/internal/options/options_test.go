@@ -829,6 +829,205 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_CLIPathsPrependedBeforeConfi
 	assert.Less(suite.T(), cliIdx, cfgIdx, "CLI path should appear before config path")
 }
 
+// ---------------------------------------------------------------------------
+// LoadArchiveOptions
+// ---------------------------------------------------------------------------
+
+// TestLoadArchiveOptions_NilCLI verifies that passing nil CLI options returns
+// a result built purely from the merged (default + global + local) config.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_NilCLI() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, info, err := LoadArchiveOptions(nil)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(opts)
+	suite.Require().NotNil(info)
+	suite.True(info.DefaultLoaded)
+}
+
+// TestLoadArchiveOptions_OutputFileSuffix verifies that a CLI OutputFileSuffix
+// overrides the config value.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_OutputFileSuffix() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch2"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch2"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &ArchiveCLIOptions{
+		OutputFileSuffix: ".custom",
+		Changed:          map[string]bool{},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+	suite.Equal(".custom", opts.OutputFileSuffix)
+}
+
+// TestLoadArchiveOptions_BoolFlagOverride verifies that a Changed flag
+// overrides the config default for the corresponding boolean option.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_BoolFlagOverride() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch3"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch3"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &ArchiveCLIOptions{
+		Changed: map[string]bool{
+			"no-include-compiled-source-files":  true,
+			"include-compiled-module-files":     true,
+			"no-include-files-not-in-workspace": true,
+		},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+	suite.False(opts.IncludeCompiledSourceFiles)
+	suite.True(opts.IncludeCompiledModuleFiles)
+	suite.False(opts.IncludeFilesNotInWorkspace)
+}
+
+// TestLoadArchiveOptions_ExtraSearchLocationsPrepended verifies that CLI
+// ExtraFileSearchLocations are prepended before config paths.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraSearchLocationsPrepended() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch4"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch4"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &ArchiveCLIOptions{
+		ExtraFileSearchLocations: []string{"cli/search"},
+		Changed:                  map[string]bool{},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(opts.ExtraFileSearchLocations)
+	suite.Equal("cli/search", opts.ExtraFileSearchLocations[0])
+}
+
+// ---------------------------------------------------------------------------
+// LoadCfgOptions
+// ---------------------------------------------------------------------------
+
+// TestLoadCfgOptions_NilCLI verifies that passing nil CLI options returns the
+// merged config default.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_NilCLI() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, info, err := LoadCfgOptions(nil)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(opts)
+	suite.Require().NotNil(info)
+	suite.True(info.DefaultLoaded)
+}
+
+// TestLoadCfgOptions_CLIOverrides verifies that string CLI fields override
+// the config values and Changed boolean flags flip the corresponding booleans.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverrides() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg2"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg2"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &CfgCLIOptions{
+		RootDirectory:       "/my/root",
+		OutputFileSuffix:    ".cfg_custom",
+		OutputLogFileSuffix: ".log_custom",
+		OutputLogFileOption: "file",
+		Changed: map[string]bool{
+			"output-log-console-option":    true,
+			"build-with-debug-information": true,
+			"no-build-with-source":         true,
+		},
+	}
+
+	opts, _, err := LoadCfgOptions(cliOpts)
+	suite.Require().NoError(err)
+	suite.Equal("/my/root", opts.RootDirectory)
+	suite.Equal(".cfg_custom", opts.OutputFileSuffix)
+	suite.Equal(".log_custom", opts.OutputLogFileSuffix)
+	suite.Equal("file", opts.OutputLogFileOption)
+	suite.True(opts.OutputLogConsoleOption)
+	suite.True(opts.BuildWithDebugInformation)
+	suite.False(opts.BuildWithSource)
+}
+
+// ---------------------------------------------------------------------------
+// GlobalConfigDir / GlobalConfigPath
+// ---------------------------------------------------------------------------
+
+// TestGlobalConfigDir_UsesEnvVar verifies that $GENLINX_CONFIG_DIR is
+// returned as-is when set.
+func TestGlobalConfigDir_UsesEnvVar(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GENLINX_CONFIG_DIR", dir)
+
+	got, err := GlobalConfigDir()
+	assert.NoError(t, err)
+	assert.Equal(t, dir, got)
+}
+
+// TestGlobalConfigDir_ReturnsNonEmpty verifies that, without the env var, a
+// non-empty platform-appropriate directory is returned.
+func TestGlobalConfigDir_ReturnsNonEmpty(t *testing.T) {
+	t.Setenv("GENLINX_CONFIG_DIR", "")
+
+	got, err := GlobalConfigDir()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, got)
+}
+
+// TestGlobalConfigPath_EndsInConfigJSON verifies that the returned path
+// always ends in "config.json".
+func TestGlobalConfigPath_EndsInConfigJSON(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GENLINX_CONFIG_DIR", dir)
+
+	got, err := GlobalConfigPath()
+	assert.NoError(t, err)
+	assert.True(t, strings.HasSuffix(got, "config.json"),
+		"GlobalConfigPath must end in config.json, got: %s", got)
+}
+
+// TestGlobalConfigPath_UnderConfigDir verifies that the config.json resides
+// inside GlobalConfigDir.
+func TestGlobalConfigPath_UnderConfigDir(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("GENLINX_CONFIG_DIR", dir)
+
+	wantDir, err := GlobalConfigDir()
+	assert.NoError(t, err)
+
+	gotPath, err := GlobalConfigPath()
+	assert.NoError(t, err)
+
+	assert.Equal(t, filepath.Join(wantDir, "config.json"), gotPath)
+}
+
 // TestOptionsTestSuite runs the test suite
 func TestOptionsTestSuite(t *testing.T) {
 	suite.Run(t, new(OptionsTestSuite))

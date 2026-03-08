@@ -296,10 +296,162 @@ func TestGetFileType(t *testing.T) {
 	}
 }
 
-// .axs maps to both FileTypeSource and FileTypeMasterSrc, so GetFileType can
-// return either — just verify it returns a known AXS type.
-func TestGetFileType_AXS_IsSourceOrMasterSrc(t *testing.T) {
+// .axs maps to FileTypeSource, FileTypeMasterSrc, and FileTypeModule (all share
+// the .axs extension). Map iteration order is non-deterministic, so any of the
+// three is a valid return value — verify it's one of the known AXS types.
+func TestGetFileType_AXS_IsKnownAXSType(t *testing.T) {
 	result := GetFileType("main.axs")
-	assert.True(t, result == FileTypeSource || result == FileTypeMasterSrc,
-		"expected FileTypeSource or FileTypeMasterSrc for .axs, got %q", result)
+	known := result == FileTypeSource || result == FileTypeMasterSrc || result == FileTypeModule
+	assert.True(t, known,
+		"expected FileTypeSource, FileTypeMasterSrc, or FileTypeModule for .axs, got %q", result)
+}
+
+// ---------------------------------------------------------------------------
+// MasterSrcPath
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestMasterSrcPath_ReturnsMasterSrcDir() {
+	dir, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	paths := a.MasterSrcPath()
+	s.Len(paths, 1)
+	s.Equal(filepath.Join(dir, "Source"), paths[0])
+}
+
+func (s *APWTestSuite) TestMasterSrcPath_EmptyWhenNoMasterSrc() {
+	data := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>NoMaster</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>P</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>S</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>Inc</Identifier>
+                <FilePathName>Include\Inc.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+	_, apwPath := writeAPW(s.T(), "NoMaster.apw", data)
+	a, err := Parse(apwPath, data)
+	s.Require().NoError(err)
+
+	paths := a.MasterSrcPath()
+	s.Empty(paths)
+}
+
+// ---------------------------------------------------------------------------
+// GetExtraFileReferencesFromFile
+// ---------------------------------------------------------------------------
+
+func TestGetExtraFileReferencesFromFile_IncludeDirective(t *testing.T) {
+	dir := t.TempDir()
+	srcPath := filepath.Join(dir, "main.axs")
+	require.NoError(t, os.WriteFile(srcPath, []byte("#include 'SomeLibrary'\n"), 0o644))
+
+	// APW with no existing files — nothing is "in workspace" yet.
+	_, apwPath := writeAPW(t, "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	require.NoError(t, err)
+
+	refs, err := a.GetExtraFileReferencesFromFile(srcPath)
+	require.NoError(t, err)
+	assert.Contains(t, refs, "SomeLibrary")
+}
+
+func TestGetExtraFileReferencesFromFile_DefineModuleDirective(t *testing.T) {
+	dir := t.TempDir()
+	srcPath := filepath.Join(dir, "main.axs")
+	require.NoError(t, os.WriteFile(srcPath, []byte("define_module 'MyModule' md()\n"), 0o644))
+
+	_, apwPath := writeAPW(t, "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	require.NoError(t, err)
+
+	refs, err := a.GetExtraFileReferencesFromFile(srcPath)
+	require.NoError(t, err)
+	assert.Contains(t, refs, "MyModule")
+}
+
+func TestGetExtraFileReferencesFromFile_ExcludesWorkspaceEntries(t *testing.T) {
+	dir := t.TempDir()
+	srcPath := filepath.Join(dir, "main.axs")
+	// Reference "TestInclude" which is already a file ID in minimalAPW().
+	require.NoError(t, os.WriteFile(srcPath, []byte("#include 'TestInclude'\n"), 0o644))
+
+	_, apwPath := writeAPW(t, "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	require.NoError(t, err)
+
+	refs, err := a.GetExtraFileReferencesFromFile(srcPath)
+	require.NoError(t, err)
+	assert.NotContains(t, refs, "TestInclude", "IDs already in workspace must not be returned as extra refs")
+}
+
+func TestGetExtraFileReferencesFromFile_NilForNonReadableFile(t *testing.T) {
+	_, apwPath := writeAPW(t, "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	require.NoError(t, err)
+
+	// .tko is not readable per FileIsReadable().
+	refs, err := a.GetExtraFileReferencesFromFile("firmware.tko")
+	require.NoError(t, err)
+	assert.Nil(t, refs)
+}
+
+func TestGetExtraFileReferencesFromFile_NoDuplicates(t *testing.T) {
+	dir := t.TempDir()
+	srcPath := filepath.Join(dir, "main.axs")
+	content := "#include 'LibA'\n#include 'LibA'\n"
+	require.NoError(t, os.WriteFile(srcPath, []byte(content), 0o644))
+
+	_, apwPath := writeAPW(t, "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	require.NoError(t, err)
+
+	refs, err := a.GetExtraFileReferencesFromFile(srcPath)
+	require.NoError(t, err)
+
+	count := 0
+	for _, r := range refs {
+		if r == "LibA" {
+			count++
+		}
+	}
+	assert.Equal(t, 1, count, "duplicate references must be deduplicated")
+}
+
+// ---------------------------------------------------------------------------
+// GetExtraFileReferences (workspace-wide)
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestGetExtraFileReferences_EmptyWhenNoExtraRefs() {
+	// minimalAPW workspace files don't exist on disk → skipped by GetExtraFileReferences.
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	refs, err := a.GetExtraFileReferences()
+	s.Require().NoError(err)
+	s.Empty(refs)
 }

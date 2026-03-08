@@ -205,6 +205,21 @@ func (suite *UtilsTestSuite) TestGetAppVersion() {
 	assert.Equal(suite.T(), "2.7.0", result)
 }
 
+// TestNormalizeConfigPaths is a thin wrapper over NormalizePaths; verify it
+// delegates correctly and returns the right slice length.
+func (suite *UtilsTestSuite) TestNormalizeConfigPaths_DelegatesCorrectly() {
+	input := []string{
+		"C:/foo/../bar",
+		"./relative",
+		"",
+	}
+	got := NormalizeConfigPaths(input)
+	suite.Equal(3, len(got), "output slice must have same length as input")
+	suite.Equal(filepath.FromSlash("C:/bar"), got[0])
+	suite.Equal(filepath.FromSlash("relative"), got[1])
+	suite.Equal("", got[2], "empty string must pass through unchanged")
+}
+
 // TestUtilsTestSuite runs the test suite
 func TestUtilsTestSuite(t *testing.T) {
 	suite.Run(t, new(UtilsTestSuite))

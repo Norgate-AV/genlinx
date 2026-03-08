@@ -12,6 +12,308 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// ---------------------------------------------------------------------------
+// structToMap
+// ---------------------------------------------------------------------------
+
+func TestStructToMap_PreservesJSONKeys(t *testing.T) {
+	type inner struct {
+		Value string `json:"myValue"`
+	}
+	type outer struct {
+		Nested inner `json:"nested"`
+	}
+
+	m, err := structToMap(outer{Nested: inner{Value: "hello"}})
+	require.NoError(t, err)
+	nested, ok := m["nested"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "hello", nested["myValue"])
+}
+
+func TestStructToMap_EmptyStruct(t *testing.T) {
+	type empty struct{}
+	m, err := structToMap(empty{})
+	require.NoError(t, err)
+	assert.Empty(t, m)
+}
+
+// ---------------------------------------------------------------------------
+// getByDottedKey
+// ---------------------------------------------------------------------------
+
+func TestGetByDottedKey_TopLevel(t *testing.T) {
+	m := map[string]any{"key": "value"}
+	v, ok := getByDottedKey(m, "key")
+	assert.True(t, ok)
+	assert.Equal(t, "value", v)
+}
+
+func TestGetByDottedKey_Nested(t *testing.T) {
+	m := map[string]any{
+		"build": map[string]any{
+			"nlrc": map[string]any{
+				"path": "/usr/bin/nlrc",
+			},
+		},
+	}
+	v, ok := getByDottedKey(m, "build.nlrc.path")
+	assert.True(t, ok)
+	assert.Equal(t, "/usr/bin/nlrc", v)
+}
+
+func TestGetByDottedKey_MissingKey(t *testing.T) {
+	m := map[string]any{"key": "value"}
+	_, ok := getByDottedKey(m, "missing")
+	assert.False(t, ok)
+}
+
+func TestGetByDottedKey_MissingNestedKey(t *testing.T) {
+	m := map[string]any{"a": map[string]any{"b": "val"}}
+	_, ok := getByDottedKey(m, "a.c")
+	assert.False(t, ok)
+}
+
+func TestGetByDottedKey_NonMapIntermediate(t *testing.T) {
+	m := map[string]any{"a": "string-not-map"}
+	_, ok := getByDottedKey(m, "a.b")
+	assert.False(t, ok)
+}
+
+// ---------------------------------------------------------------------------
+// printValue
+// ---------------------------------------------------------------------------
+
+func TestPrintValue_String(t *testing.T) {
+	out := captureStdout(t, func() { printValue("hello world") })
+	assert.Equal(t, "hello world", strings.TrimSpace(out))
+}
+
+func TestPrintValue_Bool(t *testing.T) {
+	out := captureStdout(t, func() { printValue(true) })
+	assert.Equal(t, "true", strings.TrimSpace(out))
+}
+
+func TestPrintValue_WholeNumber(t *testing.T) {
+	// JSON numbers unmarshal as float64; whole numbers should print as integers.
+	out := captureStdout(t, func() { printValue(float64(42)) })
+	assert.Equal(t, "42", strings.TrimSpace(out))
+}
+
+func TestPrintValue_Float(t *testing.T) {
+	out := captureStdout(t, func() { printValue(3.14) })
+	assert.Contains(t, strings.TrimSpace(out), "3.14")
+}
+
+func TestPrintValue_Slice(t *testing.T) {
+	out := captureStdout(t, func() { printValue([]any{"a", "b"}) })
+	// Should be JSON array.
+	assert.Contains(t, out, `"a"`)
+	assert.Contains(t, out, `"b"`)
+}
+
+// ---------------------------------------------------------------------------
+// printConfig
+// ---------------------------------------------------------------------------
+
+func TestPrintConfig_StructProducesJSON(t *testing.T) {
+	type cfg struct {
+		Name string `json:"name"`
+	}
+	out := captureStdout(t, func() { printConfig(cfg{Name: "test"}) })
+	assert.Contains(t, out, `"name"`)
+	assert.Contains(t, out, `"test"`)
+}
+
+// ---------------------------------------------------------------------------
+// resolveEditor
+// ---------------------------------------------------------------------------
+
+func TestResolveEditor_UsesEnvVar(t *testing.T) {
+	t.Setenv("EDITOR", "vim")
+	assert.Equal(t, "vim", resolveEditor())
+}
+
+func TestResolveEditor_FallsBackToCode(t *testing.T) {
+	t.Setenv("EDITOR", "")
+	assert.Equal(t, "code", resolveEditor())
+}
+
+// ---------------------------------------------------------------------------
+// ensureConfigFile
+// ---------------------------------------------------------------------------
+
+func TestEnsureConfigFile_CreatesFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "subdir", "config.json")
+
+	require.NoError(t, ensureConfigFile(path))
+
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Equal(t, "{}\n", string(data))
+}
+
+func TestEnsureConfigFile_DoesNotOverwriteExisting(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+	require.NoError(t, os.WriteFile(path, []byte(`{"existing":true}`), 0o644))
+
+	require.NoError(t, ensureConfigFile(path))
+
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Equal(t, `{"existing":true}`, string(data))
+}
+
+// ---------------------------------------------------------------------------
+// loadConfigResult
+// ---------------------------------------------------------------------------
+
+func TestLoadConfigResult_GlobalFlag(t *testing.T) {
+	// Point global config dir at an empty temp dir — should return not-found.
+	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
+
+	r, label, err := loadConfigResult(true, false)
+	require.NoError(t, err)
+	assert.Equal(t, "global", label)
+	assert.False(t, r.Found)
+}
+
+func TestLoadConfigResult_LocalFlag(t *testing.T) {
+	// Run from a temp dir with no config file — should return not-found.
+	dir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd) //nolint:errcheck
+	require.NoError(t, os.Chdir(dir))
+
+	r, label, err := loadConfigResult(false, true)
+	require.NoError(t, err)
+	assert.Equal(t, "local", label)
+	assert.False(t, r.Found)
+}
+
+// ---------------------------------------------------------------------------
+// mergePrintConfigs
+// ---------------------------------------------------------------------------
+
+func TestMergePrintConfigs_ReturnsBuildKey(t *testing.T) {
+	// Point global config to empty dir so test is isolated.
+	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
+
+	dir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd) //nolint:errcheck
+	require.NoError(t, os.Chdir(dir))
+
+	m, err := mergePrintConfigs()
+	require.NoError(t, err)
+	_, hasBuild := m["build"]
+	assert.True(t, hasBuild, "merged config must have a 'build' key")
+}
+
+// ---------------------------------------------------------------------------
+// configList
+// ---------------------------------------------------------------------------
+
+func TestConfigList_CombinedPrintsConfig(t *testing.T) {
+	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
+	dir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd) //nolint:errcheck
+	require.NoError(t, os.Chdir(dir))
+
+	out := captureStdout(t, func() {
+		err := configList(false, false)
+		require.NoError(t, err)
+	})
+	// Combined list always prints the merged config as JSON.
+	assert.Contains(t, out, `"build"`)
+}
+
+func TestConfigList_GlobalNotFound_PrintsMessage(t *testing.T) {
+	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
+
+	out := captureStdout(t, func() {
+		err := configList(true, false)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "No global configuration found.")
+}
+
+func TestConfigList_LocalNotFound_PrintsMessage(t *testing.T) {
+	// Run from a temp dir with no config file.
+	dir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd) //nolint:errcheck
+	require.NoError(t, os.Chdir(dir))
+
+	out := captureStdout(t, func() {
+		err := configList(false, true)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "No local configuration found.")
+}
+
+func TestConfigList_LocalFound_PrintsFileContents(t *testing.T) {
+	dir := t.TempDir()
+	content := `{"build":{"nlrc":{"path":"custom.exe"}}}`
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".genlinxrc.json"), []byte(content), 0o644))
+
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd) //nolint:errcheck
+	require.NoError(t, os.Chdir(dir))
+
+	out := captureStdout(t, func() {
+		err := configList(false, true)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "custom.exe")
+}
+
+// ---------------------------------------------------------------------------
+// configGet
+// ---------------------------------------------------------------------------
+
+func TestConfigGet_ExistingKey_PrintsValue(t *testing.T) {
+	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
+	dir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd) //nolint:errcheck
+	require.NoError(t, os.Chdir(dir))
+
+	out := captureStdout(t, func() {
+		err := configGet("build.nlrc.path", false, false)
+		require.NoError(t, err)
+	})
+	// Default NLRC path is non-empty; output should be the path value.
+	assert.NotEmpty(t, strings.TrimSpace(out))
+}
+
+func TestConfigGet_MissingKey_PrintsNoConfigFound(t *testing.T) {
+	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
+	dir := t.TempDir()
+	origWd, _ := os.Getwd()
+	defer os.Chdir(origWd) //nolint:errcheck
+	require.NoError(t, os.Chdir(dir))
+
+	out := captureStdout(t, func() {
+		err := configGet("nonexistent.key.path", false, false)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "No configuration found for key")
+}
+
+func TestConfigGet_GlobalNotFound(t *testing.T) {
+	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
+
+	out := captureStdout(t, func() {
+		err := configGet("build.nlrc.path", true, false)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "No global configuration found.")
+}
+
 // captureStdout redirects os.Stdout for the duration of fn and returns the
 // captured output.
 func captureStdout(t *testing.T, fn func()) string {

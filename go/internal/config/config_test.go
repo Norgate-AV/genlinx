@@ -133,6 +133,27 @@ func loadConfigFromFile(filename string) (*Config, error) {
 	return &cfg, nil
 }
 
+// TestLoadConfig_ReturnsDefaultsWhenNoFile tests that LoadConfig returns the
+// built-in defaults when no config file is present.
+// LoadConfig is a legacy viper-based loader that searches for "genlinx.json"
+// in the current directory and a few system paths; running it from a temp
+// directory that has no such file exercises the "use defaults" branch.
+func (suite *ConfigTestSuite) TestLoadConfig_ReturnsDefaultsWhenNoFile() {
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cfg, err := LoadConfig()
+	suite.Require().NoError(err)
+	suite.Require().NotNil(cfg)
+
+	// Default NLRC path should be non-empty.
+	suite.NotEmpty(cfg.Build.NLRC.Path)
+	// Default include paths should be present.
+	suite.NotEmpty(cfg.Build.NLRC.IncludePath)
+}
+
 // TestConfigTestSuite runs the test suite
 func TestConfigTestSuite(t *testing.T) {
 	suite.Run(t, new(ConfigTestSuite))

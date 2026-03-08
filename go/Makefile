@@ -1,11 +1,11 @@
+APP_NAME := genlinx
 BIN_DIR := bin
 
 MODULE := github.com/Norgate-AV/genlinx-go
 
+TARGET := $(APP_NAME)
 ifeq ($(OS),Windows_NT)
-	TARGET := genlinx.exe
-else
-	TARGET := genlinx
+	TARGET := $(APP_NAME).exe
 endif
 
 # Get GOBIN, fallback to GOPATH/bin, then HOME/go/bin
@@ -52,4 +52,4 @@ run: build
 	./$(BIN_DIR)/$(TARGET)
 
 install: build
-	cp $(BIN_DIR)/$(TARGET) $(GOBIN)/$(TARGET)
+	cp $(BIN_DIR)/$(TARGET) $(GOBIN)/$(APP_NAME)-go.exe

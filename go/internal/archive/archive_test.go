@@ -560,3 +560,80 @@ func TestZipEntryPath_CleansDots(t *testing.T) {
 		t.Errorf("expected cleaned path, got %q", result)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Build – verbose output (covers displayZippedFiles + logVerbose)
+// ---------------------------------------------------------------------------
+
+// captureStdout redirects os.Stdout for the duration of fn and returns the
+// captured output. It is defined locally because the archive package is an
+// internal package; the cmd package helper is not accessible here.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+
+	orig := os.Stdout
+	os.Stdout = w
+	fn()
+	w.Close()
+	os.Stdout = orig
+
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(r)
+	require.NoError(t, err)
+
+	return buf.String()
+}
+
+func (s *ArchiveTestSuite) TestBuild_Verbose_PrintsEntries() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	opts := defaultOpts()
+	opts.Verbose = true
+
+	out := captureStdout(s.T(), func() {
+		err := NewBuilder(a, opts).Build()
+		s.Require().NoError(err)
+	})
+
+	// displayZippedFiles prints "--> <entry>" for every zip entry.
+	s.Contains(out, "-->", "verbose output should list entries with --> prefix")
+}
+
+func (s *ArchiveTestSuite) TestBuild_NonVerbose_NoEntryList() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	opts := defaultOpts()
+	opts.Verbose = false
+
+	out := captureStdout(s.T(), func() {
+		err := NewBuilder(a, opts).Build()
+		s.Require().NoError(err)
+	})
+
+	// Without verbose, displayZippedFiles must not run.
+	s.NotContains(out, "-->", "non-verbose build should not list entries")
+}
+
+func (s *ArchiveTestSuite) TestBuild_Verbose_LogsExtraFileSearch() {
+	// Exercises getFileReferencesFromFiles' logVerbose("Searching %s ...") branch.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.Verbose = true
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+
+	out := captureStdout(s.T(), func() {
+		err := NewBuilder(a, opts).Build()
+		s.Require().NoError(err)
+	})
+
+	// getFileReferencesFromFiles logs "Searching <file> for references..."
+	s.Contains(out, "Searching", "verbose output should mention file search activity")
+}
