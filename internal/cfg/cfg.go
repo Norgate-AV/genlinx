@@ -294,10 +294,10 @@ func deduplicate(items []string) []string {
 	var result []string
 
 	for _, item := range items {
-		normalized := filepath.FromSlash(item)
-		if !seen[normalized] {
-			result = append(result, normalized)
-			seen[normalized] = true
+		key := strings.ReplaceAll(item, "\\", "/")
+		if !seen[key] {
+			result = append(result, filepath.FromSlash(item))
+			seen[key] = true
 		}
 	}
 

@@ -120,7 +120,7 @@ func warnf(format string, args ...any) {
 
 // zipEntryPath converts an OS path to a forward-slash zip entry path.
 func zipEntryPath(p string) string {
-	return path.Clean(filepath.ToSlash(p))
+	return path.Clean(strings.ReplaceAll(p, "\\", "/"))
 }
 
 func (b *Builder) writeEntry(entryName string, data []byte) error {
