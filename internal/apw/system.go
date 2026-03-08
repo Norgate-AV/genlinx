@@ -25,3 +25,9 @@ type System struct {
 	Transport                string     `xml:"Transport,attr"`
 	TransportEx              string     `xml:"TransportEx,attr"`
 }
+
+func NewSystem(id string) *System {
+	return &System{
+		Identifier: id,
+	}
+}

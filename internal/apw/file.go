@@ -124,3 +124,11 @@ type FileRef struct {
 	Type            FileType        `xml:"Type,attr"`
 	CompileType     FileCompileType `xml:"CompileType,attr"`
 }
+
+func NewFileRef(id, path string, t FileType) *FileRef {
+	return &FileRef{
+		Identifier:   id,
+		FilePathName: path,
+		Type:         t,
+	}
+}

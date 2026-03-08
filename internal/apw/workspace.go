@@ -13,3 +13,9 @@ type Workspace struct {
 	Projects       []*Project `xml:"Project"`
 	CurrentVersion string     `xml:"CurrentVersion,attr"`
 }
+
+func NewWorkspace(id string) *Workspace {
+	return &Workspace{
+		Identifier: id,
+	}
+}

@@ -10,3 +10,12 @@ type IRDB struct {
 	Notes          string   `xml:"Notes"`
 	DBKey          string   `xml:"DBKey,attr"`
 }
+
+func NewIRDB(id, path string) *IRDB {
+	return &IRDB{
+		Property:       id,
+		DOSName:        path,
+		UserDBPathName: path,
+		DBKey:          id,
+	}
+}

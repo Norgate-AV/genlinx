@@ -21,6 +21,13 @@ type APW struct {
 	ws    *Workspace
 }
 
+func NewAPW(id, path string) *APW {
+	return &APW{
+		id: id,
+		ws: NewWorkspace(id),
+	}
+}
+
 // Parse validates path and data, then constructs a fully populated APW.
 // The path must have a .apw extension. The data must be the contents of that
 // file — the caller is responsible for reading it.

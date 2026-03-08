@@ -12,3 +12,9 @@ type Project struct {
 	Comments      string    `xml:"Comments,omitempty"`
 	Systems       []*System `xml:"System"`
 }
+
+func NewProject(id string) *Project {
+	return &Project{
+		Identifier: id,
+	}
+}
