@@ -19,7 +19,9 @@ type IntegrationTestSuite struct {
 func (suite *IntegrationTestSuite) SetupTest() {
 	tempDir, err := os.MkdirTemp("", "genlinx_integration_test")
 	suite.Require().NoError(err)
-	suite.tempDir = tempDir
+	resolved, err := filepath.EvalSymlinks(tempDir)
+	suite.Require().NoError(err)
+	suite.tempDir = resolved
 }
 
 // TearDownTest cleans up the test environment

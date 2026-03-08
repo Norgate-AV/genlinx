@@ -22,7 +22,9 @@ type OptionsTestSuite struct {
 func (suite *OptionsTestSuite) SetupTest() {
 	tempDir, err := os.MkdirTemp("", "genlinx_options_test")
 	suite.Require().NoError(err)
-	suite.tempDir = tempDir
+	resolved, err := filepath.EvalSymlinks(tempDir)
+	suite.Require().NoError(err)
+	suite.tempDir = resolved
 }
 
 // TearDownTest cleans up the test environment
