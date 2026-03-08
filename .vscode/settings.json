@@ -55,5 +55,6 @@
         }
     },
     "go.lintTool": "golangci-lint",
-    "go.lintOnSave": "workspace"
+    "go.lintOnSave": "workspace",
+    "github-actions.workflows.pinned.workflows": [".github/workflows/ci.yml"]
 }
