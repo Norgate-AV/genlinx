@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/neilotoole/jsoncolor"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
@@ -117,7 +118,10 @@ func configEdit(global, local bool) error {
 		filePath = r.Path
 	}
 
-	editor := resolveEditor()
+	editor, err := resolveEditor()
+	if err != nil {
+		return err
+	}
 
 	fmt.Printf("Opening %s in %s...\n", filePath, editor)
 
@@ -190,14 +194,27 @@ func loadConfigResult(global, local bool) (options.ConfigLoadResult, string, err
 	return r, "local", err
 }
 
-// resolveEditor returns the editor to use:
-// $EDITOR env var → "code" (VS Code) as fallback.
-func resolveEditor() string {
-	if e := os.Getenv("EDITOR"); e != "" {
-		return e
+// resolveEditor returns the editor to use.
+// Resolution order: $VISUAL → $EDITOR (honoured as-is, user's explicit choice)
+// → first available fallback found on PATH.
+// Returns an error when no fallback is found, directing the user to set $EDITOR.
+//
+// TODO(future): also honour a "core.editor" key from the genlinx config file,
+// inserting it between the env-var check and the PATH fallbacks
+func resolveEditor() (string, error) {
+	for _, env := range []string{"VISUAL", "EDITOR"} {
+		if e := os.Getenv(env); e != "" {
+			return e, nil
+		}
 	}
 
-	return "code"
+	for _, candidate := range []string{"nvim", "vim", "nano", "edit", "code", "notepad"} {
+		if _, err := exec.LookPath(candidate); err == nil {
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf("no editor found on PATH; set the EDITOR environment variable to your preferred editor")
 }
 
 // ensureConfigFile creates an empty JSON config file at path (and its parent
@@ -267,13 +284,16 @@ func mergePrintConfigs() (map[string]any, error) {
 }
 
 func printConfig(v any) {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		fmt.Printf("%+v\n", v)
-		return
+	enc := jsoncolor.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+
+	if jsoncolor.IsColorTerminal(os.Stdout) {
+		enc.SetColors(jsoncolor.DefaultColors())
 	}
 
-	fmt.Println(string(b))
+	if err := enc.Encode(v); err != nil {
+		fmt.Printf("%+v\n", v)
+	}
 }
 
 // printRawFileConfig reads the config file at path and pretty-prints its
@@ -302,8 +322,16 @@ func printRawFileConfig(path string) {
 		}
 	}
 
-	b, _ := json.MarshalIndent(m, "", "  ")
-	fmt.Println(string(b))
+	enc := jsoncolor.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+
+	if jsoncolor.IsColorTerminal(os.Stdout) {
+		enc.SetColors(jsoncolor.DefaultColors())
+	}
+
+	if err := enc.Encode(m); err != nil {
+		fmt.Println("{}")
+	}
 }
 
 func printValue(v any) {

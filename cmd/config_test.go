@@ -130,14 +130,29 @@ func TestPrintConfig_StructProducesJSON(t *testing.T) {
 // resolveEditor
 // ---------------------------------------------------------------------------
 
-func TestResolveEditor_UsesEnvVar(t *testing.T) {
+func TestResolveEditor_UsesEditorEnvVar(t *testing.T) {
+	t.Setenv("VISUAL", "")
 	t.Setenv("EDITOR", "vim")
-	assert.Equal(t, "vim", resolveEditor())
+	e, err := resolveEditor()
+	require.NoError(t, err)
+	assert.Equal(t, "vim", e)
 }
 
-func TestResolveEditor_FallsBackToCode(t *testing.T) {
+func TestResolveEditor_VisualTakesPrecedenceOverEditor(t *testing.T) {
+	t.Setenv("VISUAL", "emacs")
+	t.Setenv("EDITOR", "vim")
+	e, err := resolveEditor()
+	require.NoError(t, err)
+	assert.Equal(t, "emacs", e)
+}
+
+func TestResolveEditor_NoEditorNoFallback_ReturnsError(t *testing.T) {
+	t.Setenv("VISUAL", "")
 	t.Setenv("EDITOR", "")
-	assert.Equal(t, "code", resolveEditor())
+	t.Setenv("PATH", t.TempDir()) // empty dir — no binaries available
+	_, err := resolveEditor()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "EDITOR")
 }
 
 // ---------------------------------------------------------------------------
