@@ -16,8 +16,31 @@ import (
 var cfgCmd = &cobra.Command{
 	Use:   "cfg",
 	Short: "generate NetLinx build CFG files",
-	Long:  `Generate NetLinx build configuration files`,
-	RunE:  runCfg,
+	Long: `Generate NetLinx build configuration files.
+
+The CFG file is used to configure the NetLinx Studio build process.
+
+If an option is omitted, genlinx will:
+  1. look for a .genlinxrc.json file in the root directory of the project;
+     if one is found, any options defined will be set to the value in the file
+  2. use the default values from the global config file for any remaining options
+
+The output file will be named the same as the workspace ID combined with the suffix.
+The default suffix is "build.cfg".
+
+For example, if the workspace ID is "SomeAwesomeProject", the output file will be
+"SomeAwesomeProject.build.cfg", unless the -o option is used to specify a suffix.
+
+Examples:
+  genlinx cfg -w workspace.apw                                     generate CFG for workspace.apw
+  genlinx cfg -w workspace.apw -s                                  build with source
+  genlinx cfg -w workspace.apw -D                                  do not build with debug information
+  genlinx cfg -a                                                   search for and automatically select all workspace files
+  genlinx cfg -A                                                   search for and prompt to select workspace files
+  genlinx cfg -w workspace.apw -i \\path\\to\\includes             add additional include paths
+  genlinx cfg -w workspace.apw -m \\path\\to\\modules              add additional module paths
+  genlinx cfg -w workspace.apw -l \\path\\to\\libraries            add additional library paths`,
+	RunE: runCfg,
 }
 
 func runCfg(cmd *cobra.Command, _ []string) error {
@@ -33,6 +56,11 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 	modulePath, _ := cmd.Flags().GetStringSlice("module-path")
 	libraryPath, _ := cmd.Flags().GetStringSlice("library-path")
 	all, _ := cmd.Flags().GetBool("all")
+	noAll, _ := cmd.Flags().GetBool("no-all")
+
+	if outputLogFileOption != "" && outputLogFileOption != "A" && outputLogFileOption != "N" {
+		return fmt.Errorf("invalid value %q for --output-log-file-option: must be A or N", outputLogFileOption)
+	}
 
 	// Build a Changed map so LoadCfgOptions can distinguish user-set flags
 	// from Cobra zero-value defaults.
@@ -62,6 +90,11 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 	opts, configInfo, err := options.LoadCfgOptions(cliOpts)
 	if err != nil {
 		return fmt.Errorf("failed to load cfg options: %w", err)
+	}
+
+	// -A/--no-all explicitly overrides a config-file all:true.
+	if noAll {
+		opts.All = false
 	}
 
 	if verbose {
@@ -162,4 +195,5 @@ func init() {
 	cfgCmd.Flags().StringSliceP("module-path", "m", []string{}, "add additional module paths")
 	cfgCmd.Flags().StringSliceP("library-path", "l", []string{}, "add additional library paths")
 	cfgCmd.Flags().BoolP("all", "a", false, "process all found workspace files without prompting")
+	cfgCmd.Flags().BoolP("no-all", "A", false, "prompt to select workspace files even when multiple are found")
 }
