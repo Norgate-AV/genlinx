@@ -28,6 +28,7 @@ var buildCmd = &cobra.Command{
 		libraryPath, _ := cmd.Flags().GetStringSlice("library-path")
 		outputPath, _ := cmd.Flags().GetString("output-path")
 		all, _ := cmd.Flags().GetBool("all")
+		noAll, _ := cmd.Flags().GetBool("no-all")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
 		// Positional args are treated as additional source files
@@ -55,6 +56,10 @@ var buildCmd = &cobra.Command{
 		opts, configInfo, err := options.LoadBuildOptions(cliOpts)
 		if err != nil {
 			return fmt.Errorf("failed to load build options: %w", err)
+		}
+
+		if noAll {
+			opts.All = false
 		}
 
 		if verbose {
@@ -193,10 +198,12 @@ func init() {
 	buildCmd.Flags().StringSliceP("library-path", "l", []string{}, "add additional library paths")
 	buildCmd.Flags().StringP("output-path", "o", "", "set the output path for the compiled files")
 	buildCmd.Flags().BoolP("all", "a", false, "select all cfg files without prompting")
+	buildCmd.Flags().BoolP("no-all", "A", false, "prompt to select files even when multiple are found")
 	buildCmd.Flags().Bool("verbose", false, "verbose output")
 
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "source-files")
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "include-path")
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "module-path")
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "library-path")
+	buildCmd.MarkFlagsMutuallyExclusive("all", "no-all")
 }

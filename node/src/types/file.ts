@@ -1,5 +1,3 @@
-import { ObjectTypes } from "./utils.js";
-
 export type File = FileReference & {
     exists: boolean;
     isExtra: boolean;
@@ -37,5 +35,3 @@ export const AmxFileType = {
     XDD: "XDD",
     Other: "Other",
 } as const;
-
-export type AmxFileType = ObjectTypes<typeof AmxFileType>;
