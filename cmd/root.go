@@ -7,14 +7,15 @@ import (
 	"github.com/damienbutt/figlet"
 	"github.com/spf13/cobra"
 
+	"github.com/Norgate-AV/genlinx/internal/meta"
 	"github.com/Norgate-AV/genlinx/internal/version"
 )
 
-const AppName = "genlinx"
+// const AppName = "genlinx"
 
 var rootCmd = &cobra.Command{
-	Use:           AppName,
-	Short:         "CLI utility for NetLinx projects 🚀🚀🚀",
+	Use:           meta.AppName,
+	Short:         meta.AppDescription,
 	Long:          getBanner(),
 	Version:       version.Version,
 	SilenceUsage:  true,
@@ -24,9 +25,9 @@ var rootCmd = &cobra.Command{
 func getBanner() string {
 	year := strconv.Itoa(time.Now().Year())
 
-	banner, err := figlet.Text(AppName)
+	banner, err := figlet.Text(meta.AppName)
 	if err != nil {
-		banner = AppName
+		banner = meta.AppName
 	}
 
 	banner += `
@@ -46,7 +47,7 @@ func getFooter() string {
 ===================================================
 
 For more help, make sure to check out the man page:
-    $ man ` + AppName
+    $ man ` + meta.AppName
 }
 
 func Execute() error {

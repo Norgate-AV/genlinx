@@ -121,6 +121,11 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
+		if len(workspace.AllFiles()) <= 1 {
+			color.Red("No files found in workspace %s. There is nothing to archive.", workspaceFile)
+			continue
+		}
+
 		builder := archive.NewBuilder(workspace, opts)
 		if err := builder.Build(); err != nil {
 			color.Red("Error building archive for %s: %v", workspaceFile, err)

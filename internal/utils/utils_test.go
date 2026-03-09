@@ -133,6 +133,25 @@ func (suite *UtilsTestSuite) TestFindFilesByExtension() {
 	assert.Equal(suite.T(), filepath.Join(suite.tempDir, "test2.axi"), files[0])
 }
 
+// TestFindFilesByExtension_NoMatch tests that an empty slice is returned when
+// no files in the directory match the requested extension.
+func (suite *UtilsTestSuite) TestFindFilesByExtension_NoMatch() {
+	err := os.WriteFile(filepath.Join(suite.tempDir, "file.axs"), []byte("test"), 0o644)
+	suite.Require().NoError(err)
+
+	files, err := FindFilesByExtension(suite.tempDir, ".xyz")
+	suite.Require().NoError(err)
+	assert.Empty(suite.T(), files)
+}
+
+// TestFindFilesByExtension_NonExistentDirectory tests that an error is returned
+// when the requested directory does not exist.
+func (suite *UtilsTestSuite) TestFindFilesByExtension_NonExistentDirectory() {
+	files, err := FindFilesByExtension(filepath.Join(suite.tempDir, "nonexistent"), ".axs")
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), files)
+}
+
 // TestUtilsTestSuite runs the test suite
 func TestUtilsTestSuite(t *testing.T) {
 	suite.Run(t, new(UtilsTestSuite))
