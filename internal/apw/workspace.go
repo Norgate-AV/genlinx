@@ -35,5 +35,6 @@ func (w *Workspace) RemoveProject(id string) bool {
 			return true
 		}
 	}
+
 	return false
 }

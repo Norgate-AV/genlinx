@@ -156,6 +156,7 @@ func (s *APWTestSuite) TestAllFiles_IncludesWorkspaceFile() {
 	s.Require().NoError(err)
 
 	files := a.AllFiles()
+
 	var found bool
 	for _, f := range files {
 		if f.Type == FileTypeWorkspace {
@@ -163,6 +164,7 @@ func (s *APWTestSuite) TestAllFiles_IncludesWorkspaceFile() {
 			break
 		}
 	}
+
 	s.True(found, "expected workspace file entry in AllFiles()")
 }
 
@@ -438,6 +440,7 @@ func TestGetExtraFileReferencesFromFile_NoDuplicates(t *testing.T) {
 			count++
 		}
 	}
+
 	assert.Equal(t, 1, count, "duplicate references must be deduplicated")
 }
 

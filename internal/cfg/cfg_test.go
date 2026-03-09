@@ -118,6 +118,7 @@ func TestDeduplicate_SlashVariants(t *testing.T) {
 		`C:\Program Files (x86)\Common Files\AMXShare\AXIs`,
 		`C:/Program Files (x86)/Common Files/AMXShare/AXIs`,
 	}
+
 	result := deduplicate(input)
 	assert.Len(t, result, 1)
 	// The retained entry must have OS-native separators.

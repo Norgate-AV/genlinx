@@ -21,6 +21,7 @@ func TestMain(m *testing.M) {
 		fmt.Println(msg)
 		os.Exit(0)
 	}
+
 	os.Exit(m.Run())
 }
 
@@ -129,6 +130,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_CFGFileNotFound() {
 	_, err := compiler.BuildArgs(CompileOptions{
 		CFGFiles: []string{filepath.Join(suite.tempDir, "nonexistent.cfg")},
 	})
+
 	assert.ErrorContains(suite.T(), err, "CFG file not found")
 }
 
@@ -295,12 +297,15 @@ func (suite *CompilerTestSuite) TestBuildArgsOrder() {
 	if includePos >= 0 {
 		assert.Greater(suite.T(), includePos, sourcePos)
 	}
+
 	if modulePos >= 0 {
 		assert.Greater(suite.T(), modulePos, sourcePos)
 	}
+
 	if libraryPos >= 0 {
 		assert.Greater(suite.T(), libraryPos, sourcePos)
 	}
+
 	if outputPos >= 0 {
 		assert.Greater(suite.T(), outputPos, sourcePos)
 	}
@@ -424,6 +429,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_BothSourceAndCFGEmpty() {
 		assert.False(suite.T(), strings.HasPrefix(arg, "-CFG"),
 			"should not contain a -CFG arg when no CFG files are provided")
 	}
+
 	assert.Empty(suite.T(), args)
 }
 
@@ -468,6 +474,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_SourceFileNotFound() {
 	_, err := compiler.BuildArgs(CompileOptions{
 		SourceFiles: []string{filepath.Join(suite.tempDir, "nonexistent.axs")},
 	})
+
 	assert.ErrorContains(suite.T(), err, "source file not found")
 }
 
@@ -547,6 +554,7 @@ func (suite *CompilerTestSuite) TestCompile_AlwaysStreamsOutput() {
 			ExecutablePath: os.Args[0],
 			env:            append(os.Environ(), "GENLINX_FAKE_COMPILER="+fakeOutput),
 		}
+
 		_, _ = c.Compile(CompileOptions{
 			SourceFiles: []string{placeholder},
 			Verbose:     false, // output must still stream regardless

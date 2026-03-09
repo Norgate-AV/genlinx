@@ -831,10 +831,12 @@ func newDefaultSystem() *System {
 // Workspace-type entries whose ID equals the workspace stem.
 func collectFileIDs(files []File) map[string]bool {
 	ids := make(map[string]bool)
+
 	for _, f := range files {
 		if f.Type != FileTypeWorkspace {
 			ids[f.ID] = true
 		}
 	}
+
 	return ids
 }

@@ -154,6 +154,7 @@ func (f *FileRef) RemoveDeviceMap(addr string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -174,5 +175,6 @@ func (f *FileRef) RemoveIRDB(property string) bool {
 			return true
 		}
 	}
+
 	return false
 }

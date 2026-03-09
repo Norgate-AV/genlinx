@@ -256,6 +256,7 @@ func (s *FindTestSuite) TestPrintJSON_SingleDevice() {
 	err := PrintJSON([]Device{
 		{IP: "192.168.1.1", System: 1, MAC: "00:60:9f:01:02:03", Hostname: "NX-3200", ID: "ICSPS70B"},
 	})
+
 	s.NoError(err)
 }
 

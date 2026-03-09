@@ -177,6 +177,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipContains_WorkspaceFile() {
 			break
 		}
 	}
+
 	s.True(found, "zip should contain the workspace .apw file")
 }
 
@@ -198,6 +199,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipContains_SourceFile() {
 			break
 		}
 	}
+
 	s.True(found, "zip should contain TestMain.axs at the archive root")
 }
 
@@ -218,6 +220,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipEntry_ModuleUsesRelativePath() {
 			break
 		}
 	}
+
 	s.True(found, "zip should contain TestModule.axs at the archive root")
 }
 
@@ -238,6 +241,7 @@ func (s *ArchiveTestSuite) TestBuild_ZipEntry_IncludeUsesRelativePath() {
 			break
 		}
 	}
+
 	s.True(found, "zip should contain TestInclude.axi at the archive root")
 }
 
@@ -299,6 +303,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_AddedWithRelativePath() 
 			break
 		}
 	}
+
 	s.True(found, "zip should contain TestModule.tko at the archive root")
 }
 
@@ -351,6 +356,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_AddedWithRelativePath() 
 			break
 		}
 	}
+
 	s.True(found, "zip should contain TestMain.tkn at the archive root")
 }
 
@@ -392,6 +398,7 @@ func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToExtraLocation() {
 		Exists:  true,
 		IsExtra: true,
 	}
+
 	s.Require().NoError(b.addModuleItem(extraFile))
 	s.Require().NoError(b.zipWriter.Close())
 	s.Require().NoError(f.Close())
@@ -409,6 +416,7 @@ func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToExtraLocation() {
 			tkoFound = true
 		}
 	}
+
 	s.True(axsFound, "extra .axs should be added at the archive root")
 	s.True(tkoFound, "compiled .tko should be added at the archive root alongside extra .axs")
 }
@@ -509,6 +517,7 @@ func (s *ArchiveTestSuite) TestBuild_IncludeFilesNotInWorkspace_True_AddsExtraFi
 			break
 		}
 	}
+
 	s.True(found, "extra file should be added at the archive root when IncludeFilesNotInWorkspace=true")
 }
 
@@ -666,6 +675,7 @@ func (s *ArchiveTestSuite) TestBuild_WorkspaceAPW_HasFlatPaths() {
 			break
 		}
 	}
+
 	s.Require().NotEmpty(apwData, "zip must contain TestWorkspace.apw")
 
 	// Parse the archived APW and verify all FileRef paths are bare filenames.
@@ -779,5 +789,6 @@ func (s *ArchiveTestSuite) TestBuild_SharedFile_AddedOnlyOnce() {
 			count++
 		}
 	}
+
 	s.Equal(1, count, "Shared.axi should appear exactly once in the zip, got %d entries", count)
 }

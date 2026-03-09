@@ -65,6 +65,7 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions() {
 			break
 		}
 	}
+
 	assert.True(suite.T(), sourcePathFound, "Should contain source file with test.axs")
 
 	includePathFound := false
@@ -74,6 +75,7 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions() {
 			break
 		}
 	}
+
 	assert.True(suite.T(), includePathFound, "Should contain include path with cli/include")
 
 	modulePathFound := false
@@ -83,6 +85,7 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions() {
 			break
 		}
 	}
+
 	assert.True(suite.T(), modulePathFound, "Should contain module path with cli/module")
 	assert.True(suite.T(), opts.Verbose)
 }
@@ -110,6 +113,7 @@ func (suite *OptionsTestSuite) TestPrependAndDeduplicate() {
 			duplicateCount++
 		}
 	}
+
 	assert.Equal(suite.T(), 1, duplicateCount)
 }
 
@@ -141,18 +145,23 @@ func (suite *OptionsTestSuite) TestResolvePaths() {
 	for _, path := range opts.SourceFiles {
 		assert.True(suite.T(), filepath.IsAbs(path), "Source file should be absolute: %s", path)
 	}
+
 	for _, path := range opts.CFGFiles {
 		assert.True(suite.T(), filepath.IsAbs(path), "CFG file should be absolute: %s", path)
 	}
+
 	for _, path := range opts.IncludePath {
 		assert.True(suite.T(), filepath.IsAbs(path), "Include path should be absolute: %s", path)
 	}
+
 	for _, path := range opts.ModulePath {
 		assert.True(suite.T(), filepath.IsAbs(path), "Module path should be absolute: %s", path)
 	}
+
 	for _, path := range opts.LibraryPath {
 		assert.True(suite.T(), filepath.IsAbs(path), "Library path should be absolute: %s", path)
 	}
+
 	assert.True(suite.T(), filepath.IsAbs(opts.OutputPath), "Output path should be absolute: %s", opts.OutputPath)
 	assert.True(suite.T(), filepath.IsAbs(opts.NLRCPath), "NLRC path should be absolute: %s", opts.NLRCPath)
 	assert.True(suite.T(), filepath.IsAbs(opts.ShellPath), "Shell path should be absolute: %s", opts.ShellPath)
@@ -221,6 +230,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfig() {
 			}
 		}
 	}`
+
 	err := os.WriteFile(configFile, []byte(configContent), 0o644)
 	suite.Require().NoError(err)
 
@@ -316,6 +326,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfigFindUp() {
 			}
 		}
 	}`
+
 	err = os.WriteFile(configFile, []byte(configContent), 0o644)
 	suite.Require().NoError(err)
 
@@ -438,11 +449,13 @@ func (suite *OptionsTestSuite) TestMergeConfigs_LaterConfigWins() {
 			NLRC: config.NLRCConfig{Path: "default.exe"},
 		},
 	}
+
 	globalCfg := &config.Config{
 		Build: config.BuildConfig{
 			NLRC: config.NLRCConfig{Path: "global.exe"},
 		},
 	}
+
 	localCfg := &config.Config{
 		Build: config.BuildConfig{
 			NLRC: config.NLRCConfig{Path: "local.exe"},
@@ -463,6 +476,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_EmptyLaterDoesNotOverride() {
 			NLRC: config.NLRCConfig{Path: "config1.exe"},
 		},
 	}
+
 	config2 := &config.Config{} // Path is "" (zero value)
 
 	merged := mergeConfigs(config1, config2)
@@ -478,6 +492,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_IncludePathAccumulates() {
 			NLRC: config.NLRCConfig{IncludePath: []string{"global/include"}},
 		},
 	}
+
 	config2 := &config.Config{
 		Build: config.BuildConfig{
 			NLRC: config.NLRCConfig{IncludePath: []string{"local/include"}},
@@ -504,6 +519,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesPaths() {
 			NLRC: config.NLRCConfig{IncludePath: []string{sharedPath}},
 		},
 	}
+
 	config2 := &config.Config{
 		Build: config.BuildConfig{
 			NLRC: config.NLRCConfig{IncludePath: []string{sharedPath}},
@@ -531,6 +547,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesNormalized() {
 			NLRC: config.NLRCConfig{IncludePath: []string{rawPath}},
 		},
 	}
+
 	config.NormalizeConfigPaths(defaultCfg)
 
 	// Simulate a global config loaded from a JSON file with forward slashes,
@@ -540,6 +557,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesNormalized() {
 			NLRC: config.NLRCConfig{IncludePath: []string{rawPath}},
 		},
 	}
+
 	config.NormalizeConfigPaths(globalCfg)
 
 	// After normalization both have the same OS-canonical string, so merging
@@ -612,6 +630,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_LocalPrependsBeforeDefault()
 	for _, p := range merged.Build.NLRC.IncludePath {
 		seen[p]++
 	}
+
 	for p, count := range seen {
 		assert.Equal(suite.T(), 1, count, "path %q appears %d times", p, count)
 	}
@@ -650,6 +669,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_GlobalPrependsBeforeDefault(
 	for _, p := range merged.Build.NLRC.IncludePath {
 		seen[p]++
 	}
+
 	for p, count := range seen {
 		assert.Equal(suite.T(), 1, count, "path %q appears %d times", p, count)
 	}
@@ -668,6 +688,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllThreeLayers() {
 		[]byte(`{"build":{"nlrc":{"includePath":["global/include"]}}}`),
 		0o644,
 	))
+
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
 		[]byte(`{"build":{"nlrc":{"includePath":["local/include"]}}}`),
@@ -709,6 +730,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllThreeLayers() {
 	for _, p := range paths {
 		seen[p]++
 	}
+
 	for p, count := range seen {
 		assert.Equal(suite.T(), 1, count, "path %q appears %d times", p, count)
 	}
@@ -748,6 +770,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_ResolvesRelativePaths() {
 	for _, p := range merged.Build.NLRC.IncludePath {
 		assert.True(suite.T(), filepath.IsAbs(p), "IncludePath must be absolute: %s", p)
 	}
+
 	for _, p := range merged.Build.NLRC.ModulePath {
 		assert.True(suite.T(), filepath.IsAbs(p), "ModulePath must be absolute: %s", p)
 	}
@@ -781,6 +804,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllPathsAbsolute() {
 		if p == "" {
 			continue
 		}
+
 		assert.True(suite.T(), filepath.IsAbs(p), "all merged paths must be absolute: %s", p)
 	}
 }
@@ -815,6 +839,7 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_CLIPathsPrependedBeforeConfi
 		if strings.Contains(p, "cli") {
 			cliIdx = i
 		}
+
 		if strings.Contains(p, "config") {
 			cfgIdx = i
 		}

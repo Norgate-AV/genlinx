@@ -120,6 +120,7 @@ func TestPrintConfig_StructProducesJSON(t *testing.T) {
 	type cfg struct {
 		Name string `json:"name"`
 	}
+
 	out := captureStdout(t, func() { printConfig(cfg{Name: "test"}) })
 	assert.Contains(t, out, `"name"`)
 	assert.Contains(t, out, `"test"`)
@@ -227,6 +228,7 @@ func TestConfigList_CombinedPrintsConfig(t *testing.T) {
 		err := configList(false, false)
 		require.NoError(t, err)
 	})
+
 	// Combined list always prints the merged config as JSON.
 	assert.Contains(t, out, `"build"`)
 }
@@ -238,6 +240,7 @@ func TestConfigList_GlobalNotFound_PrintsMessage(t *testing.T) {
 		err := configList(true, false)
 		require.NoError(t, err)
 	})
+
 	assert.Contains(t, out, "No global configuration found.")
 }
 
@@ -252,6 +255,7 @@ func TestConfigList_LocalNotFound_PrintsMessage(t *testing.T) {
 		err := configList(false, true)
 		require.NoError(t, err)
 	})
+
 	assert.Contains(t, out, "No local configuration found.")
 }
 
@@ -268,6 +272,7 @@ func TestConfigList_LocalFound_PrintsFileContents(t *testing.T) {
 		err := configList(false, true)
 		require.NoError(t, err)
 	})
+
 	assert.Contains(t, out, "custom.exe")
 }
 
@@ -286,6 +291,7 @@ func TestConfigGet_ExistingKey_PrintsValue(t *testing.T) {
 		err := configGet("build.nlrc.path", false, false)
 		require.NoError(t, err)
 	})
+
 	// Default NLRC path is non-empty; output should be the path value.
 	assert.NotEmpty(t, strings.TrimSpace(out))
 }
@@ -301,6 +307,7 @@ func TestConfigGet_MissingKey_PrintsNoConfigFound(t *testing.T) {
 		err := configGet("nonexistent.key.path", false, false)
 		require.NoError(t, err)
 	})
+
 	assert.Contains(t, out, "No configuration found for key")
 }
 
@@ -311,6 +318,7 @@ func TestConfigGet_GlobalNotFound(t *testing.T) {
 		err := configGet("build.nlrc.path", true, false)
 		require.NoError(t, err)
 	})
+
 	assert.Contains(t, out, "No global configuration found.")
 }
 
@@ -409,6 +417,7 @@ func TestPrintRawFileConfig_MissingFile(t *testing.T) {
 	out := captureStdout(t, func() {
 		printRawFileConfig(filepath.Join(t.TempDir(), "nonexistent.json"))
 	})
+
 	assert.Equal(t, "{}", strings.TrimSpace(out))
 }
 

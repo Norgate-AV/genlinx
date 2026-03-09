@@ -123,6 +123,7 @@ func (suite *UtilsTestSuite) TestFindFilesByExtension() {
 	expectedFiles := []string{
 		filepath.Join(suite.tempDir, "test1.axs"),
 	}
+
 	assert.ElementsMatch(suite.T(), expectedFiles, files)
 
 	// Test finding .axi files

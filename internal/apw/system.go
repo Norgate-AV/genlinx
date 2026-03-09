@@ -53,5 +53,6 @@ func (s *System) RemoveFile(id string) bool {
 			return true
 		}
 	}
+
 	return false
 }

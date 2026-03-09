@@ -34,5 +34,6 @@ func (p *Project) RemoveSystem(id string) bool {
 			return true
 		}
 	}
+
 	return false
 }
