@@ -43,3 +43,15 @@ func (s *System) AddFile(fr *FileRef) *FileRef {
 
 	return fr
 }
+
+// RemoveFile removes the first FileRef whose Identifier matches id.
+// Returns true if a file was removed, false if no match was found.
+func (s *System) RemoveFile(id string) bool {
+	for i, f := range s.Files {
+		if f.Identifier == id {
+			s.Files = append(s.Files[:i], s.Files[i+1:]...)
+			return true
+		}
+	}
+	return false
+}

@@ -341,8 +341,26 @@ func (s *MarshalTestSuite) TestWorkspace_AddProject_MultipleProjects() {
 }
 
 // ---------------------------------------------------------------------------
-// Project.AddSystem
+// Workspace.RemoveProject
 // ---------------------------------------------------------------------------
+
+func (s *MarshalTestSuite) TestWorkspace_RemoveProject_RemovesMatchingProject() {
+	a := NewAPW("P", "P.apw")
+	a.Workspace().AddProject(NewProject("Alpha"))
+	a.Workspace().AddProject(NewProject("Beta"))
+	removed := a.Workspace().RemoveProject("Alpha")
+	s.True(removed)
+	s.Len(a.ws.Projects, 1)
+	s.Equal("Beta", a.ws.Projects[0].Identifier)
+}
+
+func (s *MarshalTestSuite) TestWorkspace_RemoveProject_ReturnsFalseWhenNotFound() {
+	a := NewAPW("P", "P.apw")
+	a.Workspace().AddProject(NewProject("Alpha"))
+	removed := a.Workspace().RemoveProject("NoSuchProject")
+	s.False(removed)
+	s.Len(a.ws.Projects, 1)
+}
 
 func (s *MarshalTestSuite) TestProject_AddSystem_AppearsInSystems() {
 	proj := NewProject("P")
@@ -361,8 +379,26 @@ func (s *MarshalTestSuite) TestProject_AddSystem_MultipleSystems() {
 }
 
 // ---------------------------------------------------------------------------
-// System.AddFile
+// Project.RemoveSystem
 // ---------------------------------------------------------------------------
+
+func (s *MarshalTestSuite) TestProject_RemoveSystem_RemovesMatchingSystem() {
+	proj := NewProject("P")
+	proj.AddSystem(NewSystem("S1"))
+	proj.AddSystem(NewSystem("S2"))
+	removed := proj.RemoveSystem("S1")
+	s.True(removed)
+	s.Len(proj.Systems, 1)
+	s.Equal("S2", proj.Systems[0].Identifier)
+}
+
+func (s *MarshalTestSuite) TestProject_RemoveSystem_ReturnsFalseWhenNotFound() {
+	proj := NewProject("P")
+	proj.AddSystem(NewSystem("S1"))
+	removed := proj.RemoveSystem("NoSuchSystem")
+	s.False(removed)
+	s.Len(proj.Systems, 1)
+}
 
 func (s *MarshalTestSuite) TestSystem_AddFile_AppearsInFiles() {
 	sys := newDefaultSystem()
@@ -405,8 +441,26 @@ func (s *MarshalTestSuite) TestSystem_AddFile_MultipleFiles() {
 }
 
 // ---------------------------------------------------------------------------
-// FileRef.AddDeviceMap
+// System.RemoveFile
 // ---------------------------------------------------------------------------
+
+func (s *MarshalTestSuite) TestSystem_RemoveFile_RemovesMatchingFile() {
+	sys := newDefaultSystem()
+	sys.AddFile(NewFileRef("Inc1", "Include/Inc1.axi", FileTypeInclude))
+	sys.AddFile(NewFileRef("Main", "Source/Main.axs", FileTypeMasterSrc))
+	removed := sys.RemoveFile("Inc1")
+	s.True(removed)
+	s.Len(sys.Files, 1)
+	s.Equal("Main", sys.Files[0].Identifier)
+}
+
+func (s *MarshalTestSuite) TestSystem_RemoveFile_ReturnsFalseWhenNotFound() {
+	sys := newDefaultSystem()
+	sys.AddFile(NewFileRef("Inc1", "Include/Inc1.axi", FileTypeInclude))
+	removed := sys.RemoveFile("NoSuchFile")
+	s.False(removed)
+	s.Len(sys.Files, 1)
+}
 
 func (s *MarshalTestSuite) TestFileRef_AddDeviceMap_AppearsInDeviceMaps() {
 	fr := NewFileRef("Panel1", "Panel1.tp4", FileTypeTP4)
@@ -423,6 +477,28 @@ func (s *MarshalTestSuite) TestFileRef_AddDeviceMap_MultipleDeviceMaps() {
 	fr.AddDeviceMap(NewDeviceMap("10001:1:0", "dvTP1"))
 	fr.AddDeviceMap(NewDeviceMap("10002:1:0", "dvTP2"))
 	s.Len(fr.DeviceMaps, 2)
+}
+
+// ---------------------------------------------------------------------------
+// FileRef.RemoveDeviceMap
+// ---------------------------------------------------------------------------
+
+func (s *MarshalTestSuite) TestFileRef_RemoveDeviceMap_RemovesMatchingDeviceMap() {
+	fr := NewFileRef("Panel1", "Panel1.tp4", FileTypeTP4)
+	fr.AddDeviceMap(NewDeviceMap("10001:1:0", "dvTP1"))
+	fr.AddDeviceMap(NewDeviceMap("10002:1:0", "dvTP2"))
+	removed := fr.RemoveDeviceMap("10001:1:0")
+	s.True(removed)
+	s.Len(fr.DeviceMaps, 1)
+	s.Equal("10002:1:0", fr.DeviceMaps[0].DevAddr)
+}
+
+func (s *MarshalTestSuite) TestFileRef_RemoveDeviceMap_ReturnsFalseWhenNotFound() {
+	fr := NewFileRef("Panel1", "Panel1.tp4", FileTypeTP4)
+	fr.AddDeviceMap(NewDeviceMap("10001:1:0", "dvTP1"))
+	removed := fr.RemoveDeviceMap("99999:1:0")
+	s.False(removed)
+	s.Len(fr.DeviceMaps, 1)
 }
 
 func (s *MarshalTestSuite) TestFileRef_AddDeviceMap_AppearsInMarshaledOutput() {
@@ -460,6 +536,28 @@ func (s *MarshalTestSuite) TestFileRef_AddIRDB_MultipleIRDBs() {
 	fr.AddIRDB(NewIRDB("Samsung_TV", "Samsung_TV.irdb"))
 	fr.AddIRDB(NewIRDB("Sony_DVD", "Sony_DVD.irdb"))
 	s.Len(fr.IRDBs, 2)
+}
+
+// ---------------------------------------------------------------------------
+// FileRef.RemoveIRDB
+// ---------------------------------------------------------------------------
+
+func (s *MarshalTestSuite) TestFileRef_RemoveIRDB_RemovesMatchingIRDB() {
+	fr := NewFileRef("IR1", "IR/Remote.irl", FileTypeIR)
+	fr.AddIRDB(NewIRDB("Samsung_TV", "Samsung_TV.irdb"))
+	fr.AddIRDB(NewIRDB("Sony_DVD", "Sony_DVD.irdb"))
+	removed := fr.RemoveIRDB("Samsung_TV")
+	s.True(removed)
+	s.Len(fr.IRDBs, 1)
+	s.Equal("Sony_DVD", fr.IRDBs[0].Property)
+}
+
+func (s *MarshalTestSuite) TestFileRef_RemoveIRDB_ReturnsFalseWhenNotFound() {
+	fr := NewFileRef("IR1", "IR/Remote.irl", FileTypeIR)
+	fr.AddIRDB(NewIRDB("Samsung_TV", "Samsung_TV.irdb"))
+	removed := fr.RemoveIRDB("NoSuchDB")
+	s.False(removed)
+	s.Len(fr.IRDBs, 1)
 }
 
 func (s *MarshalTestSuite) TestFileRef_AddIRDB_AppearsInMarshaledOutput() {

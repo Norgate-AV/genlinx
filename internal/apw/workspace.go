@@ -25,3 +25,15 @@ func (w *Workspace) AddProject(p *Project) *Project {
 	w.Projects = append(w.Projects, p)
 	return p
 }
+
+// RemoveProject removes the first project whose Identifier matches id.
+// Returns true if a project was removed, false if no match was found.
+func (w *Workspace) RemoveProject(id string) bool {
+	for i, p := range w.Projects {
+		if p.Identifier == id {
+			w.Projects = append(w.Projects[:i], w.Projects[i+1:]...)
+			return true
+		}
+	}
+	return false
+}

@@ -24,3 +24,15 @@ func (p *Project) AddSystem(s *System) *System {
 	p.Systems = append(p.Systems, s)
 	return s
 }
+
+// RemoveSystem removes the first system whose Identifier matches id.
+// Returns true if a system was removed, false if no match was found.
+func (p *Project) RemoveSystem(id string) bool {
+	for i, s := range p.Systems {
+		if s.Identifier == id {
+			p.Systems = append(p.Systems[:i], p.Systems[i+1:]...)
+			return true
+		}
+	}
+	return false
+}

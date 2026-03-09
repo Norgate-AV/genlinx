@@ -140,10 +140,34 @@ func (f *FileRef) AddDeviceMap(dm *DeviceMap) *DeviceMap {
 	return dm
 }
 
+// RemoveDeviceMap removes the first DeviceMap whose DevAddr matches addr.
+// Returns true if a device map was removed, false if no match was found.
+func (f *FileRef) RemoveDeviceMap(addr string) bool {
+	for i, dm := range f.DeviceMaps {
+		if dm.DevAddr == addr {
+			f.DeviceMaps = append(f.DeviceMaps[:i], f.DeviceMaps[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 // AddIRDB appends irdb to the file's IRDB list and returns it so calls can be
 // chained. Per the .apw XML schema IRDBs are nested inside a File element, not
 // at the System level.
 func (f *FileRef) AddIRDB(irdb *IRDB) *IRDB {
 	f.IRDBs = append(f.IRDBs, irdb)
 	return irdb
+}
+
+// RemoveIRDB removes the first IRDB whose Property matches property.
+// Returns true if an IRDB was removed, false if no match was found.
+func (f *FileRef) RemoveIRDB(property string) bool {
+	for i, irdb := range f.IRDBs {
+		if irdb.Property == property {
+			f.IRDBs = append(f.IRDBs[:i], f.IRDBs[i+1:]...)
+			return true
+		}
+	}
+	return false
 }
