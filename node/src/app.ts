@@ -4,7 +4,6 @@ import figlet from "figlet";
 import StringBuilder from "string-builder";
 import { Command } from "commander";
 import { getAppVersion, getModuleName } from "./utils/index.js";
-import { archive } from "./cli/commands/index.js";
 
 const args = process.argv;
 const program = new Command();
@@ -15,8 +14,6 @@ program
     .name(name)
     .description("cli helper utility for NetLinx projects 🚀🚀🚀")
     .version(version, "-v, --version");
-
-program.addCommand(archive());
 
 program.addHelpText("beforeAll", () => {
     const builder = new StringBuilder();

@@ -29,7 +29,7 @@ var buildCmd = &cobra.Command{
 		outputPath, _ := cmd.Flags().GetString("output-path")
 		all, _ := cmd.Flags().GetBool("all")
 		noAll, _ := cmd.Flags().GetBool("no-all")
-		verbose, _ := cmd.Flags().GetBool("verbose")
+		verbose, _ := rootCmd.PersistentFlags().GetBool("verbose")
 
 		// Positional args are treated as additional source files
 		if len(args) > 0 {
@@ -199,7 +199,6 @@ func init() {
 	buildCmd.Flags().StringP("output-path", "o", "", "set the output path for the compiled files")
 	buildCmd.Flags().BoolP("all", "a", false, "select all cfg files without prompting")
 	buildCmd.Flags().BoolP("no-all", "A", false, "prompt to select files even when multiple are found")
-	buildCmd.Flags().Bool("verbose", false, "verbose output")
 
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "source-files")
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "include-path")

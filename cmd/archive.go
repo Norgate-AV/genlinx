@@ -142,4 +142,8 @@ func init() {
 	archiveCmd.Flags().BoolP("no-include-files-not-in-workspace", "N", false, "do not include files not in workspace")
 	archiveCmd.Flags().StringSliceP("extra-file-search-locations", "l", []string{}, "extra file locations to search")
 	archiveCmd.Flags().BoolP("all", "a", false, "process all found workspace files without prompting")
+
+	archiveCmd.MarkFlagsMutuallyExclusive("include-compiled-source-files", "no-include-compiled-source-files")
+	archiveCmd.MarkFlagsMutuallyExclusive("include-compiled-module-files", "no-include-compiled-module-files")
+	archiveCmd.MarkFlagsMutuallyExclusive("include-files-not-in-workspace", "no-include-files-not-in-workspace")
 }
