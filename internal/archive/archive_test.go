@@ -682,3 +682,102 @@ func (s *ArchiveTestSuite) TestBuild_WorkspaceAPW_HasFlatPaths() {
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Build – deduplication
+// ---------------------------------------------------------------------------
+
+// sharedIncludeAPW returns a workspace with two systems that both reference the
+// same shared include file, simulating the real-world pattern that triggers
+// duplicate zip entries without deduplication.
+func sharedIncludeAPW(id string) []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>` + id + `</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>TestProject</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>System1</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>Main1</Identifier>
+                <FilePathName>Source\Main1.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>Shared</Identifier>
+                <FilePathName>Include\Shared.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+        <System IsActive="false" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>System2</Identifier>
+            <SysID>2</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>Main2</Identifier>
+                <FilePathName>Source\Main2.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>Shared</Identifier>
+                <FilePathName>Include\Shared.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+func (s *ArchiveTestSuite) TestBuild_SharedFile_AddedOnlyOnce() {
+	// A file referenced by multiple systems must appear exactly once in the zip.
+	dir := s.T().TempDir()
+
+	data := sharedIncludeAPW("SharedWorkspace")
+	apwPath := filepath.Join(dir, "SharedWorkspace.apw")
+	s.Require().NoError(os.WriteFile(apwPath, data, 0o644))
+
+	for _, sub := range []struct{ d, n string }{
+		{"Source", "Main1.axs"},
+		{"Source", "Main2.axs"},
+		{"Include", "Shared.axi"},
+	} {
+		s.Require().NoError(os.MkdirAll(filepath.Join(dir, sub.d), 0o755))
+		s.Require().NoError(os.WriteFile(filepath.Join(dir, sub.d, sub.n), []byte(`PROGRAM_NAME='test'`), 0o644))
+	}
+
+	a, err := apw.Parse(apwPath, data)
+	s.Require().NoError(err)
+
+	oldWd, _ := os.Getwd()
+	s.T().Cleanup(func() { _ = os.Chdir(oldWd) })
+	s.Require().NoError(os.Chdir(dir))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(dir, "SharedWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	count := 0
+	for _, f := range zr.File {
+		if f.Name == "Shared.axi" {
+			count++
+		}
+	}
+	s.Equal(1, count, "Shared.axi should appear exactly once in the zip, got %d entries", count)
+}

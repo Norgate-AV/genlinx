@@ -41,7 +41,8 @@ type Builder struct {
 	apw                 *apw.APW
 	opts                *Options
 	zipWriter           *zip.Writer
-	entries             []string // tracks zip entry names for verbose display
+	entries             []string        // tracks zip entry names for verbose display
+	seenEntries         map[string]bool // guards against duplicate zip entries
 	extraFilesOnDisk    []string
 	extraFileReferences []string
 	locatedExtraRefs    []string
@@ -50,8 +51,9 @@ type Builder struct {
 // NewBuilder returns a new Builder for the given workspace and options.
 func NewBuilder(workspace *apw.APW, opts *Options) *Builder {
 	return &Builder{
-		apw:  workspace,
-		opts: opts,
+		apw:         workspace,
+		opts:        opts,
+		seenEntries: make(map[string]bool),
 	}
 }
 
@@ -139,6 +141,10 @@ func zipEntryPath(p string) string {
 }
 
 func (b *Builder) writeEntry(entryName string, data []byte) error {
+	if b.seenEntries[entryName] {
+		return nil
+	}
+
 	w, err := b.zipWriter.Create(entryName)
 	if err != nil {
 		return err
@@ -148,6 +154,7 @@ func (b *Builder) writeEntry(entryName string, data []byte) error {
 		return err
 	}
 
+	b.seenEntries[entryName] = true
 	b.entries = append(b.entries, entryName)
 
 	return nil
