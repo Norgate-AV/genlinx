@@ -136,6 +136,7 @@ aurs:
 
       # documentation
       install -Dm644 "./README.md" "${pkgdir}/usr/share/doc/genlinx/README.md"
+      install -Dm644 man/genlinx.1 "${pkgdir}/usr/share/man/man1/genlinx.1"
     skip_upload: false
 
 aur_sources:
@@ -184,4 +185,53 @@ aur_sources:
 
       # Install documentation
       install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+      install -Dm644 man/genlinx.1 "${pkgdir}/usr/share/man/man1/genlinx.1"
     skip_upload: false
+
+dockers:
+  - image_templates:
+      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-amd64"
+      - "ghcr.io/Norgate-AV-genlinx:latest-amd64"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/amd64"
+    extra_files:
+      - go.mod
+      - go.sum
+      - cmd
+      - internal
+    goarch: amd64
+  - image_templates:
+      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-arm64"
+      - "ghcr.io/Norgate-AV-genlinx:latest-arm64"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm64"
+    extra_files:
+      - go.mod
+      - go.sum
+      - cmd
+      - internal
+    goarch: arm64
+
+docker_manifests:
+  - name_template: "ghcr.io/Norgate-AV-genlinx:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-amd64"
+      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/Norgate-AV-genlinx:latest"
+    image_templates:
+      - "ghcr.io/Norgate-AV-genlinx:latest-amd64"
+      - "ghcr.io/Norgate-AV-genlinx:latest-arm64"
