@@ -16,6 +16,14 @@ import (
 	"github.com/Norgate-AV/genlinx/internal/apw"
 )
 
+// Package-level color instances used by logVerbose and displayZippedFiles.
+var (
+	logBlue  = color.New(color.FgBlue)
+	logCyan  = color.New(color.FgCyan)
+	logGreen = color.New(color.FgGreen)
+	logRed   = color.New(color.FgRed)
+)
+
 //go:embed scripts/symlink.bat
 var symlinkBat []byte
 
@@ -57,7 +65,7 @@ func NewBuilder(workspace *apw.APW, opts *Options) *Builder {
 
 // Build produces the zip archive and writes it to disk.
 func (b *Builder) Build() error {
-	b.logVerbose("Creating archive...")
+	b.logVerbose(logBlue, "Creating archive...")
 
 	outputFile := fmt.Sprintf("%s.%s", b.apw.ID(), b.opts.OutputFileSuffix)
 
@@ -89,7 +97,7 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("failed to close output file: %w", err)
 	}
 
-	fmt.Printf("Created archive: %s\n", outputFile)
+	fmt.Println(color.New(color.FgGreen, color.Bold).Sprintf("Created archive: %s", outputFile))
 
 	if b.opts.Verbose {
 		b.displayZippedFiles()
@@ -102,9 +110,9 @@ func (b *Builder) Build() error {
 // Logging helpers
 // ---------------------------------------------------------------------------
 
-func (b *Builder) logVerbose(format string, args ...any) {
+func (b *Builder) logVerbose(c *color.Color, format string, args ...any) {
 	if b.opts.Verbose {
-		fmt.Printf(format+"\n", args...)
+		fmt.Println(c.Sprintf(format, args...))
 	}
 }
 
@@ -183,7 +191,7 @@ func (b *Builder) addWorkspaceItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose("Added file: %s", entryName)
+	b.logVerbose(logCyan, "Added file: %s", entryName)
 
 	return nil
 }
@@ -197,7 +205,7 @@ func (b *Builder) addGeneralItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose("Added file: %s", file.Path)
+	b.logVerbose(logCyan, "Added file: %s", file.Path)
 
 	return nil
 }
@@ -212,7 +220,7 @@ func (b *Builder) addSourceItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose("Added file: %s", file.Path)
+	b.logVerbose(logCyan, "Added file: %s", file.Path)
 
 	if !b.opts.IncludeCompiledSourceFiles {
 		return nil
@@ -225,7 +233,7 @@ func (b *Builder) addSourceItem(file apw.File) error {
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
 		warnf("compiled file not found, skipping: %s", compiledPath)
 	} else {
-		b.logVerbose("Added file: %s", compiledPath)
+		b.logVerbose(logCyan, "Added file: %s", compiledPath)
 	}
 
 	return nil
@@ -241,7 +249,7 @@ func (b *Builder) addModuleItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose("Added file: %s", file.Path)
+	b.logVerbose(logCyan, "Added file: %s", file.Path)
 
 	if !b.opts.IncludeCompiledModuleFiles {
 		return nil
@@ -254,7 +262,7 @@ func (b *Builder) addModuleItem(file apw.File) error {
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
 		warnf("compiled file not found, skipping: %s", compiledPath)
 	} else {
-		b.logVerbose("Added file: %s", compiledPath)
+		b.logVerbose(logCyan, "Added file: %s", compiledPath)
 	}
 
 	return nil
@@ -269,7 +277,7 @@ func (b *Builder) addEnvItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose("Added file: %s", entryName)
+	b.logVerbose(logCyan, "Added file: %s", entryName)
 
 	return nil
 }
@@ -320,7 +328,7 @@ func (b *Builder) addEnvFile() {
 		return
 	}
 
-	b.logVerbose("Adding env file to the archive...")
+	b.logVerbose(logBlue, "Adding env file to the archive...")
 
 	masterSrcRelPath := filepath.Join("..", filepath.Base(masterSrcPaths[0]))
 
@@ -338,7 +346,7 @@ func (b *Builder) addEnvFile() {
 }
 
 func (b *Builder) addSymlinkScripts() {
-	b.logVerbose("Adding symlink scripts for extra files to the archive...")
+	b.logVerbose(logBlue, "Adding symlink scripts for extra files to the archive...")
 
 	scripts := map[string][]byte{
 		"symlink.bat": symlinkBat,
@@ -351,7 +359,7 @@ func (b *Builder) addSymlinkScripts() {
 		if err := b.writeEntry(entryName, content); err != nil {
 			warnf("could not add script %s: %v", name, err)
 		} else {
-			b.logVerbose("Added file: %s", entryName)
+			b.logVerbose(logCyan, "Added file: %s", entryName)
 		}
 	}
 }
@@ -360,10 +368,10 @@ func (b *Builder) addSymlinkScripts() {
 // interest for extra-file matching (.axs, .axi, .jar, .xdd).
 // Mirrors ArchiveBuilder.getExtraFilesOnDisk().
 func (b *Builder) getExtraFilesOnDisk(locations []string) {
-	b.logVerbose("Searching known locations for extra files...")
+	b.logVerbose(logBlue, "Searching known locations for extra files...")
 
 	for _, location := range locations {
-		b.logVerbose("--> Searching %s", location)
+		b.logVerbose(logCyan, "--> Searching %s", location)
 
 		_ = filepath.WalkDir(location, func(p string, d fs.DirEntry, err error) error {
 			if err != nil {
@@ -389,10 +397,10 @@ func (b *Builder) getExtraFilesOnDisk(locations []string) {
 }
 
 func (b *Builder) displayExtraFileReferences(refs []string) {
-	b.logVerbose("Found %d extra files referenced...", len(refs))
+	b.logVerbose(logGreen, "Found %d extra files referenced...", len(refs))
 
 	for _, r := range refs {
-		b.logVerbose("--> %s", r)
+		b.logVerbose(logCyan, "--> %s", r)
 	}
 }
 
@@ -419,16 +427,16 @@ func (b *Builder) searchForExtraFiles(refs []string) error {
 		}
 
 		if found == "" {
-			b.logVerbose("Could not find %s", ref)
+			b.logVerbose(logRed, "Could not find %s", ref)
 			continue
 		}
 
 		if b.isIgnored(found) {
-			b.logVerbose("Ignoring %s as per config", filepath.Base(found))
+			b.logVerbose(logBlue, "Ignoring %s as per config", filepath.Base(found))
 			continue
 		}
 
-		b.logVerbose("Found %s: %s", ref, found)
+		b.logVerbose(logGreen, "Found %s: %s", ref, found)
 		newLocated = append(newLocated, found)
 	}
 
@@ -450,7 +458,7 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 			continue
 		}
 
-		b.logVerbose("Searching %s for references...", file)
+		b.logVerbose(logBlue, "Searching %s for references...", file)
 
 		refs, err := b.apw.GetExtraFileReferencesFromFile(file)
 		if err != nil {
@@ -458,7 +466,7 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 		}
 
 		if len(refs) == 0 {
-			b.logVerbose("--> No references found")
+			b.logVerbose(logCyan, "--> No references found")
 			continue
 		}
 
@@ -473,7 +481,7 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 		}
 
 		if len(newRefs) == 0 {
-			b.logVerbose("--> No new references found")
+			b.logVerbose(logCyan, "--> No new references found")
 			continue
 		}
 
@@ -496,7 +504,7 @@ func (b *Builder) addExtraFiles() error {
 		return nil
 	}
 
-	b.logVerbose("Searching for extra files that are not part of the workspace...")
+	b.logVerbose(logBlue, "Searching for extra files that are not part of the workspace...")
 
 	refs, err := b.apw.GetExtraFileReferences()
 	if err != nil {
@@ -506,7 +514,7 @@ func (b *Builder) addExtraFiles() error {
 	b.extraFileReferences = append(b.extraFileReferences, refs...)
 
 	if len(b.extraFileReferences) == 0 {
-		b.logVerbose("No extra file references found in the workspace file")
+		b.logVerbose(logBlue, "No extra file references found in the workspace file")
 		return nil
 	}
 
@@ -563,6 +571,6 @@ func (b *Builder) addExtraFiles() error {
 
 func (b *Builder) displayZippedFiles() {
 	for _, entry := range b.entries {
-		fmt.Printf("--> %s\n", entry)
+		fmt.Println(logCyan.Sprintf("--> %s", entry))
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
 	"github.com/Norgate-AV/genlinx/internal/apw"
@@ -66,7 +67,7 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 
 	if len(workspaceFiles) == 0 {
 		if verbose {
-			fmt.Println("Searching for workspace files...")
+			color.Blue("Searching for workspace files...")
 		}
 
 		found, err := utils.FindFilesByExtension(".", apw.AmxExtensions[apw.FileTypeWorkspace])
@@ -78,14 +79,14 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 
 		if verbose && len(workspaceFiles) > 0 {
 			for _, f := range workspaceFiles {
-				fmt.Printf("  Found: %s\n", f)
+				color.Cyan("  Found: %s", f)
 			}
 		}
 	}
 
 	if len(workspaceFiles) == 0 {
-		fmt.Fprintln(os.Stderr, "No workspace files found.")
-		os.Exit(0)
+		color.Red("No workspace files found.")
+		return nil
 	}
 
 	// -----------------------------------------------------------------------
@@ -107,24 +108,24 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 
 	for _, workspaceFile := range workspaceFiles {
 		if verbose {
-			fmt.Printf("Generating archive for %s...\n", workspaceFile)
+			color.Blue("Generating archive for %s...", workspaceFile)
 		}
 
 		data, err := os.ReadFile(workspaceFile)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading workspace %s: %v\n", workspaceFile, err)
+			color.Red("Error loading workspace %s: %v", workspaceFile, err)
 			continue
 		}
 
 		workspace, err := apw.Parse(workspaceFile, data)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading workspace %s: %v\n", workspaceFile, err)
+			color.Red("Error loading workspace %s: %v", workspaceFile, err)
 			continue
 		}
 
 		builder := archive.NewBuilder(workspace, opts)
 		if err := builder.Build(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error building archive for %s: %v\n", workspaceFile, err)
+			color.Red("Error building archive for %s: %v", workspaceFile, err)
 			continue
 		}
 	}
