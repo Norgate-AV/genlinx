@@ -10,6 +10,8 @@ import (
 
 	"github.com/Norgate-AV/genlinx/internal/compiler"
 	"github.com/Norgate-AV/genlinx/internal/options"
+	"github.com/Norgate-AV/genlinx/internal/prompt"
+	"github.com/Norgate-AV/genlinx/internal/utils"
 )
 
 var buildCmd = &cobra.Command{
@@ -28,13 +30,9 @@ var buildCmd = &cobra.Command{
 		all, _ := cmd.Flags().GetBool("all")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
-		// If source files provided as arguments, add them to sourceFiles
+		// Positional args are treated as additional source files
 		if len(args) > 0 {
 			sourceFiles = append(sourceFiles, args...)
-		}
-
-		if len(sourceFiles) == 0 && len(cfgFiles) == 0 {
-			return fmt.Errorf("no source or CFG files specified")
 		}
 
 		if runtime.GOOS != "windows" {
@@ -59,41 +57,120 @@ var buildCmd = &cobra.Command{
 			return fmt.Errorf("failed to load build options: %w", err)
 		}
 
-		// Print configuration loading information if verbose
 		if verbose {
 			configInfo.Print()
 		}
 
-		// TODO: Use the 'all' flag for file selection
-		_ = all // Placeholder for future implementation
-
-		// Create compiler
 		nlrc := compiler.NewNLRCCompiler(opts.NLRCPath)
 
-		// Compile
-		result, err := nlrc.Compile(buildCompileOpts(opts))
-		if err != nil {
-			return fmt.Errorf("compilation failed: %w", err)
+		if len(opts.SourceFiles) > 0 {
+			return executeSourceBuild(opts.SourceFiles, nlrc, opts)
 		}
 
-		if len(result.Warnings) > 0 {
-			fmt.Fprintln(os.Stderr, color.YellowString("A total of %d warning(s) occurred.", len(result.Warnings)))
-			for _, w := range result.Warnings {
-				fmt.Fprintln(os.Stderr, color.YellowString(w))
-			}
-		}
-
-		if len(result.Errors) > 0 {
-			fmt.Fprintln(os.Stderr, color.RedString("A total of %d error(s) occurred.", len(result.Errors)))
-			for _, e := range result.Errors {
-				fmt.Fprintln(os.Stderr, color.RedString(e))
-			}
-
-			return fmt.Errorf("the build process failed with a total of %d error(s)", len(result.Errors))
-		}
-
-		return nil
+		return executeCfgBuild(opts.CFGFiles, nlrc, opts)
 	},
+}
+
+// executeSourceBuild compiles each source file with a separate compiler
+// invocation, mirroring the TypeScript executeSourceBuild function.
+func executeSourceBuild(files []string, nlrc compiler.Compiler, opts *options.BuildOptions) error {
+	for _, file := range files {
+		if opts.Verbose {
+			color.Blue("Executing build for %s...", file)
+		}
+
+		compileOpts := buildCompileOpts(opts)
+		compileOpts.SourceFiles = []string{file}
+		compileOpts.CFGFiles = nil
+
+		result, err := nlrc.Compile(compileOpts)
+		if err != nil {
+			return fmt.Errorf("compilation failed for %s: %w", file, err)
+		}
+
+		if err := printBuildResult(result); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// executeCfgBuild compiles each CFG file with a separate compiler invocation,
+// mirroring the TypeScript executeCfgBuild function. When no files are given it
+// auto-discovers .cfg files in the current working directory. If multiple files
+// are found and --all is not set the user is prompted to select which ones to
+// build.
+func executeCfgBuild(files []string, nlrc compiler.Compiler, opts *options.BuildOptions) error {
+	if len(files) == 0 {
+		if opts.Verbose {
+			color.Blue("Searching for CFG files...")
+		}
+
+		located, err := utils.FindFilesByExtension(".", ".cfg")
+		if err != nil {
+			return fmt.Errorf("failed to search for CFG files: %w", err)
+		}
+
+		files = located
+	}
+
+	if len(files) == 0 {
+		color.Red("No CFG files found.")
+		return nil
+	}
+
+	if !opts.All && len(files) > 1 {
+		selected, err := prompt.SelectFiles(files)
+		if err != nil {
+			return err
+		}
+
+		files = selected
+	}
+
+	for _, file := range files {
+		if opts.Verbose {
+			color.Blue("Executing build for %s...", file)
+		}
+
+		compileOpts := buildCompileOpts(opts)
+		compileOpts.CFGFiles = []string{file}
+		compileOpts.SourceFiles = nil
+
+		result, err := nlrc.Compile(compileOpts)
+		if err != nil {
+			return fmt.Errorf("compilation failed for %s: %w", file, err)
+		}
+
+		if err := printBuildResult(result); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// printBuildResult prints warnings and errors from a compile result and returns
+// an error if any errors were present.
+func printBuildResult(result *compiler.CompileResult) error {
+	if len(result.Warnings) > 0 {
+		fmt.Fprintln(os.Stderr, color.YellowString("A total of %d warning(s) occurred.", len(result.Warnings)))
+		for _, w := range result.Warnings {
+			fmt.Fprintln(os.Stderr, color.YellowString(w))
+		}
+	}
+
+	if len(result.Errors) > 0 {
+		fmt.Fprintln(os.Stderr, color.RedString("A total of %d error(s) occurred.", len(result.Errors)))
+		for _, e := range result.Errors {
+			fmt.Fprintln(os.Stderr, color.RedString(e))
+		}
+
+		return fmt.Errorf("the build process failed with a total of %d error(s)", len(result.Errors))
+	}
+
+	return nil
 }
 
 // buildCompileOpts maps BuildOptions onto compiler.CompileOptions.
@@ -118,8 +195,8 @@ func init() {
 	buildCmd.Flags().StringSliceP("library-path", "l", []string{}, "add additional library paths")
 	buildCmd.Flags().StringP("output-path", "o", "", "set the output path for the compiled files")
 	buildCmd.Flags().BoolP("all", "a", false, "select all cfg files without prompting")
+	buildCmd.Flags().Bool("verbose", false, "verbose output")
 
-	// Add conflicts (simplified for now)
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "source-files")
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "include-path")
 	buildCmd.MarkFlagsMutuallyExclusive("cfg-files", "module-path")

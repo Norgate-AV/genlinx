@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,13 +43,17 @@ func TestBuildCompileOpts_EmptyOutputPath(t *testing.T) {
 }
 
 func TestBuildCmd_NoArgs_ReturnsError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("CFG auto-discovery runs on Windows; OS guard does not apply")
+	}
+
 	err := buildCmd.RunE(buildCmd, []string{})
-	assert.EqualError(t, err, "no source or CFG files specified")
+	assert.EqualError(t, err, "the build command is only supported on Windows")
 }
 
 func TestBuildCmd_WithSourceFileArg_PassesGuard(t *testing.T) {
 	err := buildCmd.RunE(buildCmd, []string{"main.axs"})
-	// Guard must not fire; a different error (OS check, missing compiler, etc.) may follow.
+	// The Windows guard fires on non-Windows; confirm it is not a "no files" error.
 	if err != nil {
 		assert.NotEqual(t, "no source or CFG files specified", err.Error(),
 			"guard must not fire when source files are provided")
