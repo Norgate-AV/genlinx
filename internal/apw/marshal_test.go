@@ -441,6 +441,31 @@ func (s *MarshalTestSuite) TestSystem_AddFile_MultipleFiles() {
 }
 
 // ---------------------------------------------------------------------------
+// FileRef.SetPath
+// ---------------------------------------------------------------------------
+
+func (s *MarshalTestSuite) TestFileRef_SetPath_UpdatesFilePathName() {
+	fr := NewFileRef("Inc1", "Include/Inc1.axi", FileTypeInclude)
+	fr.SetPath("Inc1.axi")
+	s.Equal("Inc1.axi", fr.FilePathName)
+}
+
+func (s *MarshalTestSuite) TestFileRef_SetPath_AppearsInMarshaledOutput() {
+	dir := s.T().TempDir()
+	a := NewAPW("P", filepath.Join(dir, "P.apw"))
+	proj := a.Workspace().AddProject(NewProject("P"))
+	sys := proj.AddSystem(newDefaultSystem())
+	fr := sys.AddFile(NewFileRef("Inc1", "Include/Inc1.axi", FileTypeInclude))
+	fr.SetPath("Inc1.axi")
+
+	data, err := a.Bytes()
+	s.Require().NoError(err)
+	out := string(data)
+	s.Contains(out, "<FilePathName>Inc1.axi</FilePathName>")
+	s.NotContains(out, "Include/Inc1.axi")
+}
+
+// ---------------------------------------------------------------------------
 // System.RemoveFile
 // ---------------------------------------------------------------------------
 

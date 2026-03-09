@@ -28,7 +28,6 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 	workspaceFiles, _ := cmd.Flags().GetStringSlice("workspace-files")
 	outputFileSuffix, _ := cmd.Flags().GetString("output-file-suffix")
 	extraSearchLocations, _ := cmd.Flags().GetStringSlice("extra-file-search-locations")
-	extraArchiveLocation, _ := cmd.Flags().GetString("extra-file-archive-location")
 	all, _ := cmd.Flags().GetBool("all")
 
 	// Build a Changed map so LoadArchiveOptions can distinguish "user set this
@@ -46,7 +45,6 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 		WorkspaceFiles:           workspaceFiles,
 		OutputFileSuffix:         outputFileSuffix,
 		ExtraFileSearchLocations: extraSearchLocations,
-		ExtraFileArchiveLocation: extraArchiveLocation,
 		All:                      all,
 		Verbose:                  verbose,
 		Changed:                  changed,
@@ -143,6 +141,5 @@ func init() {
 	archiveCmd.Flags().BoolP("include-files-not-in-workspace", "n", false, "include files not in workspace")
 	archiveCmd.Flags().BoolP("no-include-files-not-in-workspace", "N", false, "do not include files not in workspace")
 	archiveCmd.Flags().StringSliceP("extra-file-search-locations", "l", []string{}, "extra file locations to search")
-	archiveCmd.Flags().StringP("extra-file-archive-location", "p", "", "location to place extra files in the archive")
 	archiveCmd.Flags().BoolP("all", "a", false, "process all found workspace files without prompting")
 }

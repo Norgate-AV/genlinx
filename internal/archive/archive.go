@@ -2,7 +2,6 @@ package archive
 
 import (
 	"archive/zip"
-	_ "embed"
 	"fmt"
 	"io/fs"
 	"os"
@@ -24,12 +23,6 @@ var (
 	logRed   = color.New(color.FgRed)
 )
 
-//go:embed scripts/symlink.bat
-var symlinkBat []byte
-
-//go:embed scripts/symlink.ps1
-var symlinkPS1 []byte
-
 // Options configures the archive build process, merging config file values with
 // CLI flags. It is the Go equivalent of the TypeScript ArchiveOptions type.
 type Options struct {
@@ -38,7 +31,6 @@ type Options struct {
 	IncludeCompiledModuleFiles bool
 	IncludeFilesNotInWorkspace bool
 	ExtraFileSearchLocations   []string
-	ExtraFileArchiveLocation   string
 	All                        bool
 	IgnoredFiles               []string
 	Verbose                    bool
@@ -86,6 +78,21 @@ func (b *Builder) Build() error {
 		_ = b.zipWriter.Close()
 		_ = f.Close()
 		return err
+	}
+
+	// Marshal the workspace with rewritten flat paths and write it to the archive.
+	apwData, err := b.apw.Bytes()
+	if err != nil {
+		_ = b.zipWriter.Close()
+		_ = f.Close()
+		return fmt.Errorf("failed to marshal workspace: %w", err)
+	}
+
+	apwEntry := zipEntryPath(filepath.Base(b.apw.FilePath()))
+	if err := b.writeEntry(apwEntry, apwData); err != nil {
+		_ = b.zipWriter.Close()
+		_ = f.Close()
+		return fmt.Errorf("failed to write workspace to archive: %w", err)
 	}
 
 	if err := b.zipWriter.Close(); err != nil {
@@ -156,35 +163,12 @@ func (b *Builder) addDiskFile(diskPath, entryName string) error {
 }
 
 // ---------------------------------------------------------------------------
-// Per-type add methods (mirrors ArchiveItemFactory / *Item classes)
+// Per-type add methods
 // ---------------------------------------------------------------------------
 
-// archiveDir returns the zip directory for a file — mirrors the TS archivePath
-// logic used in GeneralItem / SourceItem / ModuleItem constructors.
-//
-// For workspace-referened files the returned path is relative to the workspace
-// directory (e.g. "Source", "Module", "Include"). This matches the behaviour of
-// the TypeScript implementation where file.path is stored as a relative path and
-// path.dirname(file.path) gives the subdirectory name directly.
-func (b *Builder) archiveDir(file apw.File) string {
-	if file.IsExtra {
-		return b.opts.ExtraFileArchiveLocation
-	}
-
-	workspaceDir := filepath.Dir(b.apw.FilePath())
-
-	relDir, err := filepath.Rel(workspaceDir, filepath.Dir(file.Path))
-	if err != nil {
-		// Should never happen with valid absolute paths, but fall back gracefully.
-		return filepath.Base(filepath.Dir(file.Path))
-	}
-
-	return relDir
-}
-
-// addWorkspaceItem places the .apw file at the zip root (no subdirectory).
-// Mirrors WorkspaceItem.addToArchive().
-func (b *Builder) addWorkspaceItem(file apw.File) error {
+// addGeneralItem adds a file to the archive root using just its filename.
+// Mirrors GeneralItem.addToArchive() — flat layout, no subdirectory.
+func (b *Builder) addGeneralItem(file apw.File) error {
 	entryName := zipEntryPath(filepath.Base(file.Path))
 
 	if err := b.addDiskFile(file.Path, entryName); err != nil {
@@ -196,31 +180,16 @@ func (b *Builder) addWorkspaceItem(file apw.File) error {
 	return nil
 }
 
-// addGeneralItem places the file under its directory path inside the zip.
-// Mirrors GeneralItem.addToArchive().
-func (b *Builder) addGeneralItem(file apw.File) error {
-	entryName := zipEntryPath(filepath.Join(b.archiveDir(file), filepath.Base(file.Path)))
-
-	if err := b.addDiskFile(file.Path, entryName); err != nil {
-		return err
-	}
-
-	b.logVerbose(logCyan, "Added file: %s", file.Path)
-
-	return nil
-}
-
-// addSourceItem places the source file and, when requested, its compiled .tkn.
-// Mirrors SourceItem.addToArchive().
+// addSourceItem adds the source file and, when requested, its compiled .tkn.
+// Both are placed at the archive root.
 func (b *Builder) addSourceItem(file apw.File) error {
-	dir := b.archiveDir(file)
-	entryName := zipEntryPath(filepath.Join(dir, filepath.Base(file.Path)))
+	entryName := zipEntryPath(filepath.Base(file.Path))
 
 	if err := b.addDiskFile(file.Path, entryName); err != nil {
 		return err
 	}
 
-	b.logVerbose(logCyan, "Added file: %s", file.Path)
+	b.logVerbose(logCyan, "Added file: %s", entryName)
 
 	if !b.opts.IncludeCompiledSourceFiles {
 		return nil
@@ -228,28 +197,27 @@ func (b *Builder) addSourceItem(file apw.File) error {
 
 	compiledPath := strings.TrimSuffix(file.Path, apw.AmxExtensions[apw.FileTypeSource]) +
 		apw.AmxCompiledExtensions[apw.FileTypeSource]
-	compiledEntry := zipEntryPath(filepath.Join(dir, filepath.Base(compiledPath)))
+	compiledEntry := zipEntryPath(filepath.Base(compiledPath))
 
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
 		warnf("compiled file not found, skipping: %s", compiledPath)
 	} else {
-		b.logVerbose(logCyan, "Added file: %s", compiledPath)
+		b.logVerbose(logCyan, "Added file: %s", compiledEntry)
 	}
 
 	return nil
 }
 
-// addModuleItem places the module source and, when requested, its compiled .tko.
-// Mirrors ModuleItem.addToArchive().
+// addModuleItem adds the module source and, when requested, its compiled .tko.
+// Both are placed at the archive root.
 func (b *Builder) addModuleItem(file apw.File) error {
-	dir := b.archiveDir(file)
-	entryName := zipEntryPath(filepath.Join(dir, filepath.Base(file.Path)))
+	entryName := zipEntryPath(filepath.Base(file.Path))
 
 	if err := b.addDiskFile(file.Path, entryName); err != nil {
 		return err
 	}
 
-	b.logVerbose(logCyan, "Added file: %s", file.Path)
+	b.logVerbose(logCyan, "Added file: %s", entryName)
 
 	if !b.opts.IncludeCompiledModuleFiles {
 		return nil
@@ -257,43 +225,24 @@ func (b *Builder) addModuleItem(file apw.File) error {
 
 	compiledPath := strings.TrimSuffix(file.Path, apw.AmxExtensions[apw.FileTypeModule]) +
 		apw.AmxCompiledExtensions[apw.FileTypeModule]
-	compiledEntry := zipEntryPath(filepath.Join(dir, filepath.Base(compiledPath)))
+	compiledEntry := zipEntryPath(filepath.Base(compiledPath))
 
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
 		warnf("compiled file not found, skipping: %s", compiledPath)
 	} else {
-		b.logVerbose(logCyan, "Added file: %s", compiledPath)
+		b.logVerbose(logCyan, "Added file: %s", compiledEntry)
 	}
-
-	return nil
-}
-
-// addEnvItem writes an in-memory .env file into the extra-file archive location.
-// Mirrors EnvItem.addToArchive().
-func (b *Builder) addEnvItem(file apw.File) error {
-	entryName := zipEntryPath(filepath.Join(b.opts.ExtraFileArchiveLocation, file.Path))
-
-	if err := b.writeEntry(entryName, []byte(file.Content)); err != nil {
-		return err
-	}
-
-	b.logVerbose(logCyan, "Added file: %s", entryName)
 
 	return nil
 }
 
 // addFileToArchive dispatches to the correct per-type method.
-// Mirrors ArchiveItemFactory.create().
 func (b *Builder) addFileToArchive(file apw.File) error {
 	switch file.Type {
-	case apw.FileTypeWorkspace:
-		return b.addWorkspaceItem(file)
 	case apw.FileTypeModule:
 		return b.addModuleItem(file)
 	case apw.FileTypeSource, apw.FileTypeMasterSrc:
 		return b.addSourceItem(file)
-	case "Env":
-		return b.addEnvItem(file)
 	default:
 		return b.addGeneralItem(file)
 	}
@@ -303,15 +252,37 @@ func (b *Builder) addFileToArchive(file apw.File) error {
 // Workspace files pass
 // ---------------------------------------------------------------------------
 
+// addWorkspaceFiles walks the live workspace hierarchy directly, adds each
+// referenced file to the archive root (filename only — flat layout), and
+// rewrites the FileRef path to just the filename so the marshalled .apw
+// written at the end of Build() reflects the flat layout NetLinx Studio
+// expects after extraction.
 func (b *Builder) addWorkspaceFiles() error {
-	for _, file := range b.apw.AllFiles() {
-		if !file.Exists {
-			warnf("file referenced in workspace does not exist on disk, skipping: %s", file.Path)
-			continue
-		}
+	workspaceDir := filepath.Dir(b.apw.FilePath())
 
-		if err := b.addFileToArchive(file); err != nil {
-			warnf("could not add %s: %v", file.Path, err)
+	for _, proj := range b.apw.Workspace().Projects {
+		for _, sys := range proj.Systems {
+			for _, fr := range sys.Files {
+				relPath := filepath.FromSlash(strings.ReplaceAll(fr.FilePathName, `\`, `/`))
+				diskPath := filepath.Join(workspaceDir, relPath)
+
+				if _, err := os.Stat(diskPath); err != nil {
+					warnf("file referenced in workspace does not exist on disk, skipping: %s", diskPath)
+					continue
+				}
+
+				file := apw.File{
+					Type: fr.Type,
+					Path: diskPath,
+				}
+
+				if err := b.addFileToArchive(file); err != nil {
+					warnf("could not add %s: %v", diskPath, err)
+					continue
+				}
+
+				fr.SetPath(filepath.Base(diskPath))
+			}
 		}
 	}
 
@@ -322,51 +293,8 @@ func (b *Builder) addWorkspaceFiles() error {
 // Extra-files pass (files not in the workspace)
 // ---------------------------------------------------------------------------
 
-func (b *Builder) addEnvFile() {
-	masterSrcPaths := b.apw.MasterSrcPath()
-	if len(masterSrcPaths) == 0 {
-		return
-	}
-
-	b.logVerbose(logBlue, "Adding env file to the archive...")
-
-	masterSrcRelPath := filepath.Join("..", filepath.Base(masterSrcPaths[0]))
-
-	file := apw.File{
-		Type:    "Env",
-		Path:    ".env",
-		Exists:  true,
-		IsExtra: true,
-		Content: fmt.Sprintf("SOURCE_DIRECTORY_RELATIVE_PATH=%s", filepath.ToSlash(masterSrcRelPath)),
-	}
-
-	if err := b.addEnvItem(file); err != nil {
-		warnf("could not add .env: %v", err)
-	}
-}
-
-func (b *Builder) addSymlinkScripts() {
-	b.logVerbose(logBlue, "Adding symlink scripts for extra files to the archive...")
-
-	scripts := map[string][]byte{
-		"symlink.bat": symlinkBat,
-		"symlink.ps1": symlinkPS1,
-	}
-
-	for name, content := range scripts {
-		entryName := zipEntryPath(filepath.Join(b.opts.ExtraFileArchiveLocation, name))
-
-		if err := b.writeEntry(entryName, content); err != nil {
-			warnf("could not add script %s: %v", name, err)
-		} else {
-			b.logVerbose(logCyan, "Added file: %s", entryName)
-		}
-	}
-}
-
 // getExtraFilesOnDisk walks the given locations and collects files that are of
 // interest for extra-file matching (.axs, .axi, .jar, .xdd).
-// Mirrors ArchiveBuilder.getExtraFilesOnDisk().
 func (b *Builder) getExtraFilesOnDisk(locations []string) {
 	b.logVerbose(logBlue, "Searching known locations for extra files...")
 
@@ -496,9 +424,6 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 	return nil
 }
 
-// addExtraFiles orchestrates the discovery and addition of files that are
-// referenced in the workspace but not listed as workspace members.
-// Mirrors ArchiveBuilder.addExtraFiles().
 func (b *Builder) addExtraFiles() error {
 	if !b.opts.IncludeFilesNotInWorkspace {
 		return nil
@@ -537,12 +462,8 @@ func (b *Builder) addExtraFiles() error {
 	for _, ref := range b.locatedExtraRefs {
 		fileType := apw.GetFileType(ref)
 
-		// GetFileType is ambiguous for .axs: it can return FileTypeModule,
-		// FileTypeSource, or FileTypeMasterSrc (all share the .axs extension).
-		// Extra .axs files are always Module files — they were discovered via
-		// define_module directives in workspace source files, so we normalise
-		// to FileTypeModule here to ensure the correct compiled counterpart
-		// (.tko) is included when IncludeCompiledModuleFiles is set.
+		// GetFileType is ambiguous for .axs: normalise to FileTypeModule since
+		// extra .axs files are always discovered via define_module directives.
 		if fileType == apw.FileTypeSource || fileType == apw.FileTypeMasterSrc {
 			fileType = apw.FileTypeModule
 		}
@@ -558,9 +479,6 @@ func (b *Builder) addExtraFiles() error {
 			warnf("could not add %s: %v", ref, err)
 		}
 	}
-
-	b.addEnvFile()
-	b.addSymlinkScripts()
 
 	return nil
 }

@@ -3,6 +3,7 @@ package archive
 import (
 	"archive/zip"
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -102,7 +103,6 @@ func defaultOpts() *Options {
 		IncludeCompiledSourceFiles: false,
 		IncludeCompiledModuleFiles: false,
 		IncludeFilesNotInWorkspace: false,
-		ExtraFileArchiveLocation:   ".genlinx",
 	}
 }
 
@@ -193,12 +193,12 @@ func (s *ArchiveTestSuite) TestBuild_ZipContains_SourceFile() {
 
 	var found bool
 	for _, f := range zr.File {
-		if f.Name == "Source/TestMain.axs" {
+		if f.Name == "TestMain.axs" {
 			found = true
 			break
 		}
 	}
-	s.True(found, "zip should contain Source/TestMain.axs with a relative entry path")
+	s.True(found, "zip should contain TestMain.axs at the archive root")
 }
 
 func (s *ArchiveTestSuite) TestBuild_ZipEntry_ModuleUsesRelativePath() {
@@ -213,12 +213,12 @@ func (s *ArchiveTestSuite) TestBuild_ZipEntry_ModuleUsesRelativePath() {
 
 	var found bool
 	for _, f := range zr.File {
-		if f.Name == "Module/TestModule.axs" {
+		if f.Name == "TestModule.axs" {
 			found = true
 			break
 		}
 	}
-	s.True(found, "zip should contain Module/TestModule.axs with a relative entry path")
+	s.True(found, "zip should contain TestModule.axs at the archive root")
 }
 
 func (s *ArchiveTestSuite) TestBuild_ZipEntry_IncludeUsesRelativePath() {
@@ -233,12 +233,12 @@ func (s *ArchiveTestSuite) TestBuild_ZipEntry_IncludeUsesRelativePath() {
 
 	var found bool
 	for _, f := range zr.File {
-		if f.Name == "Include/TestInclude.axi" {
+		if f.Name == "TestInclude.axi" {
 			found = true
 			break
 		}
 	}
-	s.True(found, "zip should contain Include/TestInclude.axi with a relative entry path")
+	s.True(found, "zip should contain TestInclude.axi at the archive root")
 }
 
 func (s *ArchiveTestSuite) TestBuild_ZipEntry_NoAbsolutePaths() {
@@ -294,12 +294,12 @@ func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_AddedWithRelativePath() 
 
 	var found bool
 	for _, f := range zr.File {
-		if f.Name == "Module/TestModule.tko" {
+		if f.Name == "TestModule.tko" {
 			found = true
 			break
 		}
 	}
-	s.True(found, "zip should contain Module/TestModule.tko alongside the .axs source file")
+	s.True(found, "zip should contain TestModule.tko at the archive root")
 }
 
 func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_SkippedWhenOptionFalse() {
@@ -322,7 +322,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_SkippedWhenOptionFalse()
 	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
-		s.NotEqual("Module/TestModule.tko", f.Name,
+		s.NotEqual("TestModule.tko", f.Name,
 			"compiled .tko should not be in zip when IncludeCompiledModuleFiles=false")
 	}
 }
@@ -346,12 +346,12 @@ func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_AddedWithRelativePath() 
 
 	var found bool
 	for _, f := range zr.File {
-		if f.Name == "Source/TestMain.tkn" {
+		if f.Name == "TestMain.tkn" {
 			found = true
 			break
 		}
 	}
-	s.True(found, "zip should contain Source/TestMain.tkn alongside the .axs master source file")
+	s.True(found, "zip should contain TestMain.tkn at the archive root")
 }
 
 func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToExtraLocation() {
@@ -402,15 +402,15 @@ func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToExtraLocation() {
 
 	var axsFound, tkoFound bool
 	for _, zf := range zr.File {
-		if zf.Name == ".genlinx/ExtraLib.axs" {
+		if zf.Name == "ExtraLib.axs" {
 			axsFound = true
 		}
-		if zf.Name == ".genlinx/ExtraLib.tko" {
+		if zf.Name == "ExtraLib.tko" {
 			tkoFound = true
 		}
 	}
-	s.True(axsFound, "extra .axs should be added to ExtraFileArchiveLocation (.genlinx/)")
-	s.True(tkoFound, "compiled .tko should be added to ExtraFileArchiveLocation alongside extra .axs")
+	s.True(axsFound, "extra .axs should be added at the archive root")
+	s.True(tkoFound, "compiled .tko should be added at the archive root alongside extra .axs")
 }
 
 // ---------------------------------------------------------------------------
@@ -456,7 +456,7 @@ func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_SkippedWhenOptionFalse()
 	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
-		s.NotEqual("Source/TestMain.tkn", f.Name,
+		s.NotEqual("TestMain.tkn", f.Name,
 			"compiled .tkn should not be in zip when IncludeCompiledSourceFiles=false")
 	}
 }
@@ -480,8 +480,8 @@ func (s *ArchiveTestSuite) TestBuild_IncludeFilesNotInWorkspace_False_NoExtraFil
 	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
-		s.False(strings.HasPrefix(f.Name, ".genlinx/"),
-			"no .genlinx/ entries should appear when IncludeFilesNotInWorkspace=false; found %q", f.Name)
+		s.NotEqual("ExtraLib.axs", f.Name,
+			"no extra files should appear when IncludeFilesNotInWorkspace=false; found %q", f.Name)
 	}
 }
 
@@ -504,12 +504,12 @@ func (s *ArchiveTestSuite) TestBuild_IncludeFilesNotInWorkspace_True_AddsExtraFi
 
 	var found bool
 	for _, f := range zr.File {
-		if f.Name == ".genlinx/ExtraLib.axs" {
+		if f.Name == "ExtraLib.axs" {
 			found = true
 			break
 		}
 	}
-	s.True(found, "extra file should be added to .genlinx/ when IncludeFilesNotInWorkspace=true")
+	s.True(found, "extra file should be added at the archive root when IncludeFilesNotInWorkspace=true")
 }
 
 func (s *ArchiveTestSuite) TestBuild_IgnoredFiles_ExcludesFromExtraSearch() {
@@ -531,7 +531,7 @@ func (s *ArchiveTestSuite) TestBuild_IgnoredFiles_ExcludesFromExtraSearch() {
 	defer func() { _ = zr.Close() }()
 
 	for _, f := range zr.File {
-		s.NotEqual(".genlinx/ExtraLib.axs", f.Name,
+		s.NotEqual("ExtraLib.axs", f.Name,
 			"ignored file should not appear in zip even when IncludeFilesNotInWorkspace=true")
 	}
 }
@@ -636,4 +636,49 @@ func (s *ArchiveTestSuite) TestBuild_Verbose_LogsExtraFileSearch() {
 
 	// getFileReferencesFromFiles logs "Searching <file> for references..."
 	s.Contains(out, "Searching", "verbose output should mention file search activity")
+}
+
+// ---------------------------------------------------------------------------
+// Build – flat APW in zip
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_WorkspaceAPW_HasFlatPaths() {
+	// After Build() the .apw entry in the zip must have FilePathName values that
+	// are bare filenames (no subdirectory prefix), because the archive is flat.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	// Find and read the .apw entry.
+	var apwData []byte
+	for _, f := range zr.File {
+		if f.Name == "TestWorkspace.apw" {
+			rc, err := f.Open()
+			s.Require().NoError(err)
+			apwData, err = io.ReadAll(rc)
+			_ = rc.Close()
+			s.Require().NoError(err)
+			break
+		}
+	}
+	s.Require().NotEmpty(apwData, "zip must contain TestWorkspace.apw")
+
+	// Parse the archived APW and verify all FileRef paths are bare filenames.
+	parsed, err := apw.Parse("TestWorkspace.apw", apwData)
+	s.Require().NoError(err)
+
+	for _, proj := range parsed.Workspace().Projects {
+		for _, sys := range proj.Systems {
+			for _, fr := range sys.Files {
+				base := filepath.Base(fr.FilePathName)
+				s.Equal(base, fr.FilePathName,
+					"FileRef path in archived .apw should be a bare filename, got %q", fr.FilePathName)
+			}
+		}
+	}
 }

@@ -133,6 +133,11 @@ func NewFileRef(id, path string, t FileType) *FileRef {
 	}
 }
 
+// SetPath updates the FileRef's FilePathName to p.
+func (f *FileRef) SetPath(p string) {
+	f.FilePathName = p
+}
+
 // AddDeviceMap appends dm to the file's device map list and returns it so
 // calls can be chained. Multiple device maps can be associated with one file.
 func (f *FileRef) AddDeviceMap(dm *DeviceMap) *DeviceMap {

@@ -501,10 +501,6 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 		if len(cfg.Archive.ExtraFileSearchLocations) > 0 {
 			result.Archive.ExtraFileSearchLocations = prependAndDeduplicate(result.Archive.ExtraFileSearchLocations, cfg.Archive.ExtraFileSearchLocations)
 		}
-
-		if cfg.Archive.ExtraFileArchiveLocation != "" {
-			result.Archive.ExtraFileArchiveLocation = cfg.Archive.ExtraFileArchiveLocation
-		}
 	}
 
 	return result

@@ -38,7 +38,6 @@ type ArchiveConfig struct {
 	IncludeCompiledModuleFiles bool     `mapstructure:"includeCompiledModuleFiles" json:"includeCompiledModuleFiles"`
 	IncludeFilesNotInWorkspace bool     `mapstructure:"includeFilesNotInWorkspace" json:"includeFilesNotInWorkspace"`
 	ExtraFileSearchLocations   []string `mapstructure:"extraFileSearchLocations"   json:"extraFileSearchLocations"`
-	ExtraFileArchiveLocation   string   `mapstructure:"extraFileArchiveLocation"   json:"extraFileArchiveLocation"`
 	All                        bool     `mapstructure:"all"                        json:"all"`
 	IgnoredFiles               []string `mapstructure:"ignoredFiles"               json:"ignoredFiles"`
 }
@@ -86,7 +85,6 @@ var defaultConfig = Config{
 		IncludeCompiledModuleFiles: true,
 		IncludeFilesNotInWorkspace: true,
 		ExtraFileSearchLocations:   utils.NormalizePaths([]string{"C:/Program Files (x86)/Common Files/AMXShare"}),
-		ExtraFileArchiveLocation:   utils.NormalizePath(".genlinx"),
 		All:                        false,
 		IgnoredFiles: []string{
 			"G4API.axi",
@@ -190,7 +188,6 @@ func NormalizeConfigPaths(config *Config) {
 
 	// Normalize Archive paths
 	config.Archive.ExtraFileSearchLocations = utils.NormalizePaths(config.Archive.ExtraFileSearchLocations)
-	config.Archive.ExtraFileArchiveLocation = utils.NormalizePath(config.Archive.ExtraFileArchiveLocation)
 
 	// Normalize Build paths
 	config.Build.NLRC.Path = utils.NormalizePath(config.Build.NLRC.Path)

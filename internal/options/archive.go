@@ -18,7 +18,6 @@ type ArchiveCLIOptions struct {
 	// so the CLI can override the merged config value only when the user asked.
 	Changed                  map[string]bool
 	ExtraFileSearchLocations []string
-	ExtraFileArchiveLocation string
 	All                      bool
 	Verbose                  bool
 }
@@ -37,7 +36,6 @@ func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLo
 		IncludeCompiledModuleFiles: mergedCfg.Archive.IncludeCompiledModuleFiles,
 		IncludeFilesNotInWorkspace: mergedCfg.Archive.IncludeFilesNotInWorkspace,
 		ExtraFileSearchLocations:   mergedCfg.Archive.ExtraFileSearchLocations,
-		ExtraFileArchiveLocation:   mergedCfg.Archive.ExtraFileArchiveLocation,
 		All:                        mergedCfg.Archive.All,
 		IgnoredFiles:               mergedCfg.Archive.IgnoredFiles,
 	}
@@ -78,10 +76,6 @@ func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLo
 			opts.ExtraFileSearchLocations,
 			cliOpts.ExtraFileSearchLocations,
 		)
-	}
-
-	if cliOpts.ExtraFileArchiveLocation != "" {
-		opts.ExtraFileArchiveLocation = cliOpts.ExtraFileArchiveLocation
 	}
 
 	if cliOpts.All {

@@ -776,8 +776,6 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllPathsAbsolute() {
 	allPaths = append(allPaths, merged.CFG.ModulePath...)
 	allPaths = append(allPaths, merged.CFG.LibraryPath...)
 	allPaths = append(allPaths, merged.Archive.ExtraFileSearchLocations...)
-	// ExtraFileArchiveLocation is an output path resolved at execution time —
-	// it must NOT be made absolute at config load time.
 
 	for _, p := range allPaths {
 		if p == "" {
@@ -785,10 +783,6 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllPathsAbsolute() {
 		}
 		assert.True(suite.T(), filepath.IsAbs(p), "all merged paths must be absolute: %s", p)
 	}
-
-	// ExtraFileArchiveLocation stays relative (output path, not input path).
-	assert.False(suite.T(), filepath.IsAbs(merged.Archive.ExtraFileArchiveLocation),
-		"ExtraFileArchiveLocation must remain relative, got: %s", merged.Archive.ExtraFileArchiveLocation)
 }
 
 // TestLoadBuildOptions_CLIPathsPrependedBeforeConfig verifies that CLI-supplied

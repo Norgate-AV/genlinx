@@ -62,7 +62,6 @@ func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 		},
 		Archive: ArchiveConfig{
 			ExtraFileSearchLocations: []string{"./search"},
-			ExtraFileArchiveLocation: "./archive",
 		},
 	}
 
@@ -77,7 +76,6 @@ func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 	assert.Equal(suite.T(), filepath.FromSlash("lib"), config.Build.NLRC.LibraryPath[0])
 	assert.Equal(suite.T(), filepath.FromSlash("shell.exe"), config.Build.Shell.Path)
 	assert.Equal(suite.T(), filepath.FromSlash("search"), config.Archive.ExtraFileSearchLocations[0])
-	assert.Equal(suite.T(), filepath.FromSlash("archive"), config.Archive.ExtraFileArchiveLocation)
 }
 
 // TestSaveConfig tests saving configuration to file
