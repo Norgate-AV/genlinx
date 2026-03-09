@@ -1,0 +1,157 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://github.com/Norgate-AV/genlinx/genlinx.schema.json",
+    "title": "genlinx configuration",
+    "description": "Configuration schema for genlinx (.genlinxrc.json, config.json)",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "cfg": {
+            "description": "Options for the 'cfg' command (NetLinx build CFG file generation)",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "outputFile": {
+                    "description": "Output CFG filename suffix (e.g. 'build.cfg')",
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.cfg$"
+                },
+                "outputLogFile": {
+                    "description": "Output log filename suffix (e.g. 'build.log')",
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.log$"
+                },
+                "outputLogFileOption": {
+                    "description": "Log file write mode: 'A' = append, 'N' = new/overwrite",
+                    "type": "string",
+                    "enum": ["A", "N"]
+                },
+                "outputLogConsoleOption": {
+                    "description": "Whether to echo compiler output to the console",
+                    "type": "boolean"
+                },
+                "buildWithDebugInformation": {
+                    "description": "Include debug information in compiled output",
+                    "type": "boolean"
+                },
+                "buildWithSource": {
+                    "description": "Include source files in compiled output",
+                    "type": "boolean"
+                },
+                "includePath": {
+                    "description": "Additional include paths for the NetLinx compiler",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "modulePath": {
+                    "description": "Additional module paths for the NetLinx compiler",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "libraryPath": {
+                    "description": "Additional library paths for the NetLinx compiler",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "all": {
+                    "description": "Automatically select all workspace files without prompting",
+                    "type": "boolean"
+                }
+            }
+        },
+        "archive": {
+            "description": "Options for the 'archive' command (ZIP archive creation)",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "outputFile": {
+                    "description": "Output archive filename suffix (e.g. 'archive.zip')",
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.zip$"
+                },
+                "includeCompiledSourceFiles": {
+                    "description": "Include compiled source files (.tkn) in the archive",
+                    "type": "boolean"
+                },
+                "includeCompiledModuleFiles": {
+                    "description": "Include compiled module files (.tko) in the archive",
+                    "type": "boolean"
+                },
+                "includeFilesNotInWorkspace": {
+                    "description": "Include files found in search locations that are not referenced by the workspace",
+                    "type": "boolean"
+                },
+                "extraFileSearchLocations": {
+                    "description": "Additional directories to search for files to include in the archive",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "ignoredFiles": {
+                    "description": "Filenames to exclude from the archive even if found in search locations",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "all": {
+                    "description": "Automatically select all workspace files without prompting",
+                    "type": "boolean"
+                }
+            }
+        },
+        "build": {
+            "description": "Options for the 'build' command (NetLinx compilation)",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "nlrc": {
+                    "description": "NetLinx Resource Compiler (NLRC) settings",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "path": {
+                            "description": "Path to the NLRC executable",
+                            "type": "string"
+                        },
+                        "includePath": {
+                            "description": "Additional include paths passed to NLRC",
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "uniqueItems": true
+                        },
+                        "modulePath": {
+                            "description": "Additional module paths passed to NLRC",
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "uniqueItems": true
+                        },
+                        "libraryPath": {
+                            "description": "Additional library paths passed to NLRC",
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "uniqueItems": true
+                        }
+                    }
+                },
+                "shell": {
+                    "description": "Shell used to invoke the compiler",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "path": {
+                            "description": "Path to the shell executable (e.g. C:/Windows/System32/cmd.exe)",
+                            "type": "string"
+                        }
+                    }
+                },
+                "all": {
+                    "description": "Automatically select all workspace files without prompting",
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}
