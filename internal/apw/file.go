@@ -117,7 +117,7 @@ type FileRef struct {
 	XMLName         xml.Name        `xml:"File"`
 	Identifier      string          `xml:"Identifier"`
 	FilePathName    string          `xml:"FilePathName"`
-	Comments        string          `xml:"Comments,omitempty"`
+	Comments        string          `xml:"Comments"`
 	MasterDirectory string          `xml:"MasterDirectory,omitempty"`
 	DeviceMaps      []*DeviceMap    `xml:"DeviceMap"`
 	IRDBs           []*IRDB         `xml:"IRDB"`
@@ -131,4 +131,19 @@ func NewFileRef(id, path string, t FileType) *FileRef {
 		FilePathName: path,
 		Type:         t,
 	}
+}
+
+// AddDeviceMap appends dm to the file's device map list and returns it so
+// calls can be chained. Multiple device maps can be associated with one file.
+func (f *FileRef) AddDeviceMap(dm *DeviceMap) *DeviceMap {
+	f.DeviceMaps = append(f.DeviceMaps, dm)
+	return dm
+}
+
+// AddIRDB appends irdb to the file's IRDB list and returns it so calls can be
+// chained. Per the .apw XML schema IRDBs are nested inside a File element, not
+// at the System level.
+func (f *FileRef) AddIRDB(irdb *IRDB) *IRDB {
+	f.IRDBs = append(f.IRDBs, irdb)
+	return irdb
 }

@@ -16,9 +16,9 @@ type System struct {
 	VNMSystemID              string     `xml:"VNMSystemID,omitempty"`
 	VNMIPAddress             string     `xml:"VNMIPAddress,omitempty"`
 	VNMMaskAddress           string     `xml:"VNMMaskAddress,omitempty"`
-	UserName                 string     `xml:"UserName,omitempty"`
-	Password                 string     `xml:"Password,omitempty"`
-	Comments                 string     `xml:"Comments,omitempty"`
+	UserName                 string     `xml:"UserName"`
+	Password                 string     `xml:"Password"`
+	Comments                 string     `xml:"Comments"`
 	Files                    []*FileRef `xml:"File"`
 	IsActive                 string     `xml:"IsActive,attr"`
 	Platform                 string     `xml:"Platform,attr"`
@@ -30,4 +30,16 @@ func NewSystem(id string) *System {
 	return &System{
 		Identifier: id,
 	}
+}
+
+// AddFile appends fr to the system's file list and returns it so calls can be
+// chained. If fr.CompileType is empty it is inferred from fr.Type.
+func (s *System) AddFile(fr *FileRef) *FileRef {
+	if fr.CompileType == "" {
+		fr.CompileType = compileTypeFor(fr.Type)
+	}
+
+	s.Files = append(s.Files, fr)
+
+	return fr
 }

@@ -22,9 +22,52 @@ type APW struct {
 }
 
 func NewAPW(id, path string) *APW {
+	ws := NewWorkspace(id)
+	ws.CreateVersion = "4.0"
+	ws.CurrentVersion = "4.0"
+
+	absPath := path
+	if path != "" {
+		if abs, err := filepath.Abs(path); err == nil {
+			absPath = abs
+		}
+	}
+
 	return &APW{
-		id: id,
-		ws: NewWorkspace(id),
+		id:    id,
+		name:  id + FileExtensionAPW,
+		path:  absPath,
+		dir:   filepath.Dir(absPath),
+		files: make(map[string]File),
+		ws:    ws,
+	}
+}
+
+// Workspace returns the APW's inner Workspace so callers can build the
+// project/system/file hierarchy directly.
+func (a *APW) Workspace() *Workspace {
+	return a.ws
+}
+
+// SetWorkspace replaces the APW's inner Workspace and rebuilds the internal
+// files map from the new workspace tree.
+func (a *APW) SetWorkspace(ws *Workspace) {
+	a.ws = ws
+	a.files = make(map[string]File)
+
+	if ws != nil {
+		a.buildFiles()
+	}
+}
+
+// Rebuild re-derives the internal files map from the current workspace tree.
+// Call this after modifying the workspace hierarchy programmatically so that
+// AllFiles, ModuleFiles, IncludePath etc. reflect the latest state.
+func (a *APW) Rebuild() {
+	a.files = make(map[string]File)
+
+	if a.ws != nil {
+		a.buildFiles()
 	}
 }
 
