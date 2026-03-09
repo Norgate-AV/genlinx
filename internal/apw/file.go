@@ -110,7 +110,6 @@ type File struct {
 	Path    string
 	Exists  bool
 	IsExtra bool
-	Content string // optional in-memory content (e.g. for .env files)
 }
 
 type FileRef struct {

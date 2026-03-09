@@ -429,10 +429,6 @@ func resolveConfigPaths(cfg *config.Config) error {
 		return fmt.Errorf("archive.extraFileSearchLocations: %w", err)
 	}
 
-	// NOTE: ExtraFileArchiveLocation is an output destination resolved at
-	// command execution time (relative to the project root), not at config
-	// load time — leave it as-is, mirroring the TS implementation.
-
 	return nil
 }
 

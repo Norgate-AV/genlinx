@@ -360,10 +360,9 @@ func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_AddedWithRelativePath() 
 	s.True(found, "zip should contain TestMain.tkn at the archive root")
 }
 
-func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToExtraLocation() {
-	// Verify that an extra .axs file that is treated as a Module (regardless of
-	// what GetFileType non-deterministically returns) adds its .tko compiled
-	// counterpart to the ExtraFileArchiveLocation directory in the zip.
+func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToArchiveRoot() {
+	// Verify that an extra .axs file treated as a Module adds both itself and
+	// its compiled .tko counterpart at the archive root (flat layout).
 	a := setupWorkspace(s.T(), "TestWorkspace")
 	wd, _ := os.Getwd()
 
