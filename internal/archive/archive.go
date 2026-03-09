@@ -24,7 +24,7 @@ var (
 )
 
 // Options configures the archive build process, merging config file values with
-// CLI flags. It is the Go equivalent of the TypeScript ArchiveOptions type.
+// CLI flags.
 type Options struct {
 	OutputFileSuffix           string
 	IncludeCompiledSourceFiles bool

@@ -21,7 +21,6 @@ const (
 )
 
 // logPattern matches the NLRC compiler log prefix: "ERROR: ..." or "WARNING: ..."
-// This mirrors the TypeScript regex (?<level>ERROR|WARNING): .+
 var logPattern = regexp.MustCompile(`(ERROR|WARNING): .+`)
 
 // Compiler represents a NetLinx compiler
@@ -235,8 +234,7 @@ func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
 }
 
 // parseOutput parses compiler output for errors and warnings.
-// It mirrors the TypeScript regex (?<level>ERROR|WARNING): .+ and deduplicates
-// results, matching NLRC's output format exactly.
+// It deduplicates results, matching NLRC's output format exactly.
 func (c *NLRCCompiler) parseOutput(output string) ([]string, []string) {
 	seenErrors := make(map[string]struct{})
 	seenWarnings := make(map[string]struct{})

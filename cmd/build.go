@@ -71,8 +71,7 @@ var buildCmd = &cobra.Command{
 	},
 }
 
-// executeSourceBuild compiles each source file with a separate compiler
-// invocation, mirroring the TypeScript executeSourceBuild function.
+// executeSourceBuild compiles each source file with a separate compiler invocation.
 func executeSourceBuild(files []string, nlrc compiler.Compiler, opts *options.BuildOptions) error {
 	for _, file := range files {
 		if opts.Verbose {
@@ -96,11 +95,10 @@ func executeSourceBuild(files []string, nlrc compiler.Compiler, opts *options.Bu
 	return nil
 }
 
-// executeCfgBuild compiles each CFG file with a separate compiler invocation,
-// mirroring the TypeScript executeCfgBuild function. When no files are given it
-// auto-discovers .cfg files in the current working directory. If multiple files
-// are found and --all is not set the user is prompted to select which ones to
-// build.
+// executeCfgBuild compiles each CFG file with a separate compiler invocation.
+// When no files are given it auto-discovers .cfg files in the current working
+// directory. If multiple files are found and --all is not set the user is prompted
+// to select which ones to build.
 func executeCfgBuild(files []string, nlrc compiler.Compiler, opts *options.BuildOptions) error {
 	if len(files) == 0 {
 		if opts.Verbose {

@@ -97,8 +97,7 @@ func (info *ConfigLoadInfo) Print() {
 	}
 }
 
-// LoadMergedConfig is the central config-merge entry point, equivalent to
-// getAppConfig() in the TypeScript implementation.  It loads the default,
+// LoadMergedConfig is the central config-merge entry point. It loads the default,
 // global, and local configs, merges them in order of increasing precedence
 // (default < global < local) and returns the fully-merged config together
 // with load metadata.  Every command-specific Load*Options function calls
@@ -366,9 +365,8 @@ func LoadLocalConfig() (ConfigLoadResult, error) {
 }
 
 // resolveConfigPaths resolves all relative paths in cfg to absolute paths
-// using the current working directory. This mirrors the TS implementation which
-// resolves paths at merge time so that config --list and the build commands
-// always show/use fully-qualified paths.
+// using the current working directory. This resolves paths at merge time
+// so that config --list and the build commands always show/use fully-qualified paths.
 func resolveConfigPaths(cfg *config.Config) error {
 	abs := func(p string) (string, error) {
 		if p == "" {

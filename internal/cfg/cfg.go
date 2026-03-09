@@ -15,7 +15,7 @@ import (
 var licenseText string
 
 // Options configures the CFG build process, merging config file values with
-// CLI flags. It is the Go equivalent of the TypeScript CfgOptions type.
+// CLI flags.
 type Options struct {
 	RootDirectory             string
 	OutputFileSuffix          string
@@ -32,7 +32,7 @@ type Options struct {
 }
 
 // Builder generates the content of a NetLinx build CFG file from a parsed APW
-// workspace. It is the Go equivalent of the TypeScript CfgBuilder class.
+// workspace.
 type Builder struct {
 	apw  *apw.APW
 	opts *Options
@@ -125,7 +125,7 @@ func (b *Builder) addHeader(contentLines []string) {
 }
 
 // ---------------------------------------------------------------------------
-// CFG sections (each mirrors a private method on the TS CfgBuilder)
+// CFG sections
 // ---------------------------------------------------------------------------
 
 func (b *Builder) addMainRootDirectory() {
@@ -236,7 +236,7 @@ func (b *Builder) addCompilerOptionOverrides() {
 }
 
 func (b *Builder) addAdditionalIncludePaths() {
-	// Merge workspace include paths (mirrors TS: options.includePath.push(...apw.includePath))
+	// Merge workspace include paths
 	combined := deduplicate(append(b.opts.IncludePath, b.apw.IncludePath()...))
 
 	for _, p := range combined {

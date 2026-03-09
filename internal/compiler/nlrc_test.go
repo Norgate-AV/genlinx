@@ -367,7 +367,7 @@ func (suite *CompilerTestSuite) TestParseOutput_NonNLRCFormatIgnored() {
 }
 
 // TestParseOutput_DuplicatesDeduped verifies that duplicate log lines are only
-// reported once, matching the TypeScript Set deduplication behaviour.
+// reported once.
 func (suite *CompilerTestSuite) TestParseOutput_DuplicatesDeduped() {
 	compiler := NewNLRCCompiler("test.exe")
 	output := "ERROR: undefined variable\nERROR: undefined variable\nWARNING: deprecated usage\nWARNING: deprecated usage"

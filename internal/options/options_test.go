@@ -738,7 +738,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllThreeLayers() {
 
 // TestLoadMergedConfig_ResolvesRelativePaths verifies that relative paths
 // specified in a local config (e.g. "./include") are resolved to absolute
-// paths against the CWD at merge time — matching the TS implementation.
+// paths against the CWD at merge time.
 func (suite *OptionsTestSuite) TestLoadMergedConfig_ResolvesRelativePaths() {
 	noGlobalDir := filepath.Join(suite.tempDir, "no_global_rel")
 	suite.Require().NoError(os.MkdirAll(noGlobalDir, 0o755))

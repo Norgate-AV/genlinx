@@ -190,7 +190,7 @@ func loadConfigResult(global, local bool) (options.ConfigLoadResult, string, err
 	return r, "local", err
 }
 
-// resolveEditor returns the editor to use, mirroring the TS getEditor logic:
+// resolveEditor returns the editor to use:
 // $EDITOR env var → "code" (VS Code) as fallback.
 func resolveEditor() string {
 	if e := os.Getenv("EDITOR"); e != "" {

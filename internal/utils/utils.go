@@ -14,7 +14,7 @@ func FileExists(path string) bool {
 
 // FindFilesByExtension finds all files with the specified extension in dir.
 // Only the immediate directory is searched — subdirectories are not descended
-// into, matching the behaviour of the TypeScript implementation.
+// into.
 func FindFilesByExtension(dir, ext string) ([]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
