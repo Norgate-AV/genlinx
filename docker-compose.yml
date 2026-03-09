@@ -1,0 +1,10 @@
+services:
+  genlinx:
+    image: norgate-av/genlinx:${VERSION:-dev}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
