@@ -1,29 +1,28 @@
 package find
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/neilotoole/jsoncolor"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
 )
 
-// PrintJSON outputs devices as pretty-printed JSON.
+// PrintJSON outputs devices as colorized pretty-printed JSON.
 func PrintJSON(devices []Device) error {
-	b, err := json.MarshalIndent(devices, "", "  ")
-	if err != nil {
-		return err
+	enc := jsoncolor.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+
+	if jsoncolor.IsColorTerminal(os.Stdout) {
+		enc.SetColors(jsoncolor.DefaultColors())
 	}
 
-	fmt.Println(string(b))
-
-	return nil
+	return enc.Encode(devices)
 }
 
-// PrintTable outputs devices as a coloured table with green borders.
+// PrintTable outputs devices as a coloured table with green borders and a title.
 func PrintTable(devices []Device) {
 	green := renderer.Tint{FG: renderer.Colors{color.FgGreen}}
 
@@ -41,6 +40,7 @@ func PrintTable(devices []Device) {
 		}),
 	)
 
+	table.Caption(tw.Caption{Text: "Discovered Devices", Spot: tw.SpotTopCenter})
 	table.Header("IP Address", "System", "Date", "Time", "MAC Address", "Hostname", "ID")
 
 	for _, d := range devices {
