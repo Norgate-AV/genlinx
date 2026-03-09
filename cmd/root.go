@@ -31,11 +31,22 @@ func getBanner() string {
 
 	banner += `
 
+` + version.Version + `
 Open source CLI tool for NetLinx projects
 Copyright (c) 2010-` + year + `, Norgate AV
-https://github.com/Norgate-AV/genlinx`
+https://github.com/Norgate-AV/genlinx
+
+===================================================`
 
 	return banner
+}
+
+func getFooter() string {
+	return `
+===================================================
+
+For more help, make sure to check out the man page:
+    $ man ` + AppName
 }
 
 func Execute() error {
@@ -51,4 +62,9 @@ func init() {
 
 	// Global flags
 	rootCmd.PersistentFlags().Bool("verbose", false, "verbose output")
+
+	// Append afterAll footer to the default help output.
+	rootCmd.SetHelpTemplate(`{{with .Long}}{{. | trimRightSpace}}
+
+{{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}` + getFooter() + "\n")
 }
