@@ -564,6 +564,50 @@ func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesNormalized() {
 		"same path must deduplicate after normalization")
 }
 
+// TestMergeConfigsWithPresence_BoolsRespected verifies that boolean fields are
+// only applied from an override when the corresponding presence flag is set,
+// preventing JSON zero-value ambiguity.
+func (suite *OptionsTestSuite) TestMergeConfigsWithPresence_BoolsRespected() {
+	base := &config.Config{
+		CFG: config.CFGConfig{
+			OutputLogConsoleOption: true,  // default: true
+			BuildWithSource:        false, // default: false
+		},
+		Archive: config.ArchiveConfig{
+			IncludeCompiledSourceFiles: true, // default: true
+		},
+	}
+
+	override := &config.Config{
+		CFG: config.CFGConfig{
+			OutputLogConsoleOption: false, // wants to override to false
+			BuildWithSource:        true,  // wants to override to true
+		},
+		Archive: config.ArchiveConfig{
+			IncludeCompiledSourceFiles: false, // wants to override to false
+		},
+	}
+
+	// Without presence flags — boolean overrides must NOT be applied.
+	merged := mergeConfigsWithPresence(base, configMergeInput{cfg: override, presence: boolPresence{}})
+	suite.True(merged.CFG.OutputLogConsoleOption, "bool without presence flag should not be overridden")
+	suite.False(merged.CFG.BuildWithSource, "bool without presence flag should not be overridden")
+	suite.True(merged.Archive.IncludeCompiledSourceFiles, "bool without presence flag should not be overridden")
+
+	// With presence flags — boolean overrides MUST be applied.
+	merged = mergeConfigsWithPresence(base, configMergeInput{
+		cfg: override,
+		presence: boolPresence{
+			cfgOutputLogConsoleOption: true,
+			cfgBuildWithSource:        true,
+			archiveIncludeCompiledSrc: true,
+		},
+	})
+	suite.False(merged.CFG.OutputLogConsoleOption, "bool with presence flag should be applied")
+	suite.True(merged.CFG.BuildWithSource, "bool with presence flag should be applied")
+	suite.False(merged.Archive.IncludeCompiledSourceFiles, "bool with presence flag should be applied")
+}
+
 // TestLoadMergedConfig_NoConfigs verifies that when neither a global nor a
 // local config file is present, loadMergedConfig returns the built-in
 // defaults and ConfigLoadInfo reflects both as not-found.
@@ -846,6 +890,176 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_CLIPathsPrependedBeforeConfi
 	assert.Less(suite.T(), cliIdx, cfgIdx, "CLI path should appear before config path")
 }
 
+// TestLoadBuildOptions_NilCLI verifies that nil CLI options return a result
+// built purely from the merged (default + global + local) config.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_NilCLI() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_nil"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_nil"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, info, err := LoadBuildOptions(nil)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(opts)
+	suite.Require().NotNil(info)
+	suite.True(info.DefaultLoaded)
+	suite.NotEmpty(opts.NLRCPath)
+	suite.NotEmpty(opts.IncludePath)
+}
+
+// TestLoadBuildOptions_NLRCPathFromConfig verifies that a local config's
+// build.nlrc.path overrides the built-in default.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_NLRCPathFromConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_nlrc"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_nlrc"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"build":{"nlrc":{"path":"C:/custom/NLRC.exe"}}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadBuildOptions(nil)
+	suite.Require().NoError(err)
+	suite.Contains(opts.NLRCPath, "custom",
+		"local config nlrc.path must override the built-in default")
+}
+
+// TestLoadBuildOptions_ModulePathPrependedBeforeConfig verifies that CLI-supplied
+// module paths appear before config-file paths in the merged result.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_ModulePathPrependedBeforeConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_mod"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_mod"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"build":{"nlrc":{"modulePath":["config/module"]}}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadBuildOptions(&CLIOptions{ModulePath: []string{"cli/module"}})
+	suite.Require().NoError(err)
+
+	cliIdx, cfgIdx := -1, -1
+	for i, p := range opts.ModulePath {
+		if strings.Contains(p, "cli") {
+			cliIdx = i
+		}
+
+		if strings.Contains(p, "config") {
+			cfgIdx = i
+		}
+	}
+
+	suite.NotEqual(-1, cliIdx, "CLI module path should be present")
+	suite.NotEqual(-1, cfgIdx, "config module path should be present")
+	suite.Less(cliIdx, cfgIdx, "CLI module path must appear before config path")
+}
+
+// TestLoadBuildOptions_LibraryPathPrependedBeforeConfig verifies that CLI-supplied
+// library paths appear before config-file paths in the merged result.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_LibraryPathPrependedBeforeConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_lib"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_lib"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"build":{"nlrc":{"libraryPath":["config/lib"]}}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadBuildOptions(&CLIOptions{LibraryPath: []string{"cli/lib"}})
+	suite.Require().NoError(err)
+
+	cliIdx, cfgIdx := -1, -1
+	for i, p := range opts.LibraryPath {
+		if strings.Contains(p, "cli") {
+			cliIdx = i
+		}
+
+		if strings.Contains(p, "config") {
+			cfgIdx = i
+		}
+	}
+
+	suite.NotEqual(-1, cliIdx, "CLI library path should be present")
+	suite.NotEqual(-1, cfgIdx, "config library path should be present")
+	suite.Less(cliIdx, cfgIdx, "CLI library path must appear before config path")
+}
+
+// TestLoadBuildOptions_OutputPathOverride verifies that a CLI output path
+// overrides the (empty) config value and is resolved to an absolute path.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_OutputPathOverride() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_out"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_out"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadBuildOptions(&CLIOptions{OutputPath: "cli/output"})
+	suite.Require().NoError(err)
+	suite.Contains(opts.OutputPath, "cli")
+	suite.True(filepath.IsAbs(opts.OutputPath), "output path must be resolved to an absolute path")
+}
+
+// TestLoadBuildOptions_AllFromConfig verifies that build.all:true in a local
+// config file is reflected in the merged build options.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_AllFromConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_all"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_all"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"build":{"all":true}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadBuildOptions(nil)
+	suite.Require().NoError(err)
+	suite.True(opts.All)
+}
+
+// TestLoadBuildOptions_CLIAllOverridesConfig verifies that CLI All:true is
+// applied even when the config does not set it.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_CLIAllOverridesConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_cliall"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_cliall"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadBuildOptions(&CLIOptions{All: true})
+	suite.Require().NoError(err)
+	suite.True(opts.All)
+}
+
 // ---------------------------------------------------------------------------
 // LoadArchiveOptions
 // ---------------------------------------------------------------------------
@@ -937,6 +1151,140 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraSearchLocationsPrepen
 	suite.Equal("cli/search", opts.ExtraFileSearchLocations[0])
 }
 
+// TestLoadArchiveOptions_ConfigFileBoolPreservedWhenNoFlag verifies that boolean
+// values set in a local config file are preserved when no CLI flag is passed —
+// an empty Changed map must not reset config-file values back to built-in defaults.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ConfigFileBoolPreservedWhenNoFlag() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch_preserve"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch_preserve"), 0o755))
+
+	// Flip all three flags to the opposite of the built-in defaults
+	// (defaults: includeCompiledSourceFiles=true, includeCompiledModuleFiles=true, includeFilesNotInWorkspace=true).
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"includeCompiledSourceFiles":false,"includeCompiledModuleFiles":false,"includeFilesNotInWorkspace":false}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{Changed: map[string]bool{}})
+	suite.Require().NoError(err)
+	suite.False(opts.IncludeCompiledSourceFiles,
+		"config file includeCompiledSourceFiles:false must be preserved when no CLI flag is set")
+	suite.False(opts.IncludeCompiledModuleFiles,
+		"config file includeCompiledModuleFiles:false must be preserved when no CLI flag is set")
+	suite.False(opts.IncludeFilesNotInWorkspace,
+		"config file includeFilesNotInWorkspace:false must be preserved when no CLI flag is set")
+}
+
+// TestLoadArchiveOptions_CLIOverridesConfigFile_IncludeCompiledSource verifies
+// that --include-compiled-source-files overrides a config file that sets
+// includeCompiledSourceFiles:false.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_IncludeCompiledSource() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch_ics"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch_ics"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"includeCompiledSourceFiles":false}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
+		Changed: map[string]bool{"include-compiled-source-files": true},
+	})
+	suite.Require().NoError(err)
+	suite.True(opts.IncludeCompiledSourceFiles,
+		"--include-compiled-source-files must override config file includeCompiledSourceFiles:false")
+}
+
+// TestLoadArchiveOptions_CLIOverridesConfigFile_IncludeCompiledModule verifies
+// that --include-compiled-module-files overrides a config file that sets
+// includeCompiledModuleFiles:false.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_IncludeCompiledModule() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch_icm"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch_icm"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"includeCompiledModuleFiles":false}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
+		Changed: map[string]bool{"include-compiled-module-files": true},
+	})
+	suite.Require().NoError(err)
+	suite.True(opts.IncludeCompiledModuleFiles,
+		"--include-compiled-module-files must override config file includeCompiledModuleFiles:false")
+}
+
+// TestLoadArchiveOptions_CLIOverridesConfigFile_IncludeFilesNotInWorkspace
+// verifies that --include-files-not-in-workspace overrides a config file that
+// sets includeFilesNotInWorkspace:false.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_IncludeFilesNotInWorkspace() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch_ifw"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch_ifw"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"includeFilesNotInWorkspace":false}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
+		Changed: map[string]bool{"include-files-not-in-workspace": true},
+	})
+	suite.Require().NoError(err)
+	suite.True(opts.IncludeFilesNotInWorkspace,
+		"--include-files-not-in-workspace must override config file includeFilesNotInWorkspace:false")
+}
+
+// TestLoadArchiveOptions_CLIOverridesConfigFile_NoIncludeFilesNotInWorkspace
+// verifies that --no-include-files-not-in-workspace overrides a config file
+// that sets includeFilesNotInWorkspace:true.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_NoIncludeFilesNotInWorkspace() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch_nofw"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch_nofw"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"includeFilesNotInWorkspace":true}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
+		Changed: map[string]bool{"no-include-files-not-in-workspace": true},
+	})
+	suite.Require().NoError(err)
+	suite.False(opts.IncludeFilesNotInWorkspace,
+		"--no-include-files-not-in-workspace must override config file includeFilesNotInWorkspace:true")
+}
+
 // ---------------------------------------------------------------------------
 // LoadCfgOptions
 // ---------------------------------------------------------------------------
@@ -991,6 +1339,230 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverrides() {
 	suite.True(opts.OutputLogConsoleOption)
 	suite.True(opts.BuildWithDebugInformation)
 	suite.False(opts.BuildWithSource)
+}
+
+// TestLoadCfgOptions_ConfigFileBoolPreservedWhenNoFlag verifies that boolean
+// values set in a local config file are preserved when no CLI flag is passed —
+// an empty Changed map must not reset config-file values back to built-in defaults.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_ConfigFileBoolPreservedWhenNoFlag() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_preserve"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_preserve"), 0o755))
+
+	// Flip all three booleans to the opposite of the built-in defaults
+	// (defaults: buildWithSource=false, buildWithDebugInformation=false, outputLogConsoleOption=true).
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"cfg":{"buildWithSource":true,"buildWithDebugInformation":true,"outputLogConsoleOption":false}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{Changed: map[string]bool{}})
+	suite.Require().NoError(err)
+	suite.True(opts.BuildWithSource,
+		"config file buildWithSource:true must be preserved when no CLI flag is set")
+	suite.True(opts.BuildWithDebugInformation,
+		"config file buildWithDebugInformation:true must be preserved when no CLI flag is set")
+	suite.False(opts.OutputLogConsoleOption,
+		"config file outputLogConsoleOption:false must be preserved when no CLI flag is set")
+}
+
+// TestLoadCfgOptions_CLIOverridesConfigFile_NoBuildWithSource verifies that
+// --no-build-with-source overrides a config file that sets buildWithSource:true.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverridesConfigFile_NoBuildWithSource() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_bws"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_bws"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"cfg":{"buildWithSource":true}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
+		Changed: map[string]bool{"no-build-with-source": true},
+	})
+	suite.Require().NoError(err)
+	suite.False(opts.BuildWithSource,
+		"--no-build-with-source must override config file buildWithSource:true")
+}
+
+// TestLoadCfgOptions_CLIOverridesConfigFile_BuildWithDebug verifies that
+// --build-with-debug-information overrides a config file that sets
+// buildWithDebugInformation:false.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverridesConfigFile_BuildWithDebug() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_bwd"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_bwd"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"cfg":{"buildWithDebugInformation":false}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
+		Changed: map[string]bool{"build-with-debug-information": true},
+	})
+	suite.Require().NoError(err)
+	suite.True(opts.BuildWithDebugInformation,
+		"--build-with-debug-information must override config file buildWithDebugInformation:false")
+}
+
+// TestLoadCfgOptions_CLIOverridesConfigFile_OutputLogConsole verifies that
+// --output-log-console-option overrides a config file that sets
+// outputLogConsoleOption:false.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverridesConfigFile_OutputLogConsole() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_olco"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_olco"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"cfg":{"outputLogConsoleOption":false}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
+		Changed: map[string]bool{"output-log-console-option": true},
+	})
+	suite.Require().NoError(err)
+	suite.True(opts.OutputLogConsoleOption,
+		"--output-log-console-option must override config file outputLogConsoleOption:false")
+}
+
+// TestLoadCfgOptions_CLIIncludePathPrependedBeforeConfig verifies that
+// CLI include paths appear before config-file paths in the merged result.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIIncludePathPrependedBeforeConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_inc"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_inc"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"cfg":{"includePath":["config/include"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
+		IncludePath: []string{"cli/include"},
+		Changed:     map[string]bool{},
+	})
+	suite.Require().NoError(err)
+
+	cliIdx, cfgIdx := -1, -1
+	for i, p := range opts.IncludePath {
+		if strings.Contains(p, "cli") {
+			cliIdx = i
+		}
+
+		if strings.Contains(p, "config") {
+			cfgIdx = i
+		}
+	}
+
+	suite.NotEqual(-1, cliIdx, "CLI include path should be present")
+	suite.NotEqual(-1, cfgIdx, "config include path should be present")
+	suite.Less(cliIdx, cfgIdx, "CLI include path must appear before config path")
+}
+
+// TestLoadCfgOptions_CLIModulePathPrependedBeforeConfig verifies that
+// CLI module paths appear before config-file paths in the merged result.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIModulePathPrependedBeforeConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_mod"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_mod"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"cfg":{"modulePath":["config/module"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
+		ModulePath: []string{"cli/module"},
+		Changed:    map[string]bool{},
+	})
+	suite.Require().NoError(err)
+
+	cliIdx, cfgIdx := -1, -1
+	for i, p := range opts.ModulePath {
+		if strings.Contains(p, "cli") {
+			cliIdx = i
+		}
+
+		if strings.Contains(p, "config") {
+			cfgIdx = i
+		}
+	}
+
+	suite.NotEqual(-1, cliIdx, "CLI module path should be present")
+	suite.NotEqual(-1, cfgIdx, "config module path should be present")
+	suite.Less(cliIdx, cfgIdx, "CLI module path must appear before config path")
+}
+
+// TestLoadCfgOptions_CLILibraryPathPrependedBeforeConfig verifies that
+// CLI library paths appear before config-file paths in the merged result.
+func (suite *OptionsTestSuite) TestLoadCfgOptions_CLILibraryPathPrependedBeforeConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_lib"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_lib"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"cfg":{"libraryPath":["config/lib"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
+		LibraryPath: []string{"cli/lib"},
+		Changed:     map[string]bool{},
+	})
+	suite.Require().NoError(err)
+
+	cliIdx, cfgIdx := -1, -1
+	for i, p := range opts.LibraryPath {
+		if strings.Contains(p, "cli") {
+			cliIdx = i
+		}
+
+		if strings.Contains(p, "config") {
+			cfgIdx = i
+		}
+	}
+
+	suite.NotEqual(-1, cliIdx, "CLI library path should be present")
+	suite.NotEqual(-1, cfgIdx, "config library path should be present")
+	suite.Less(cliIdx, cfgIdx, "CLI library path must appear before config path")
 }
 
 // ---------------------------------------------------------------------------
