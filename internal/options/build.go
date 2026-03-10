@@ -40,9 +40,6 @@ type BuildOptions struct {
 
 	// NLRC compiler path
 	NLRCPath string
-
-	// Shell path
-	ShellPath string
 }
 
 // MergeOptions merges configuration from multiple sources with proper precedence
@@ -146,7 +143,6 @@ func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, erro
 		ModulePath:  mergedCfg.Build.NLRC.ModulePath,
 		LibraryPath: mergedCfg.Build.NLRC.LibraryPath,
 		NLRCPath:    mergedCfg.Build.NLRC.Path,
-		ShellPath:   mergedCfg.Build.Shell.Path,
 		All:         mergedCfg.Build.All,
 	}
 
@@ -407,10 +403,6 @@ func resolveConfigPaths(cfg *config.Config) error {
 		return fmt.Errorf("build.nlrc.libraryPath: %w", err)
 	}
 
-	if cfg.Build.Shell.Path, err = abs(cfg.Build.Shell.Path); err != nil {
-		return fmt.Errorf("build.shell.path: %w", err)
-	}
-
 	if err = absSlice(cfg.CFG.IncludePath); err != nil {
 		return fmt.Errorf("cfg.includePath: %w", err)
 	}
@@ -460,10 +452,6 @@ func mergeConfigs(configs ...*config.Config) *config.Config {
 
 		if len(cfg.Build.NLRC.LibraryPath) > 0 {
 			result.Build.NLRC.LibraryPath = prependAndDeduplicate(result.Build.NLRC.LibraryPath, cfg.Build.NLRC.LibraryPath)
-		}
-
-		if cfg.Build.Shell.Path != "" {
-			result.Build.Shell.Path = cfg.Build.Shell.Path
 		}
 
 		if cfg.Build.All {
@@ -575,13 +563,6 @@ func (o *BuildOptions) resolvePaths() error {
 	if o.NLRCPath != "" {
 		if o.NLRCPath, err = filepath.Abs(o.NLRCPath); err != nil {
 			return fmt.Errorf("failed to resolve NLRC path %s: %w", o.NLRCPath, err)
-		}
-	}
-
-	// Resolve shell path
-	if o.ShellPath != "" {
-		if o.ShellPath, err = filepath.Abs(o.ShellPath); err != nil {
-			return fmt.Errorf("failed to resolve shell path %s: %w", o.ShellPath, err)
 		}
 	}
 

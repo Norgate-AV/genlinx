@@ -127,7 +127,6 @@ func (suite *OptionsTestSuite) TestResolvePaths() {
 		LibraryPath: []string{"./lib"},
 		OutputPath:  "./output",
 		NLRCPath:    "./nlrc.exe",
-		ShellPath:   "./shell.exe",
 	}
 
 	// Change to temp directory for relative path testing
@@ -164,7 +163,6 @@ func (suite *OptionsTestSuite) TestResolvePaths() {
 
 	assert.True(suite.T(), filepath.IsAbs(opts.OutputPath), "Output path should be absolute: %s", opts.OutputPath)
 	assert.True(suite.T(), filepath.IsAbs(opts.NLRCPath), "NLRC path should be absolute: %s", opts.NLRCPath)
-	assert.True(suite.T(), filepath.IsAbs(opts.ShellPath), "Shell path should be absolute: %s", opts.ShellPath)
 }
 
 // TestLoadGlobalConfig tests global configuration loading
@@ -404,7 +402,6 @@ func (suite *OptionsTestSuite) TestBuildOptionsStruct() {
 		LibraryPath: []string{"lib1", "lib2"},
 		OutputPath:  "output/",
 		NLRCPath:    "nlrc.exe",
-		ShellPath:   "shell.exe",
 		All:         true,
 		Verbose:     true,
 	}
@@ -415,7 +412,6 @@ func (suite *OptionsTestSuite) TestBuildOptionsStruct() {
 	assert.Len(suite.T(), opts.LibraryPath, 2)
 	assert.Equal(suite.T(), "output/", opts.OutputPath)
 	assert.Equal(suite.T(), "nlrc.exe", opts.NLRCPath)
-	assert.Equal(suite.T(), "shell.exe", opts.ShellPath)
 	assert.True(suite.T(), opts.All)
 	assert.True(suite.T(), opts.Verbose)
 }
@@ -791,7 +787,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllPathsAbsolute() {
 	merged, _, err := LoadMergedConfig()
 	suite.Require().NoError(err)
 
-	allPaths := []string{merged.Build.NLRC.Path, merged.Build.Shell.Path}
+	allPaths := []string{merged.Build.NLRC.Path}
 	allPaths = append(allPaths, merged.Build.NLRC.IncludePath...)
 	allPaths = append(allPaths, merged.Build.NLRC.ModulePath...)
 	allPaths = append(allPaths, merged.Build.NLRC.LibraryPath...)

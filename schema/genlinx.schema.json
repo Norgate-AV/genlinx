@@ -136,17 +136,6 @@
                         }
                     }
                 },
-                "shell": {
-                    "description": "Shell used to invoke the compiler",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "path": {
-                            "description": "Path to the shell executable (e.g. C:/Windows/System32/cmd.exe)",
-                            "type": "string"
-                        }
-                    }
-                },
                 "all": {
                     "description": "Automatically select all workspace files without prompting",
                     "type": "boolean"

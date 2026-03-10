@@ -56,9 +56,6 @@ func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 				ModulePath:  []string{"./module"},
 				LibraryPath: []string{"./lib"},
 			},
-			Shell: ShellConfig{
-				Path: "./shell.exe",
-			},
 		},
 		Archive: ArchiveConfig{
 			ExtraFileSearchLocations: []string{"./search"},
@@ -74,7 +71,6 @@ func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 	assert.Equal(suite.T(), filepath.FromSlash("include"), config.Build.NLRC.IncludePath[0])
 	assert.Equal(suite.T(), filepath.FromSlash("module"), config.Build.NLRC.ModulePath[0])
 	assert.Equal(suite.T(), filepath.FromSlash("lib"), config.Build.NLRC.LibraryPath[0])
-	assert.Equal(suite.T(), filepath.FromSlash("shell.exe"), config.Build.Shell.Path)
 	assert.Equal(suite.T(), filepath.FromSlash("search"), config.Archive.ExtraFileSearchLocations[0])
 }
 

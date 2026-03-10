@@ -44,9 +44,8 @@ type ArchiveConfig struct {
 
 // BuildConfig represents build command configuration
 type BuildConfig struct {
-	NLRC  NLRCConfig  `mapstructure:"nlrc"  json:"nlrc"`
-	Shell ShellConfig `mapstructure:"shell" json:"shell"`
-	All   bool        `mapstructure:"all"   json:"all"`
+	NLRC NLRCConfig `mapstructure:"nlrc" json:"nlrc"`
+	All  bool       `mapstructure:"all"  json:"all"`
 }
 
 // NLRCConfig represents NetLinx compiler configuration
@@ -55,11 +54,6 @@ type NLRCConfig struct {
 	IncludePath []string `mapstructure:"includePath" json:"includePath"`
 	ModulePath  []string `mapstructure:"modulePath"  json:"modulePath"`
 	LibraryPath []string `mapstructure:"libraryPath" json:"libraryPath"`
-}
-
-// ShellConfig represents shell configuration
-type ShellConfig struct {
-	Path string `mapstructure:"path" json:"path"`
 }
 
 var defaultConfig = Config{
@@ -115,9 +109,6 @@ var defaultConfig = Config{
 				"C:/Program Files (x86)/Common Files/AMXShare/Duet/module",
 			}),
 			LibraryPath: utils.NormalizePaths([]string{"C:/Program Files (x86)/Common Files/AMXShare/SYCs"}),
-		},
-		Shell: ShellConfig{
-			Path: utils.NormalizePath("C:/Windows/System32/cmd.exe"),
 		},
 		All: false,
 	},
@@ -194,7 +185,6 @@ func NormalizeConfigPaths(config *Config) {
 	config.Build.NLRC.IncludePath = utils.NormalizePaths(config.Build.NLRC.IncludePath)
 	config.Build.NLRC.ModulePath = utils.NormalizePaths(config.Build.NLRC.ModulePath)
 	config.Build.NLRC.LibraryPath = utils.NormalizePaths(config.Build.NLRC.LibraryPath)
-	config.Build.Shell.Path = utils.NormalizePath(config.Build.Shell.Path)
 }
 
 // LoadDefaultConfig returns the default configuration
