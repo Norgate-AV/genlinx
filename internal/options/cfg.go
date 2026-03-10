@@ -6,24 +6,25 @@ import (
 
 // CfgCLIOptions holds the raw values parsed from the cfg command flags.
 type CfgCLIOptions struct {
-	WorkspaceFiles              []string
-	RootDirectory               string
-	OutputFileSuffix            string
-	OutputLogFileSuffix         string
-	OutputLogFileOption         string
-	OutputLogConsoleOption      bool
-	NoOutputLogConsoleOption    bool
-	BuildWithDebugInformation   bool
-	NoBuildWithDebugInformation bool
-	BuildWithSource             bool
-	NoBuildWithSource           bool
-	IncludePath                 []string
-	ModulePath                  []string
-	LibraryPath                 []string
-	All                         bool
-	Verbose                     bool
-	// Changed tracks which boolean flags were explicitly provided by the user.
-	Changed map[string]bool
+	WorkspaceFiles      []string
+	RootDirectory       string
+	OutputFileSuffix    string
+	OutputLogFileSuffix string
+	OutputLogFileOption string
+	// Unused: boolean overrides are handled via the ExplicitBoolFlags map instead.
+	// OutputLogConsoleOption      bool
+	// NoOutputLogConsoleOption    bool
+	// BuildWithDebugInformation   bool
+	// NoBuildWithDebugInformation bool
+	// BuildWithSource             bool
+	// NoBuildWithSource           bool
+	IncludePath []string
+	ModulePath  []string
+	LibraryPath []string
+	All         bool
+	Verbose     bool
+	// ExplicitBoolFlags tracks which boolean flags were explicitly provided by the user.
+	ExplicitBoolFlags map[string]bool
 }
 
 // LoadCfgOptions loads and merges CFG options from defaults, global config,
@@ -69,23 +70,23 @@ func LoadCfgOptions(cliOpts *CfgCLIOptions) (*cfg.Options, *ConfigLoadInfo, erro
 		opts.OutputLogFileOption = cliOpts.OutputLogFileOption
 	}
 
-	changed := cliOpts.Changed
+	explicitBoolFlags := cliOpts.ExplicitBoolFlags
 
-	if changed["no-output-log-console-option"] {
+	if explicitBoolFlags["no-output-log-console-option"] {
 		opts.OutputLogConsoleOption = false
-	} else if changed["output-log-console-option"] {
+	} else if explicitBoolFlags["output-log-console-option"] {
 		opts.OutputLogConsoleOption = true
 	}
 
-	if changed["no-build-with-debug-information"] {
+	if explicitBoolFlags["no-build-with-debug-information"] {
 		opts.BuildWithDebugInformation = false
-	} else if changed["build-with-debug-information"] {
+	} else if explicitBoolFlags["build-with-debug-information"] {
 		opts.BuildWithDebugInformation = true
 	}
 
-	if changed["no-build-with-source"] {
+	if explicitBoolFlags["no-build-with-source"] {
 		opts.BuildWithSource = false
-	} else if changed["build-with-source"] {
+	} else if explicitBoolFlags["build-with-source"] {
 		opts.BuildWithSource = true
 	}
 

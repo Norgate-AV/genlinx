@@ -1095,7 +1095,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_OutputFileSuffix() {
 
 	cliOpts := &ArchiveCLIOptions{
 		OutputFileSuffix: ".custom",
-		Changed:          map[string]bool{},
+		ExplicitBoolFlags:          map[string]bool{},
 	}
 
 	opts, _, err := LoadArchiveOptions(cliOpts)
@@ -1103,7 +1103,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_OutputFileSuffix() {
 	suite.Equal(".custom", opts.OutputFileSuffix)
 }
 
-// TestLoadArchiveOptions_BoolFlagOverride verifies that a Changed flag
+// TestLoadArchiveOptions_BoolFlagOverride verifies that a ExplicitBoolFlags flag
 // overrides the config default for the corresponding boolean option.
 func (suite *OptionsTestSuite) TestLoadArchiveOptions_BoolFlagOverride() {
 	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch3"))
@@ -1115,7 +1115,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_BoolFlagOverride() {
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	cliOpts := &ArchiveCLIOptions{
-		Changed: map[string]bool{
+		ExplicitBoolFlags: map[string]bool{
 			"no-include-compiled-source-files":  true,
 			"include-compiled-module-files":     true,
 			"no-include-files-not-in-workspace": true,
@@ -1142,7 +1142,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraSearchLocationsPrepen
 
 	cliOpts := &ArchiveCLIOptions{
 		ExtraFileSearchLocations: []string{"cli/search"},
-		Changed:                  map[string]bool{},
+		ExplicitBoolFlags:                  map[string]bool{},
 	}
 
 	opts, _, err := LoadArchiveOptions(cliOpts)
@@ -1153,7 +1153,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraSearchLocationsPrepen
 
 // TestLoadArchiveOptions_ConfigFileBoolPreservedWhenNoFlag verifies that boolean
 // values set in a local config file are preserved when no CLI flag is passed —
-// an empty Changed map must not reset config-file values back to built-in defaults.
+// an empty ExplicitBoolFlags map must not reset config-file values back to built-in defaults.
 func (suite *OptionsTestSuite) TestLoadArchiveOptions_ConfigFileBoolPreservedWhenNoFlag() {
 	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_arch_preserve"))
 	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_arch_preserve"), 0o755))
@@ -1171,7 +1171,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_ConfigFileBoolPreservedWhe
 	defer os.Chdir(oldWd) //nolint:errcheck
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
-	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{Changed: map[string]bool{}})
+	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{ExplicitBoolFlags: map[string]bool{}})
 	suite.Require().NoError(err)
 	suite.False(opts.IncludeCompiledSourceFiles,
 		"config file includeCompiledSourceFiles:false must be preserved when no CLI flag is set")
@@ -1200,7 +1200,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_Inc
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
-		Changed: map[string]bool{"include-compiled-source-files": true},
+		ExplicitBoolFlags: map[string]bool{"include-compiled-source-files": true},
 	})
 	suite.Require().NoError(err)
 	suite.True(opts.IncludeCompiledSourceFiles,
@@ -1226,7 +1226,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_Inc
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
-		Changed: map[string]bool{"include-compiled-module-files": true},
+		ExplicitBoolFlags: map[string]bool{"include-compiled-module-files": true},
 	})
 	suite.Require().NoError(err)
 	suite.True(opts.IncludeCompiledModuleFiles,
@@ -1252,7 +1252,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_Inc
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
-		Changed: map[string]bool{"include-files-not-in-workspace": true},
+		ExplicitBoolFlags: map[string]bool{"include-files-not-in-workspace": true},
 	})
 	suite.Require().NoError(err)
 	suite.True(opts.IncludeFilesNotInWorkspace,
@@ -1278,7 +1278,7 @@ func (suite *OptionsTestSuite) TestLoadArchiveOptions_CLIOverridesConfigFile_NoI
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	opts, _, err := LoadArchiveOptions(&ArchiveCLIOptions{
-		Changed: map[string]bool{"no-include-files-not-in-workspace": true},
+		ExplicitBoolFlags: map[string]bool{"no-include-files-not-in-workspace": true},
 	})
 	suite.Require().NoError(err)
 	suite.False(opts.IncludeFilesNotInWorkspace,
@@ -1308,7 +1308,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_NilCLI() {
 }
 
 // TestLoadCfgOptions_CLIOverrides verifies that string CLI fields override
-// the config values and Changed boolean flags flip the corresponding booleans.
+// the config values and ExplicitBoolFlags boolean flags flip the corresponding booleans.
 func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverrides() {
 	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg2"))
 	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg2"), 0o755))
@@ -1323,7 +1323,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverrides() {
 		OutputFileSuffix:    ".cfg_custom",
 		OutputLogFileSuffix: ".log_custom",
 		OutputLogFileOption: "file",
-		Changed: map[string]bool{
+		ExplicitBoolFlags: map[string]bool{
 			"output-log-console-option":    true,
 			"build-with-debug-information": true,
 			"no-build-with-source":         true,
@@ -1343,7 +1343,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverrides() {
 
 // TestLoadCfgOptions_ConfigFileBoolPreservedWhenNoFlag verifies that boolean
 // values set in a local config file are preserved when no CLI flag is passed —
-// an empty Changed map must not reset config-file values back to built-in defaults.
+// an empty ExplicitBoolFlags map must not reset config-file values back to built-in defaults.
 func (suite *OptionsTestSuite) TestLoadCfgOptions_ConfigFileBoolPreservedWhenNoFlag() {
 	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_cfg_preserve"))
 	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_cfg_preserve"), 0o755))
@@ -1361,7 +1361,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_ConfigFileBoolPreservedWhenNoF
 	defer os.Chdir(oldWd) //nolint:errcheck
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
-	opts, _, err := LoadCfgOptions(&CfgCLIOptions{Changed: map[string]bool{}})
+	opts, _, err := LoadCfgOptions(&CfgCLIOptions{ExplicitBoolFlags: map[string]bool{}})
 	suite.Require().NoError(err)
 	suite.True(opts.BuildWithSource,
 		"config file buildWithSource:true must be preserved when no CLI flag is set")
@@ -1389,7 +1389,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverridesConfigFile_NoBuild
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
-		Changed: map[string]bool{"no-build-with-source": true},
+		ExplicitBoolFlags: map[string]bool{"no-build-with-source": true},
 	})
 	suite.Require().NoError(err)
 	suite.False(opts.BuildWithSource,
@@ -1415,7 +1415,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverridesConfigFile_BuildWi
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
-		Changed: map[string]bool{"build-with-debug-information": true},
+		ExplicitBoolFlags: map[string]bool{"build-with-debug-information": true},
 	})
 	suite.Require().NoError(err)
 	suite.True(opts.BuildWithDebugInformation,
@@ -1441,7 +1441,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIOverridesConfigFile_OutputL
 	suite.Require().NoError(os.Chdir(suite.tempDir))
 
 	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
-		Changed: map[string]bool{"output-log-console-option": true},
+		ExplicitBoolFlags: map[string]bool{"output-log-console-option": true},
 	})
 	suite.Require().NoError(err)
 	suite.True(opts.OutputLogConsoleOption,
@@ -1467,7 +1467,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIIncludePathPrependedBeforeC
 
 	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
 		IncludePath: []string{"cli/include"},
-		Changed:     map[string]bool{},
+		ExplicitBoolFlags:     map[string]bool{},
 	})
 	suite.Require().NoError(err)
 
@@ -1506,7 +1506,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIModulePathPrependedBeforeCo
 
 	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
 		ModulePath: []string{"cli/module"},
-		Changed:    map[string]bool{},
+		ExplicitBoolFlags:    map[string]bool{},
 	})
 	suite.Require().NoError(err)
 
@@ -1545,7 +1545,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLILibraryPathPrependedBeforeC
 
 	opts, _, err := LoadCfgOptions(&CfgCLIOptions{
 		LibraryPath: []string{"cli/lib"},
-		Changed:     map[string]bool{},
+		ExplicitBoolFlags:     map[string]bool{},
 	})
 	suite.Require().NoError(err)
 

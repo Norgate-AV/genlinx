@@ -30,9 +30,9 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 	extraSearchLocations, _ := cmd.Flags().GetStringSlice("extra-file-search-locations")
 	all, _ := cmd.Flags().GetBool("all")
 
-	// Build a Changed map so LoadArchiveOptions can distinguish "user set this
+	// Build a ExplicitBoolFlags map so LoadArchiveOptions can distinguish "user set this
 	// flag" from "Cobra zero-value default".
-	changed := map[string]bool{
+	ExplicitBoolFlags := map[string]bool{
 		"include-compiled-source-files":     cmd.Flags().Changed("include-compiled-source-files"),
 		"no-include-compiled-source-files":  cmd.Flags().Changed("no-include-compiled-source-files"),
 		"include-compiled-module-files":     cmd.Flags().Changed("include-compiled-module-files"),
@@ -47,7 +47,7 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 		ExtraFileSearchLocations: extraSearchLocations,
 		All:                      all,
 		Verbose:                  verbose,
-		Changed:                  changed,
+		ExplicitBoolFlags:                  ExplicitBoolFlags,
 	}
 
 	opts, configInfo, err := options.LoadArchiveOptions(cliOpts)

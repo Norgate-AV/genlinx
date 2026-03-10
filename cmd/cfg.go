@@ -62,9 +62,9 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("invalid value %q for --output-log-file-option: must be A or N", outputLogFileOption)
 	}
 
-	// Build a Changed map so LoadCfgOptions can distinguish user-set flags
+	// Build a ExplicitBoolFlags map so LoadCfgOptions can distinguish user-set flags
 	// from Cobra zero-value defaults.
-	changed := map[string]bool{
+	ExplicitBoolFlags := map[string]bool{
 		"output-log-console-option":       cmd.Flags().Changed("output-log-console-option"),
 		"no-output-log-console-option":    cmd.Flags().Changed("no-output-log-console-option"),
 		"build-with-debug-information":    cmd.Flags().Changed("build-with-debug-information"),
@@ -84,7 +84,7 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 		LibraryPath:         libraryPath,
 		All:                 all,
 		Verbose:             verbose,
-		Changed:             changed,
+		ExplicitBoolFlags:             ExplicitBoolFlags,
 	}
 
 	opts, configInfo, err := options.LoadCfgOptions(cliOpts)

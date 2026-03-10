@@ -6,17 +6,18 @@ import (
 
 // ArchiveCLIOptions holds the raw values parsed from archive command flags.
 type ArchiveCLIOptions struct {
-	WorkspaceFiles               []string
-	OutputFileSuffix             string
-	IncludeCompiledSourceFiles   bool
-	NoIncludeCompiledSourceFiles bool
-	IncludeCompiledModuleFiles   bool
-	NoIncludeCompiledModuleFiles bool
-	IncludeFilesNotInWorkspace   bool
-	NoIncludeFilesNotInWorkspace bool
-	// Changed tracks which boolean flags were explicitly provided by the user,
+	WorkspaceFiles   []string
+	OutputFileSuffix string
+	// Unused: boolean overrides are handled via the ExplicitBoolFlags map instead.
+	// IncludeCompiledSourceFiles   bool
+	// NoIncludeCompiledSourceFiles bool
+	// IncludeCompiledModuleFiles   bool
+	// NoIncludeCompiledModuleFiles bool
+	// IncludeFilesNotInWorkspace   bool
+	// NoIncludeFilesNotInWorkspace bool
+	// ExplicitBoolFlags tracks which boolean flags were explicitly provided by the user,
 	// so the CLI can override the merged config value only when the user asked.
-	Changed                  map[string]bool
+	ExplicitBoolFlags        map[string]bool
 	ExtraFileSearchLocations []string
 	All                      bool
 	Verbose                  bool
@@ -51,23 +52,23 @@ func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLo
 	}
 
 	// Boolean flags: only override config when user explicitly passed the flag.
-	changed := cliOpts.Changed
+	explicitBoolFlags := cliOpts.ExplicitBoolFlags
 
-	if changed["no-include-compiled-source-files"] {
+	if explicitBoolFlags["no-include-compiled-source-files"] {
 		opts.IncludeCompiledSourceFiles = false
-	} else if changed["include-compiled-source-files"] {
+	} else if explicitBoolFlags["include-compiled-source-files"] {
 		opts.IncludeCompiledSourceFiles = true
 	}
 
-	if changed["no-include-compiled-module-files"] {
+	if explicitBoolFlags["no-include-compiled-module-files"] {
 		opts.IncludeCompiledModuleFiles = false
-	} else if changed["include-compiled-module-files"] {
+	} else if explicitBoolFlags["include-compiled-module-files"] {
 		opts.IncludeCompiledModuleFiles = true
 	}
 
-	if changed["no-include-files-not-in-workspace"] {
+	if explicitBoolFlags["no-include-files-not-in-workspace"] {
 		opts.IncludeFilesNotInWorkspace = false
-	} else if changed["include-files-not-in-workspace"] {
+	} else if explicitBoolFlags["include-files-not-in-workspace"] {
 		opts.IncludeFilesNotInWorkspace = true
 	}
 
