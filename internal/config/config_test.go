@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -72,81 +71,6 @@ func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 	assert.Equal(suite.T(), filepath.FromSlash("module"), config.Build.NLRC.ModulePath[0])
 	assert.Equal(suite.T(), filepath.FromSlash("lib"), config.Build.NLRC.LibraryPath[0])
 	assert.Equal(suite.T(), filepath.FromSlash("search"), config.Archive.ExtraFileSearchLocations[0])
-}
-
-// TestSaveConfig tests saving configuration to file
-func (suite *ConfigTestSuite) TestSaveConfig() {
-	config := &Config{
-		CFG: CFGConfig{
-			OutputFile: "test.cfg",
-		},
-		Build: BuildConfig{
-			NLRC: NLRCConfig{
-				Path: "test.exe",
-			},
-		},
-	}
-
-	configFile := filepath.Join(suite.tempDir, "test_config.json")
-	err := SaveConfig(config, configFile)
-	suite.Require().NoError(err)
-
-	// Verify file was created
-	assert.True(suite.T(), fileExists(configFile))
-
-	// Load and verify content
-	loadedConfig, err := loadConfigFromFile(configFile)
-	suite.Require().NoError(err)
-	assert.Equal(suite.T(), "test.cfg", loadedConfig.CFG.OutputFile)
-	assert.Equal(suite.T(), "test.exe", loadedConfig.Build.NLRC.Path)
-}
-
-// Helper function to check if file exists
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	return !info.IsDir()
-}
-
-// Helper function to load config from file (simplified version for testing)
-func loadConfigFromFile(filename string) (*Config, error) {
-	v := viper.New()
-	v.SetConfigFile(filename)
-
-	if err := v.ReadInConfig(); err != nil {
-		return nil, err
-	}
-
-	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, err
-	}
-
-	return &cfg, nil
-}
-
-// TestLoadConfig_ReturnsDefaultsWhenNoFile tests that LoadConfig returns the
-// built-in defaults when no config file is present.
-// LoadConfig is a legacy viper-based loader that searches for "genlinx.json"
-// in the current directory and a few system paths; running it from a temp
-// directory that has no such file exercises the "use defaults" branch.
-func (suite *ConfigTestSuite) TestLoadConfig_ReturnsDefaultsWhenNoFile() {
-	oldWd, err := os.Getwd()
-	suite.Require().NoError(err)
-	defer os.Chdir(oldWd) //nolint:errcheck
-	suite.Require().NoError(os.Chdir(suite.tempDir))
-
-	cfg, err := LoadConfig()
-	suite.Require().NoError(err)
-	suite.Require().NotNil(cfg)
-
-	// Default NLRC path should be non-empty.
-	suite.NotEmpty(cfg.Build.NLRC.Path)
-	// Default include paths should be present.
-	suite.NotEmpty(cfg.Build.NLRC.IncludePath)
 }
 
 // TestConfigTestSuite runs the test suite

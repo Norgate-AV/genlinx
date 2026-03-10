@@ -1,12 +1,6 @@
 package config
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-
-	"github.com/spf13/viper"
-
 	"github.com/Norgate-AV/genlinx/internal/utils"
 )
 
@@ -112,62 +106,6 @@ var defaultConfig = Config{
 		},
 		All: false,
 	},
-}
-
-// LoadConfig loads the configuration from various sources
-func LoadConfig() (*Config, error) {
-	v := viper.New()
-
-	// Set defaults
-	v.SetDefault("cfg", defaultConfig.CFG)
-	v.SetDefault("archive", defaultConfig.Archive)
-	v.SetDefault("build", defaultConfig.Build)
-
-	// Configuration file search paths
-	configPaths := []string{
-		".", // Current directory
-		filepath.Join(os.Getenv("HOME"), ".config", "genlinx"), // User config
-		"/etc/genlinx", // System config
-	}
-
-	for _, path := range configPaths {
-		v.AddConfigPath(path)
-	}
-
-	v.SetConfigName("genlinx")
-	v.SetConfigType("json")
-
-	// Environment variables
-	v.SetEnvPrefix("GENLINX")
-	v.AutomaticEnv()
-
-	// Read configuration
-	if err := v.ReadInConfig(); err != nil {
-		// If config file doesn't exist, use defaults
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("error reading config file: %w", err)
-		}
-	}
-
-	var config Config
-	if err := v.Unmarshal(&config); err != nil {
-		return nil, fmt.Errorf("error unmarshaling config: %w", err)
-	}
-
-	// Normalize all paths in the configuration
-	NormalizeConfigPaths(&config)
-
-	return &config, nil
-}
-
-// SaveConfig saves the configuration to a file
-func SaveConfig(config *Config, filename string) error {
-	v := viper.New()
-	v.Set("cfg", config.CFG)
-	v.Set("archive", config.Archive)
-	v.Set("build", config.Build)
-
-	return v.WriteConfigAs(filename)
 }
 
 // NormalizeConfigPaths normalizes all paths in the configuration to OS-specific format
