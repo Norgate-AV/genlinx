@@ -58,10 +58,17 @@ fmt:
 lint:
 	golangci-lint run
 
-.PHONY:
+.PHONY: vet
+vet:
+	go vet ./...
+
+.PHONY: check
+check: test lint vet
+
+.PHONY: man
 man:
 	pandoc docs/genlinx.1.md --to man docs/genlinx.1 > docs/genlinx.1
 
-.PHONY:
+.PHONY: toc
 toc:
 	doctoc --title '## Contents 📖' README.md
