@@ -1,0 +1,5 @@
+GoldenWorkspace.apw
+LibA.axi
+MainA.axs
+MainA2.axs
+ModuleA.axs
