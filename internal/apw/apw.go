@@ -223,7 +223,20 @@ func (a *APW) isInWorkspace(id string) bool {
 	return false
 }
 
-func (a *APW) searchForExtraFileReferences(file string, pattern *regexp.Regexp) ([]string, error) {
+// isInFileSet reports whether id appears in the given file set.
+// Used by scope-aware extra-file scanning to avoid treating files
+// that belong to the current archive scope as "extra".
+func isInFileSet(id string, files []File) bool {
+	for _, f := range files {
+		if f.ID == id || strings.Contains(f.Path, id) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (a *APW) searchForExtraFileReferences(file string, pattern *regexp.Regexp, inScope func(string) bool) ([]string, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -239,7 +252,7 @@ func (a *APW) searchForExtraFileReferences(file string, pattern *regexp.Regexp) 
 
 		id := match[1]
 
-		if a.isInWorkspace(id) {
+		if inScope(id) {
 			continue
 		}
 
@@ -254,6 +267,7 @@ func (a *APW) searchForExtraFileReferences(file string, pattern *regexp.Regexp) 
 
 // GetExtraFileReferencesFromFile returns the unique extra file IDs referenced
 // via #include and define_module directives in the given source file.
+// It excludes references whose IDs already appear anywhere in the workspace.
 func (a *APW) GetExtraFileReferencesFromFile(file string) ([]string, error) {
 	if !FileIsReadable(file) {
 		return nil, nil
@@ -262,12 +276,52 @@ func (a *APW) GetExtraFileReferencesFromFile(file string) ([]string, error) {
 	includePattern := regexp.MustCompile(`(?i)#(?:include)\s+'(.+)'`)
 	modulePattern := regexp.MustCompile(`(?im)^(?:define_module)\s+'(.+)'`)
 
-	includeRefs, err := a.searchForExtraFileReferences(file, includePattern)
+	includeRefs, err := a.searchForExtraFileReferences(file, includePattern, a.isInWorkspace)
 	if err != nil {
 		return nil, err
 	}
 
-	moduleRefs, err := a.searchForExtraFileReferences(file, modulePattern)
+	moduleRefs, err := a.searchForExtraFileReferences(file, modulePattern, a.isInWorkspace)
+	if err != nil {
+		return nil, err
+	}
+
+	combined := append(includeRefs, moduleRefs...)
+
+	seen := make(map[string]bool)
+	var unique []string
+
+	for _, r := range combined {
+		if !seen[r] {
+			unique = append(unique, r)
+			seen[r] = true
+		}
+	}
+
+	return unique, nil
+}
+
+// GetExtraFileReferencesFromFileInScope is like GetExtraFileReferencesFromFile
+// but only considers scopeFiles (the files belonging to the current archive
+// scope) as already accounted for. References to files that exist in the
+// workspace under a different scope are returned rather than skipped, so
+// they can be discovered and included in a scoped archive.
+func (a *APW) GetExtraFileReferencesFromFileInScope(file string, scopeFiles []File) ([]string, error) {
+	if !FileIsReadable(file) {
+		return nil, nil
+	}
+
+	includePattern := regexp.MustCompile(`(?i)#(?:include)\s+'(.+)'`)
+	modulePattern := regexp.MustCompile(`(?im)^(?:define_module)\s+'(.+)'`)
+
+	inScope := func(id string) bool { return isInFileSet(id, scopeFiles) }
+
+	includeRefs, err := a.searchForExtraFileReferences(file, includePattern, inScope)
+	if err != nil {
+		return nil, err
+	}
+
+	moduleRefs, err := a.searchForExtraFileReferences(file, modulePattern, inScope)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +342,10 @@ func (a *APW) GetExtraFileReferencesFromFile(file string) ([]string, error) {
 }
 
 // collectExtraRefs scans the given files for #include and define_module
-// references not already in the workspace, returning unique IDs.
+// references not already in the scope, returning unique IDs.
+// Only files within the provided slice are treated as "already in scope";
+// workspace files outside this slice are returned as extra references so
+// that scoped archives can discover and include them.
 func (a *APW) collectExtraRefs(files []File) ([]string, error) {
 	seen := make(map[string]bool)
 	var refs []string
@@ -298,7 +355,7 @@ func (a *APW) collectExtraRefs(files []File) ([]string, error) {
 			continue
 		}
 
-		fileRefs, err := a.GetExtraFileReferencesFromFile(f.Path)
+		fileRefs, err := a.GetExtraFileReferencesFromFileInScope(f.Path, files)
 		if err != nil {
 			continue
 		}

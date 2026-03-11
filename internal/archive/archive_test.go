@@ -943,3 +943,254 @@ func (s *ArchiveTestSuite) TestBuild_OutputFile_ProjectAndSystemIDAppended() {
 	_, statErr := os.Stat(filepath.Join(wd, "TestWorkspace-TestProject-TestSystem.archive.zip"))
 	s.NoError(statErr, "archive filename should include both project and system ID suffixes")
 }
+
+// ---------------------------------------------------------------------------
+// Build – scoped extra file inclusion (regression: FileRef path mutation)
+// ---------------------------------------------------------------------------
+//
+// addWorkspaceFiles() mutates FileRef.FilePathName to a bare filename for the
+// flat-layout APW written inside the archive. The scoped GetExtraFileReferences*
+// functions re-read those paths from the workspace tree; if called after the
+// mutation they receive bare filenames that don't resolve on disk, so no extra
+// files are found. Correct ordering (addExtraFiles before addWorkspaceFiles)
+// must be preserved. These tests guard against regression.
+
+func (s *ArchiveTestSuite) TestBuild_ProjectScoped_IncludesExtraFilesReferencedBySourceFiles() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.ProjectID = "TestProject"
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace-TestProject.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "ExtraLib.axs" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "project-scoped archive should include extra files referenced by source files")
+}
+
+func (s *ArchiveTestSuite) TestBuild_SystemScoped_IncludesExtraFilesReferencedBySourceFiles() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.ProjectID = "TestProject"
+	opts.SystemID = "TestSystem"
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace-TestProject-TestSystem.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "ExtraLib.axs" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "system-scoped archive should include extra files referenced by source files")
+}
+
+// crossScopeAPWData builds an APW where SharedLib.axi is listed in the
+// workspace under ProjectB/SystemB but is #included by ProjectA/SystemA's
+// main source file.
+func crossScopeAPWData(id string) []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>` + id + `</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>ProjectA</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemA</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainA</Identifier>
+                <FilePathName>Source\MainA.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+    <Project>
+        <Identifier>ProjectB</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemB</Identifier>
+            <SysID>2</SysID>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>SharedLib</Identifier>
+                <FilePathName>Include\SharedLib.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+// setupCrossScopeWorkspace builds a cross-scope workspace on disk:
+//   - ProjectA/SystemA: MainA.axs that #includes SharedLib.axi
+//   - ProjectB/SystemB: SharedLib.axi (listed in APW, exists on disk)
+//
+// Returns the parsed APW.  The caller's working directory is changed to the
+// temp dir so that Build() writes the zip there.
+func setupCrossScopeWorkspace(t *testing.T, id string) *apw.APW {
+	t.Helper()
+	dir := t.TempDir()
+
+	data := crossScopeAPWData(id)
+	apwPath := filepath.Join(dir, id+".apw")
+	require.NoError(t, os.WriteFile(apwPath, data, 0o644))
+
+	// Write MainA.axs — references SharedLib.axi via #include.
+	srcDir := filepath.Join(dir, "Source")
+	require.NoError(t, os.MkdirAll(srcDir, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(srcDir, "MainA.axs"),
+		[]byte("PROGRAM_NAME='main'\n#include 'SharedLib.axi'\n"),
+		0o644,
+	))
+
+	// Write SharedLib.axi — listed in the APW under ProjectB/SystemB.
+	incDir := filepath.Join(dir, "Include")
+	require.NoError(t, os.MkdirAll(incDir, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(incDir, "SharedLib.axi"),
+		[]byte("// shared library\n"),
+		0o644,
+	))
+
+	a, err := apw.Parse(apwPath, data)
+	require.NoError(t, err)
+
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	require.NoError(t, os.Chdir(dir))
+
+	return a
+}
+
+// TestBuild_SystemScoped_IncludesFileFromAnotherScope verifies that a file
+// listed in the workspace under a different project/system is correctly
+// discovered and included when building a scoped archive.  This tests the fix
+// for the isInWorkspace cross-scope bug where such files were silently dropped.
+func (s *ArchiveTestSuite) TestBuild_SystemScoped_IncludesFileFromAnotherScope() {
+	a := setupCrossScopeWorkspace(s.T(), "CrossScope")
+	wd, _ := os.Getwd()
+
+	opts := defaultOpts()
+	opts.ProjectID = "ProjectA"
+	opts.SystemID = "SystemA"
+	opts.IncludeFilesNotInWorkspace = true
+	// The workspace dir itself is the search location — SharedLib.axi is in Include/.
+	opts.ExtraFileSearchLocations = []string{wd}
+
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "CrossScope-ProjectA-SystemA.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "SharedLib.axi" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found,
+		"SharedLib.axi is listed in the workspace under a different system: "+
+			"it must still be included in a scoped archive that references it")
+}
+
+// ---------------------------------------------------------------------------
+// sanitizeSegment
+// ---------------------------------------------------------------------------
+
+func TestSanitizeSegment(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "no spaces unchanged",
+			input: "MyProject",
+			want:  "MyProject",
+		},
+		{
+			name:  "single space becomes hyphen",
+			input: "My Project",
+			want:  "My-Project",
+		},
+		{
+			name:  "multiple spaces each become one hyphen",
+			input: "My  Project",
+			want:  "My-Project",
+		},
+		{
+			name:  "space-dash-space (e.g. project name with separator) collapses",
+			input: "Penryn Road - Main Building",
+			want:  "Penryn-Road-Main-Building",
+		},
+		{
+			name:  "leading and trailing spaces become single hyphens",
+			input: " Leading",
+			want:  "-Leading",
+		},
+		{
+			name:  "already hyphenated unchanged",
+			input: "Already-Hyphenated",
+			want:  "Already-Hyphenated",
+		},
+		{
+			name:  "empty string unchanged",
+			input: "",
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeSegment(tt.input)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}

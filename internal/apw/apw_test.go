@@ -798,3 +798,117 @@ func (s *APWTestSuite) TestGetExtraFileReferencesForSystem_EmptyWhenFilesAbsent(
 	s.Require().NoError(err)
 	s.Empty(refs)
 }
+
+// crossScopeAPW builds an APW where:
+//   - ProjectA / SystemA has MainA.axs which #includes SharedLib.axi
+//   - SharedLib.axi is listed in the workspace under ProjectB / SystemB
+//
+// When doing a scoped archive for ProjectA/SystemA, SharedLib.axi must be
+// returned by GetExtraFileReferencesForSystem (not filtered as "in workspace")
+// because it is outside the targeted scope. When doing a full workspace
+// archive, it must NOT be returned (it is part of the workspace).
+func crossScopeAPWData() []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>CrossScope</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>ProjectA</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemA</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainA</Identifier>
+                <FilePathName>Source\MainA.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+    <Project>
+        <Identifier>ProjectB</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemB</Identifier>
+            <SysID>2</SysID>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>SharedLib</Identifier>
+                <FilePathName>Include\SharedLib.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+// TestGetExtraFileReferencesForSystem_CrossScopeFileIsReturned verifies that a
+// file listed in the workspace under a different system/project is treated as
+// an extra reference when scanning a scoped system — not silently dropped.
+func (s *APWTestSuite) TestGetExtraFileReferencesForSystem_CrossScopeFileIsReturned() {
+	dir, apwPath := writeAPW(s.T(), "CrossScope.apw", crossScopeAPWData())
+
+	// Write a real MainA.axs on disk so collectExtraRefs can scan it.
+	sourceDir := filepath.Join(dir, "Source")
+	s.Require().NoError(os.MkdirAll(sourceDir, 0o755))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(sourceDir, "MainA.axs"),
+		[]byte("#include 'SharedLib.axi'\n"),
+		0o644,
+	))
+
+	a, err := Parse(apwPath, crossScopeAPWData())
+	s.Require().NoError(err)
+
+	// Scoped to ProjectA/SystemA — SharedLib.axi is from ProjectB/SystemB
+	// and must not be silently dropped.
+	refs, err := a.GetExtraFileReferencesForSystem("ProjectA", "SystemA")
+	s.Require().NoError(err)
+	s.Contains(refs, "SharedLib.axi",
+		"file from another scope must appear as an extra ref in a scoped archive")
+}
+
+// TestGetExtraFileReferences_CrossScopeFileIsExcluded verifies that the
+// full-workspace (unscoped) variant still excludes workspace-listed files — the
+// fix must not regress the full-workspace behaviour.
+func (s *APWTestSuite) TestGetExtraFileReferences_CrossScopeFileIsExcluded() {
+	dir, apwPath := writeAPW(s.T(), "CrossScope.apw", crossScopeAPWData())
+
+	// Write MainA.axs and SharedLib.axi on disk.
+	sourceDir := filepath.Join(dir, "Source")
+	s.Require().NoError(os.MkdirAll(sourceDir, 0o755))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(sourceDir, "MainA.axs"),
+		[]byte("#include 'SharedLib.axi'\n"),
+		0o644,
+	))
+
+	includeDir := filepath.Join(dir, "Include")
+	s.Require().NoError(os.MkdirAll(includeDir, 0o755))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(includeDir, "SharedLib.axi"),
+		[]byte("// shared\n"),
+		0o644,
+	))
+
+	a, err := Parse(apwPath, crossScopeAPWData())
+	s.Require().NoError(err)
+
+	// Full workspace scan — SharedLib.axi is listed in the workspace so it
+	// must NOT be returned as an extra ref.
+	refs, err := a.GetExtraFileReferences()
+	s.Require().NoError(err)
+	s.NotContains(refs, "SharedLib.axi",
+		"workspace-listed file must not appear as an extra ref in a full-workspace archive")
+}

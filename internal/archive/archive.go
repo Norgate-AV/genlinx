@@ -24,10 +24,15 @@ var (
 )
 
 // sanitizeSegment replaces spaces with hyphens so that archive filenames are
-// shell-friendly. It is applied only to each segment of the output filename;
-// nothing inside the archive (file paths, APW content) is affected.
+// shell-friendly, then collapses any run of consecutive hyphens down to one.
+// It is applied only to each segment of the output filename; nothing inside
+// the archive (file paths, APW content) is affected.
 func sanitizeSegment(s string) string {
-	return strings.ReplaceAll(s, " ", "-")
+	s = strings.ReplaceAll(s, " ", "-")
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	return s
 }
 
 // Options configures the archive build process, merging config file values with
@@ -58,6 +63,19 @@ type Builder struct {
 	extraFilesOnDisk    []string
 	extraFileReferences []string
 	locatedExtraRefs    []string
+	// scopeFiles is the set of workspace files belonging to the targeted
+	// project/system. When non-nil, extra-file scanning uses a scope-aware
+	// check so that files listed in the workspace under a different scope are
+	// still discovered and included rather than silently dropped.
+	scopeFiles []apw.File
+	// outputFile holds the file path of the last successfully built archive.
+	outputFile string
+}
+
+// OutputFile returns the file path of the last successfully built archive.
+// It is only valid after a successful call to Build.
+func (b *Builder) OutputFile() string {
+	return b.outputFile
 }
 
 // NewBuilder returns a new Builder for the given workspace and options.
@@ -90,13 +108,19 @@ func (b *Builder) Build() error {
 
 	b.zipWriter = zip.NewWriter(f)
 
-	if err := b.addWorkspaceFiles(); err != nil {
+	// addExtraFiles MUST run before addWorkspaceFiles. addWorkspaceFiles mutates
+	// each FileRef's FilePathName to a bare filename (flat-layout path rewrite)
+	// so that the marshalled APW stored in the archive is correct. The scoped
+	// variants of GetExtraFileReferences* re-read those FilePathName values to
+	// locate source files on disk — if they run after the mutation the paths no
+	// longer resolve and no extra refs are found.
+	if err := b.addExtraFiles(); err != nil {
 		_ = b.zipWriter.Close()
 		_ = f.Close()
 		return err
 	}
 
-	if err := b.addExtraFiles(); err != nil {
+	if err := b.addWorkspaceFiles(); err != nil {
 		_ = b.zipWriter.Close()
 		_ = f.Close()
 		return err
@@ -134,7 +158,7 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("failed to close output file: %w", err)
 	}
 
-	fmt.Println(color.New(color.FgGreen, color.Bold).Sprintf("Created archive: %s", outputFile))
+	b.outputFile = outputFile
 
 	if b.opts.Verbose {
 		b.displayZippedFiles()
@@ -156,7 +180,7 @@ func (b *Builder) logVerbose(c *color.Color, format string, args ...any) {
 // warnf prints a yellow warning to stderr so it is always visible regardless
 // of verbose mode and does not pollute stdout.
 func warnf(format string, args ...any) {
-	fmt.Fprintln(os.Stderr, color.YellowString("Warning: "+format, args...))
+	fmt.Fprintln(os.Stderr, color.YellowString("WARNING: "+format, args...))
 }
 
 // ---------------------------------------------------------------------------
@@ -210,8 +234,6 @@ func (b *Builder) addGeneralItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose(logCyan, "Added file: %s", entryName)
-
 	return nil
 }
 
@@ -224,8 +246,6 @@ func (b *Builder) addSourceItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose(logCyan, "Added file: %s", entryName)
-
 	if !b.opts.IncludeCompiledSourceFiles {
 		return nil
 	}
@@ -236,8 +256,6 @@ func (b *Builder) addSourceItem(file apw.File) error {
 
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
 		warnf("compiled file not found, skipping: %s", compiledPath)
-	} else {
-		b.logVerbose(logCyan, "Added file: %s", compiledEntry)
 	}
 
 	return nil
@@ -252,8 +270,6 @@ func (b *Builder) addModuleItem(file apw.File) error {
 		return err
 	}
 
-	b.logVerbose(logCyan, "Added file: %s", entryName)
-
 	if !b.opts.IncludeCompiledModuleFiles {
 		return nil
 	}
@@ -264,8 +280,6 @@ func (b *Builder) addModuleItem(file apw.File) error {
 
 	if err := b.addDiskFile(compiledPath, compiledEntry); err != nil {
 		warnf("compiled file not found, skipping: %s", compiledPath)
-	} else {
-		b.logVerbose(logCyan, "Added file: %s", compiledEntry)
 	}
 
 	return nil
@@ -399,7 +413,9 @@ func (b *Builder) isIgnored(filePath string) bool {
 // searchForExtraFiles tries to locate each referenced ID on disk and records
 // found files for later addition to the archive.
 // Mirrors ArchiveBuilder.searchForExtraFiles().
-func (b *Builder) searchForExtraFiles(refs []string) error {
+// sourceFile is the file in which the refs were found; it is included in
+// warning messages so the user knows where the unresolved reference came from.
+func (b *Builder) searchForExtraFiles(refs []string, sourceFile string) error {
 	var newLocated []string
 
 	for _, ref := range refs {
@@ -413,12 +429,20 @@ func (b *Builder) searchForExtraFiles(refs []string) error {
 		}
 
 		if found == "" {
-			b.logVerbose(logRed, "Could not find %s", ref)
+			warnf("Could not find %s (referenced in %s)", ref, filepath.Base(sourceFile))
 			continue
 		}
 
 		if b.isIgnored(found) {
-			b.logVerbose(logBlue, "Ignoring %s as per config", filepath.Base(found))
+			b.logVerbose(logBlue, "Ignoring %s", filepath.Base(found))
+			continue
+		}
+
+		// Skip if this exact disk path was already located via a different
+		// reference ID earlier in the pipeline — the same physical file can be
+		// referenced with or without its extension, leading to duplicate entries
+		// that cause redundant re-scanning and misleading log output.
+		if slices.Contains(b.locatedExtraRefs, found) || slices.Contains(newLocated, found) {
 			continue
 		}
 
@@ -444,15 +468,18 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 			continue
 		}
 
-		b.logVerbose(logBlue, "Searching %s for references...", file)
-
-		refs, err := b.apw.GetExtraFileReferencesFromFile(file)
+		var refs []string
+		var err error
+		if b.scopeFiles != nil {
+			refs, err = b.apw.GetExtraFileReferencesFromFileInScope(file, b.scopeFiles)
+		} else {
+			refs, err = b.apw.GetExtraFileReferencesFromFile(file)
+		}
 		if err != nil {
 			continue
 		}
 
 		if len(refs) == 0 {
-			b.logVerbose(logCyan, "--> No references found")
 			continue
 		}
 
@@ -467,14 +494,14 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 		}
 
 		if len(newRefs) == 0 {
-			b.logVerbose(logCyan, "--> No new references found")
 			continue
 		}
 
+		b.logVerbose(logBlue, "Scanning %s...", filepath.Base(file))
 		b.extraFileReferences = append(b.extraFileReferences, newRefs...)
 		b.displayExtraFileReferences(newRefs)
 
-		if err := b.searchForExtraFiles(newRefs); err != nil {
+		if err := b.searchForExtraFiles(newRefs, file); err != nil {
 			return err
 		}
 	}
@@ -497,10 +524,13 @@ func (b *Builder) addExtraFiles() error {
 	switch {
 	case b.opts.ProjectID != "" && b.opts.SystemID != "":
 		refs, err = b.apw.GetExtraFileReferencesForSystem(b.opts.ProjectID, b.opts.SystemID)
+		b.scopeFiles, _ = b.apw.FilesForSystem(b.opts.ProjectID, b.opts.SystemID)
 	case b.opts.ProjectID != "":
 		refs, err = b.apw.GetExtraFileReferencesForProject(b.opts.ProjectID)
+		b.scopeFiles, _ = b.apw.FilesForProject(b.opts.ProjectID)
 	default:
 		refs, err = b.apw.GetExtraFileReferences()
+		// scopeFiles stays nil — recursive scan uses full workspace check
 	}
 
 	if err != nil {
@@ -519,10 +549,10 @@ func (b *Builder) addExtraFiles() error {
 		filepath.Dir(b.apw.FilePath()),
 	)
 
-	b.displayExtraFileReferences(b.extraFileReferences)
+	b.logVerbose(logGreen, "Found %d extra files referenced...", len(b.extraFileReferences))
 	b.getExtraFilesOnDisk(searchLocations)
 
-	if err := b.searchForExtraFiles(b.extraFileReferences); err != nil {
+	if err := b.searchForExtraFiles(b.extraFileReferences, b.apw.FilePath()); err != nil {
 		return err
 	}
 

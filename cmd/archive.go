@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/huh/spinner"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
@@ -162,10 +163,29 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 		}
 
 		builder := archive.NewBuilder(workspace, &buildOpts)
-		if err := builder.Build(); err != nil {
-			color.Red("Error building archive for %s: %v", workspaceFile, err)
+
+		var buildErr error
+		if verbose {
+			buildErr = builder.Build()
+		} else {
+			spinErr := spinner.New().
+				Title(fmt.Sprintf("Generating archive for %s...", workspace.ID())).
+				Action(func() {
+					buildErr = builder.Build()
+				}).
+				Run()
+			if spinErr != nil {
+				color.Red("Error running spinner: %v", spinErr)
+				continue
+			}
+		}
+
+		if buildErr != nil {
+			color.Red("Error building archive for %s: %v", workspaceFile, buildErr)
 			continue
 		}
+
+		color.New(color.FgGreen, color.Bold).Printf("Created archive: %s\n", builder.OutputFile())
 	}
 
 	return nil
