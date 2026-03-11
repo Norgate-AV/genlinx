@@ -39,6 +39,5 @@ go.work.sum
 # AMX
 *.tkn
 *.tko
-*.apw
 *.zip
 *.build.cfg
