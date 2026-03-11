@@ -185,7 +185,7 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
-		color.New(color.FgGreen, color.Bold).Printf("Created archive: %s\n", builder.OutputFile())
+		_, _ = color.New(color.FgGreen, color.Bold).Printf("Created archive: %s\n", builder.OutputFile())
 	}
 
 	return nil

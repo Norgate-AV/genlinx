@@ -20,7 +20,6 @@ var (
 	logBlue  = color.New(color.FgBlue)
 	logCyan  = color.New(color.FgCyan)
 	logGreen = color.New(color.FgGreen)
-	logRed   = color.New(color.FgRed)
 )
 
 // sanitizeSegment replaces spaces with hyphens so that archive filenames are
