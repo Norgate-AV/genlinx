@@ -912,3 +912,44 @@ func (s *APWTestSuite) TestGetExtraFileReferences_CrossScopeFileIsExcluded() {
 	s.NotContains(refs, "SharedLib.axi",
 		"workspace-listed file must not appear as an extra ref in a full-workspace archive")
 }
+
+// ---------------------------------------------------------------------------
+// GetExtraFileReferencesMap / GetExtraFileReferencesForProjectMap / GetExtraFileReferencesForSystemMap
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestGetExtraFileReferencesMap_AttributesRefToSourceFile() {
+	dir, apwPath := writeAPW(s.T(), "CrossScope.apw", crossScopeAPWData())
+
+	sourceDir := filepath.Join(dir, "Source")
+	s.Require().NoError(os.MkdirAll(sourceDir, 0o755))
+	mainAPath := filepath.Join(sourceDir, "MainA.axs")
+	s.Require().NoError(os.WriteFile(mainAPath, []byte("#include 'SomeLib'\n"), 0o644))
+
+	a, err := Parse(apwPath, crossScopeAPWData())
+	s.Require().NoError(err)
+
+	m, err := a.GetExtraFileReferencesMap()
+	s.Require().NoError(err)
+	s.Equal(mainAPath, m["SomeLib"],
+		"GetExtraFileReferencesMap must map each ref to the file it was found in")
+}
+
+func (s *APWTestSuite) TestGetExtraFileReferencesForProjectMap_UnknownProject() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.GetExtraFileReferencesForProjectMap("NoSuchProject")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrProjectNotFound)
+}
+
+func (s *APWTestSuite) TestGetExtraFileReferencesForSystemMap_UnknownSystem() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.GetExtraFileReferencesForSystemMap("TestProject", "NoSuchSystem")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrSystemNotFound)
+}

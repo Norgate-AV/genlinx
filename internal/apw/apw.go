@@ -341,14 +341,11 @@ func (a *APW) GetExtraFileReferencesFromFileInScope(file string, scopeFiles []Fi
 	return unique, nil
 }
 
-// collectExtraRefs scans the given files for #include and define_module
-// references not already in the scope, returning unique IDs.
-// Only files within the provided slice are treated as "already in scope";
-// workspace files outside this slice are returned as extra references so
-// that scoped archives can discover and include them.
-func (a *APW) collectExtraRefs(files []File) ([]string, error) {
-	seen := make(map[string]bool)
-	var refs []string
+// collectExtraRefsMap scans the given files for #include and define_module
+// references not already in the scope, returning a map of unique ref ID →
+// the path of the first source file in which it was found.
+func (a *APW) collectExtraRefsMap(files []File) (map[string]string, error) {
+	result := make(map[string]string)
 
 	for _, f := range files {
 		if !f.Exists {
@@ -361,11 +358,29 @@ func (a *APW) collectExtraRefs(files []File) ([]string, error) {
 		}
 
 		for _, r := range fileRefs {
-			if !seen[r] {
-				refs = append(refs, r)
-				seen[r] = true
+			if _, seen := result[r]; !seen {
+				result[r] = f.Path
 			}
 		}
+	}
+
+	return result, nil
+}
+
+// collectExtraRefs scans the given files for #include and define_module
+// references not already in the scope, returning unique IDs.
+// Only files within the provided slice are treated as "already in scope";
+// workspace files outside this slice are returned as extra references so
+// that scoped archives can discover and include them.
+func (a *APW) collectExtraRefs(files []File) ([]string, error) {
+	m, err := a.collectExtraRefsMap(files)
+	if err != nil {
+		return nil, err
+	}
+
+	refs := make([]string, 0, len(m))
+	for k := range m {
+		refs = append(refs, k)
 	}
 
 	return refs, nil
@@ -380,6 +395,17 @@ func (a *APW) GetExtraFileReferences() ([]string, error) {
 	}
 
 	return a.collectExtraRefs(files)
+}
+
+// GetExtraFileReferencesMap returns a map of unique extra file ID → source
+// file path for every existing file in the workspace.
+func (a *APW) GetExtraFileReferencesMap() (map[string]string, error) {
+	files := make([]File, 0, len(a.files))
+	for _, f := range a.files {
+		files = append(files, f)
+	}
+
+	return a.collectExtraRefsMap(files)
 }
 
 // filesForProject returns the File slice for the named project, walking the
@@ -472,6 +498,17 @@ func (a *APW) GetExtraFileReferencesForProject(projectID string) ([]string, erro
 	return a.collectExtraRefs(files)
 }
 
+// GetExtraFileReferencesForProjectMap returns a map of unique extra file ID →
+// source file path for every file in the named project.
+func (a *APW) GetExtraFileReferencesForProjectMap(projectID string) (map[string]string, error) {
+	files, err := a.filesForProject(projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.collectExtraRefsMap(files)
+}
+
 // GetExtraFileReferencesForSystem returns unique extra file IDs referenced
 // from files belonging to the named system within the named project. Returns
 // ErrProjectNotFound or ErrSystemNotFound if the identifiers cannot be resolved.
@@ -482,6 +519,17 @@ func (a *APW) GetExtraFileReferencesForSystem(projectID, systemID string) ([]str
 	}
 
 	return a.collectExtraRefs(files)
+}
+
+// GetExtraFileReferencesForSystemMap returns a map of unique extra file ID →
+// source file path for every file in the named system within the named project.
+func (a *APW) GetExtraFileReferencesForSystemMap(projectID, systemID string) (map[string]string, error) {
+	files, err := a.filesForSystem(projectID, systemID)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.collectExtraRefsMap(files)
 }
 
 // AllFiles returns all unique workspace file references plus the workspace file itself,

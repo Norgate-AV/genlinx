@@ -1194,3 +1194,92 @@ func TestSanitizeSegment(t *testing.T) {
 		})
 	}
 }
+
+// ---------------------------------------------------------------------------
+// warnf attribution — missing extra-file reference names the source file
+// ---------------------------------------------------------------------------
+
+// TestBuild_MissingExtraRef_WarningIncludesSourceFile verifies that when a
+// reference cannot be found on disk, the warning written to stderr names the
+// source file the reference was found in rather than the workspace APW.
+func TestBuild_MissingExtraRef_WarningIncludesSourceFile(t *testing.T) {
+	dir := t.TempDir()
+
+	// Build an APW with one source file that #includes an unknown module.
+	data := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>TestWS</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>TestProject</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>TestSystem</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>Panel</Identifier>
+                <FilePathName>Source\Panel.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+
+	apwPath := filepath.Join(dir, "TestWS.apw")
+	require.NoError(t, os.WriteFile(apwPath, data, 0o644))
+
+	sourceDir := filepath.Join(dir, "Source")
+	require.NoError(t, os.MkdirAll(sourceDir, 0o755))
+	// Panel.axs references mMissingModule — which does not exist anywhere on disk.
+	require.NoError(t, os.WriteFile(
+		filepath.Join(sourceDir, "Panel.axs"),
+		[]byte("define_module 'mMissingModule' mm()\n"),
+		0o644,
+	))
+
+	a, err := apw.Parse(apwPath, data)
+	require.NoError(t, err)
+
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	require.NoError(t, os.Chdir(dir))
+
+	opts := &Options{
+		OutputFileSuffix:           "zip",
+		IncludeFilesNotInWorkspace: true,
+		ExtraFileSearchLocations:   []string{dir},
+	}
+
+	// Redirect stderr so we can assert on the warning text.
+	origStderr := os.Stderr
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stderr = w
+	t.Cleanup(func() { os.Stderr = origStderr })
+
+	_ = NewBuilder(a, opts).Build()
+
+	require.NoError(t, w.Close())
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+
+	output := buf.String()
+	require.Contains(t, output, "mMissingModule",
+		"warning must mention the unresolved reference")
+	require.Contains(t, output, "Panel.axs",
+		"warning must name the source file the reference was found in, not the workspace APW")
+}

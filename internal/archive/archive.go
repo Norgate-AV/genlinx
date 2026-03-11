@@ -412,13 +412,12 @@ func (b *Builder) isIgnored(filePath string) bool {
 
 // searchForExtraFiles tries to locate each referenced ID on disk and records
 // found files for later addition to the archive.
-// Mirrors ArchiveBuilder.searchForExtraFiles().
-// sourceFile is the file in which the refs were found; it is included in
-// warning messages so the user knows where the unresolved reference came from.
-func (b *Builder) searchForExtraFiles(refs []string, sourceFile string) error {
+// refs maps each reference ID to the source file it was found in, so that
+// warning messages can pinpoint exactly where an unresolved reference came from.
+func (b *Builder) searchForExtraFiles(refs map[string]string) error {
 	var newLocated []string
 
-	for _, ref := range refs {
+	for ref, sourceFile := range refs {
 		var found string
 
 		for _, diskFile := range b.extraFilesOnDisk {
@@ -501,7 +500,12 @@ func (b *Builder) getFileReferencesFromFiles(files []string) error {
 		b.extraFileReferences = append(b.extraFileReferences, newRefs...)
 		b.displayExtraFileReferences(newRefs)
 
-		if err := b.searchForExtraFiles(newRefs, file); err != nil {
+		newRefsMap := make(map[string]string, len(newRefs))
+		for _, r := range newRefs {
+			newRefsMap[r] = file
+		}
+
+		if err := b.searchForExtraFiles(newRefsMap); err != nil {
 			return err
 		}
 	}
@@ -517,19 +521,19 @@ func (b *Builder) addExtraFiles() error {
 	b.logVerbose(logBlue, "Searching for extra files that are not part of the workspace...")
 
 	var (
-		refs []string
-		err  error
+		refsMap map[string]string
+		err     error
 	)
 
 	switch {
 	case b.opts.ProjectID != "" && b.opts.SystemID != "":
-		refs, err = b.apw.GetExtraFileReferencesForSystem(b.opts.ProjectID, b.opts.SystemID)
+		refsMap, err = b.apw.GetExtraFileReferencesForSystemMap(b.opts.ProjectID, b.opts.SystemID)
 		b.scopeFiles, _ = b.apw.FilesForSystem(b.opts.ProjectID, b.opts.SystemID)
 	case b.opts.ProjectID != "":
-		refs, err = b.apw.GetExtraFileReferencesForProject(b.opts.ProjectID)
+		refsMap, err = b.apw.GetExtraFileReferencesForProjectMap(b.opts.ProjectID)
 		b.scopeFiles, _ = b.apw.FilesForProject(b.opts.ProjectID)
 	default:
-		refs, err = b.apw.GetExtraFileReferences()
+		refsMap, err = b.apw.GetExtraFileReferencesMap()
 		// scopeFiles stays nil — recursive scan uses full workspace check
 	}
 
@@ -537,7 +541,9 @@ func (b *Builder) addExtraFiles() error {
 		return err
 	}
 
-	b.extraFileReferences = append(b.extraFileReferences, refs...)
+	for k := range refsMap {
+		b.extraFileReferences = append(b.extraFileReferences, k)
+	}
 
 	if len(b.extraFileReferences) == 0 {
 		b.logVerbose(logBlue, "No extra file references found in the workspace file")
@@ -552,7 +558,7 @@ func (b *Builder) addExtraFiles() error {
 	b.logVerbose(logGreen, "Found %d extra files referenced...", len(b.extraFileReferences))
 	b.getExtraFilesOnDisk(searchLocations)
 
-	if err := b.searchForExtraFiles(b.extraFileReferences, b.apw.FilePath()); err != nil {
+	if err := b.searchForExtraFiles(refsMap); err != nil {
 		return err
 	}
 
