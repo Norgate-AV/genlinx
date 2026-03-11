@@ -26,6 +26,18 @@ func (w *Workspace) AddProject(p *Project) *Project {
 	return p
 }
 
+// FindProject returns the first project whose Identifier matches id,
+// or (nil, false) if no match is found.
+func (w *Workspace) FindProject(id string) (*Project, bool) {
+	for _, p := range w.Projects {
+		if p.Identifier == id {
+			return p, true
+		}
+	}
+
+	return nil, false
+}
+
 // RemoveProject removes the first project whose Identifier matches id.
 // Returns true if a project was removed, false if no match was found.
 func (w *Workspace) RemoveProject(id string) bool {

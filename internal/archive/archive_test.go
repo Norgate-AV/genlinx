@@ -97,6 +97,66 @@ func setupWorkspace(t *testing.T, id string) *apw.APW {
 	return a
 }
 
+// minimalAPWFull is like minimalAPW but with configurable project and system identifiers.
+func minimalAPWFull(wsID, projectID, systemID string) []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>` + wsID + `</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>` + projectID + `</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>` + systemID + `</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>TestMain</Identifier>
+                <FilePathName>Source\TestMain.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+// setupWorkspaceWithIDs is like setupWorkspace but with configurable project
+// and system identifiers, allowing tests to use identifiers that contain spaces.
+func setupWorkspaceWithIDs(t *testing.T, wsID, projectID, systemID string) *apw.APW {
+	t.Helper()
+	dir := t.TempDir()
+
+	data := minimalAPWFull(wsID, projectID, systemID)
+	apwPath := filepath.Join(dir, wsID+".apw")
+	require.NoError(t, os.WriteFile(apwPath, data, 0o644))
+
+	subDir := filepath.Join(dir, "Source")
+	require.NoError(t, os.MkdirAll(subDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(subDir, "TestMain.axs"), []byte(`PROGRAM_NAME='test'`), 0o644))
+
+	a, err := apw.Parse(apwPath, data)
+	require.NoError(t, err)
+
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	require.NoError(t, os.Chdir(dir))
+
+	return a
+}
+
 func defaultOpts() *Options {
 	return &Options{
 		OutputFileSuffix:           "zip",
@@ -790,4 +850,96 @@ func (s *ArchiveTestSuite) TestBuild_SharedFile_AddedOnlyOnce() {
 	}
 
 	s.Equal(1, count, "Shared.axi should appear exactly once in the zip, got %d entries", count)
+}
+
+// ---------------------------------------------------------------------------
+// sanitizeSegment
+// ---------------------------------------------------------------------------
+
+func TestSanitizeSegment_NoSpaces(t *testing.T) {
+	require.Equal(t, "KingstonUniversity", sanitizeSegment("KingstonUniversity"))
+}
+
+func TestSanitizeSegment_SingleSpace(t *testing.T) {
+	require.Equal(t, "Kingston-University", sanitizeSegment("Kingston University"))
+}
+
+func TestSanitizeSegment_MultipleSpaces(t *testing.T) {
+	require.Equal(t, "Large-Classroom-Type-C", sanitizeSegment("Large Classroom Type C"))
+}
+
+func TestSanitizeSegment_AlreadyHyphenated(t *testing.T) {
+	require.Equal(t, "KU-Large-Classroom", sanitizeSegment("KU-Large-Classroom"))
+}
+
+func TestSanitizeSegment_Empty(t *testing.T) {
+	require.Equal(t, "", sanitizeSegment(""))
+}
+
+// ---------------------------------------------------------------------------
+// Build – output filename sanitization and scoped naming
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_SpacesInWorkspaceID_ReplacedWithHyphens() {
+	a := setupWorkspace(s.T(), "Kingston University")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "Kingston-University.archive.zip"))
+	s.NoError(statErr, "spaces in workspace ID should be replaced with hyphens in archive filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_SpacesInProjectID_ReplacedWithHyphens() {
+	a := setupWorkspaceWithIDs(s.T(), "TestWorkspace", "My Project", "TestSystem")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "My Project"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "TestWorkspace-My-Project.archive.zip"))
+	s.NoError(statErr, "spaces in project ID should be replaced with hyphens in archive filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_SpacesInSystemID_ReplacedWithHyphens() {
+	a := setupWorkspaceWithIDs(s.T(), "TestWorkspace", "TestProject", "My System")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "TestProject"
+	opts.SystemID = "My System"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "TestWorkspace-TestProject-My-System.archive.zip"))
+	s.NoError(statErr, "spaces in system ID should be replaced with hyphens in archive filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_AllSegmentsWithSpaces_AllSanitized() {
+	a := setupWorkspaceWithIDs(s.T(), "Kingston University", "My Project", "My System")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "My Project"
+	opts.SystemID = "My System"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "Kingston-University-My-Project-My-System.archive.zip"))
+	s.NoError(statErr, "all three segments with spaces should produce a fully hyphenated filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_ProjectAndSystemIDAppended() {
+	// Regression: when both ProjectID and SystemID are set, both must appear in
+	// the filename (guards against the auto-resolve bug where SystemID was dropped).
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "TestProject"
+	opts.SystemID = "TestSystem"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "TestWorkspace-TestProject-TestSystem.archive.zip"))
+	s.NoError(statErr, "archive filename should include both project and system ID suffixes")
 }

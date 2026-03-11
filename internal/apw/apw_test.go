@@ -458,3 +458,343 @@ func (s *APWTestSuite) TestGetExtraFileReferences_EmptyWhenNoExtraRefs() {
 	s.Require().NoError(err)
 	s.Empty(refs)
 }
+
+// ---------------------------------------------------------------------------
+// Workspace.FindProject
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestFindProject_Found() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	proj, ok := a.Workspace().FindProject("TestProject")
+	s.True(ok)
+	s.Require().NotNil(proj)
+	s.Equal("TestProject", proj.Identifier)
+}
+
+func (s *APWTestSuite) TestFindProject_NotFound() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, ok := a.Workspace().FindProject("DoesNotExist")
+	s.False(ok)
+}
+
+// ---------------------------------------------------------------------------
+// Project.FindSystem
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestFindSystem_Found() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	proj, ok := a.Workspace().FindProject("TestProject")
+	s.Require().True(ok)
+
+	sys, ok := proj.FindSystem("TestSystem")
+	s.True(ok)
+	s.Require().NotNil(sys)
+	s.Equal("TestSystem", sys.Identifier)
+}
+
+func (s *APWTestSuite) TestFindSystem_NotFound() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	proj, ok := a.Workspace().FindProject("TestProject")
+	s.Require().True(ok)
+
+	_, ok = proj.FindSystem("DoesNotExist")
+	s.False(ok)
+}
+
+// ---------------------------------------------------------------------------
+// FindSystemAcrossProjects
+// ---------------------------------------------------------------------------
+
+// twoProjectAPW returns APW XML with two projects that each contain a system
+// named "SharedSystem", plus one system "UniqueSystem" only in ProjectA.
+func twoProjectAPW() []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>TwoProjectWorkspace</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>ProjectA</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SharedSystem</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainA</Identifier>
+                <FilePathName>Source\MainA.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+        <System IsActive="false" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>UniqueSystem</Identifier>
+            <SysID>2</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainUnique</Identifier>
+                <FilePathName>Source\MainUnique.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+    <Project>
+        <Identifier>ProjectB</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SharedSystem</Identifier>
+            <SysID>3</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainB</Identifier>
+                <FilePathName>Source\MainB.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+func (s *APWTestSuite) TestFindSystemAcrossProjects_UniqueMatch() {
+	_, apwPath := writeAPW(s.T(), "TwoProjectWorkspace.apw", twoProjectAPW())
+	a, err := Parse(apwPath, twoProjectAPW())
+	s.Require().NoError(err)
+
+	matches := a.FindSystemAcrossProjects("UniqueSystem")
+	s.Len(matches, 1)
+	s.Equal("ProjectA", matches[0].ProjectID)
+}
+
+func (s *APWTestSuite) TestFindSystemAcrossProjects_AmbiguousMatch() {
+	_, apwPath := writeAPW(s.T(), "TwoProjectWorkspace.apw", twoProjectAPW())
+	a, err := Parse(apwPath, twoProjectAPW())
+	s.Require().NoError(err)
+
+	matches := a.FindSystemAcrossProjects("SharedSystem")
+	s.Len(matches, 2)
+
+	projectIDs := []string{matches[0].ProjectID, matches[1].ProjectID}
+	s.Contains(projectIDs, "ProjectA")
+	s.Contains(projectIDs, "ProjectB")
+}
+
+func (s *APWTestSuite) TestFindSystemAcrossProjects_NotFound() {
+	_, apwPath := writeAPW(s.T(), "TwoProjectWorkspace.apw", twoProjectAPW())
+	a, err := Parse(apwPath, twoProjectAPW())
+	s.Require().NoError(err)
+
+	matches := a.FindSystemAcrossProjects("DoesNotExist")
+	s.Empty(matches)
+}
+
+// ---------------------------------------------------------------------------
+// ScopedWorkspace
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestScopedWorkspace_NoScope_ReturnsFullWorkspace() {
+	_, apwPath := writeAPW(s.T(), "TwoProjectWorkspace.apw", twoProjectAPW())
+	a, err := Parse(apwPath, twoProjectAPW())
+	s.Require().NoError(err)
+
+	ws, err := a.ScopedWorkspace("", "")
+	s.Require().NoError(err)
+	s.Len(ws.Projects, 2)
+}
+
+func (s *APWTestSuite) TestScopedWorkspace_ProjectScope_OnlyTargetProject() {
+	_, apwPath := writeAPW(s.T(), "TwoProjectWorkspace.apw", twoProjectAPW())
+	a, err := Parse(apwPath, twoProjectAPW())
+	s.Require().NoError(err)
+
+	ws, err := a.ScopedWorkspace("ProjectA", "")
+	s.Require().NoError(err)
+	s.Require().Len(ws.Projects, 1)
+	s.Equal("ProjectA", ws.Projects[0].Identifier)
+	// All systems in ProjectA are present (SharedSystem + UniqueSystem)
+	s.Len(ws.Projects[0].Systems, 2)
+}
+
+func (s *APWTestSuite) TestScopedWorkspace_SystemScope_OnlyTargetSystem() {
+	_, apwPath := writeAPW(s.T(), "TwoProjectWorkspace.apw", twoProjectAPW())
+	a, err := Parse(apwPath, twoProjectAPW())
+	s.Require().NoError(err)
+
+	ws, err := a.ScopedWorkspace("ProjectA", "UniqueSystem")
+	s.Require().NoError(err)
+	s.Require().Len(ws.Projects, 1)
+	s.Equal("ProjectA", ws.Projects[0].Identifier)
+	s.Require().Len(ws.Projects[0].Systems, 1)
+	s.Equal("UniqueSystem", ws.Projects[0].Systems[0].Identifier)
+}
+
+func (s *APWTestSuite) TestScopedWorkspace_DoesNotMutateOriginal() {
+	_, apwPath := writeAPW(s.T(), "TwoProjectWorkspace.apw", twoProjectAPW())
+	a, err := Parse(apwPath, twoProjectAPW())
+	s.Require().NoError(err)
+
+	_, err = a.ScopedWorkspace("ProjectA", "UniqueSystem")
+	s.Require().NoError(err)
+
+	// Original workspace must still have 2 projects, and ProjectA must still
+	// have 2 systems.
+	s.Len(a.Workspace().Projects, 2)
+	proj, ok := a.Workspace().FindProject("ProjectA")
+	s.Require().True(ok)
+	s.Len(proj.Systems, 2)
+}
+
+func (s *APWTestSuite) TestScopedWorkspace_UnknownProject_ReturnsError() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.ScopedWorkspace("NoSuchProject", "")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrProjectNotFound)
+}
+
+func (s *APWTestSuite) TestScopedWorkspace_UnknownSystem_ReturnsError() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.ScopedWorkspace("TestProject", "NoSuchSystem")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrSystemNotFound)
+}
+
+// ---------------------------------------------------------------------------
+// FilesForProject
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestFilesForProject_ReturnsProjectFiles() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	files, err := a.FilesForProject("TestProject")
+	s.Require().NoError(err)
+	// minimalAPW has 3 files in TestProject
+	s.Len(files, 3)
+}
+
+func (s *APWTestSuite) TestFilesForProject_SortedByPath() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	files, err := a.FilesForProject("TestProject")
+	s.Require().NoError(err)
+
+	for i := 1; i < len(files); i++ {
+		s.LessOrEqual(files[i-1].Path, files[i].Path, "FilesForProject should be sorted by path")
+	}
+}
+
+func (s *APWTestSuite) TestFilesForProject_UnknownProject_ReturnsError() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.FilesForProject("NoSuchProject")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrProjectNotFound)
+}
+
+// ---------------------------------------------------------------------------
+// FilesForSystem
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestFilesForSystem_ReturnsSystemFiles() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	files, err := a.FilesForSystem("TestProject", "TestSystem")
+	s.Require().NoError(err)
+	s.Len(files, 3)
+}
+
+func (s *APWTestSuite) TestFilesForSystem_UnknownProject_ReturnsError() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.FilesForSystem("NoSuchProject", "TestSystem")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrProjectNotFound)
+}
+
+func (s *APWTestSuite) TestFilesForSystem_UnknownSystem_ReturnsError() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.FilesForSystem("TestProject", "NoSuchSystem")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrSystemNotFound)
+}
+
+// ---------------------------------------------------------------------------
+// GetExtraFileReferencesForProject / GetExtraFileReferencesForSystem
+// ---------------------------------------------------------------------------
+
+func (s *APWTestSuite) TestGetExtraFileReferencesForProject_UnknownProject() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.GetExtraFileReferencesForProject("NoSuchProject")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrProjectNotFound)
+}
+
+func (s *APWTestSuite) TestGetExtraFileReferencesForProject_EmptyWhenFilesAbsent() {
+	// Workspace files don't exist on disk → collectExtraRefs skips them.
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	refs, err := a.GetExtraFileReferencesForProject("TestProject")
+	s.Require().NoError(err)
+	s.Empty(refs)
+}
+
+func (s *APWTestSuite) TestGetExtraFileReferencesForSystem_UnknownSystem() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	_, err = a.GetExtraFileReferencesForSystem("TestProject", "NoSuchSystem")
+	s.Require().Error(err)
+	s.ErrorIs(err, ErrSystemNotFound)
+}
+
+func (s *APWTestSuite) TestGetExtraFileReferencesForSystem_EmptyWhenFilesAbsent() {
+	_, apwPath := writeAPW(s.T(), "TestWorkspace.apw", minimalAPW())
+	a, err := Parse(apwPath, minimalAPW())
+	s.Require().NoError(err)
+
+	refs, err := a.GetExtraFileReferencesForSystem("TestProject", "TestSystem")
+	s.Require().NoError(err)
+	s.Empty(refs)
+}

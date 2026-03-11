@@ -25,6 +25,18 @@ func (p *Project) AddSystem(s *System) *System {
 	return s
 }
 
+// FindSystem returns the first system whose Identifier matches id,
+// or (nil, false) if no match is found.
+func (p *Project) FindSystem(id string) (*System, bool) {
+	for _, s := range p.Systems {
+		if s.Identifier == id {
+			return s, true
+		}
+	}
+
+	return nil, false
+}
+
 // RemoveSystem removes the first system whose Identifier matches id.
 // Returns true if a system was removed, false if no match was found.
 func (p *Project) RemoveSystem(id string) bool {

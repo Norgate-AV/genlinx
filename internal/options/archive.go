@@ -21,6 +21,11 @@ type ArchiveCLIOptions struct {
 	ExtraFileSearchLocations []string
 	All                      bool
 	Verbose                  bool
+	// ProjectID, when non-empty, restricts the archive to a single project.
+	ProjectID string
+	// SystemID, when non-empty, further restricts the archive to a single system
+	// within the named project (ProjectID must also be set).
+	SystemID string
 }
 
 // LoadArchiveOptions loads and merges archive options from defaults, global
@@ -85,6 +90,14 @@ func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLo
 
 	if cliOpts.Verbose {
 		opts.Verbose = true
+	}
+
+	if cliOpts.ProjectID != "" {
+		opts.ProjectID = cliOpts.ProjectID
+	}
+
+	if cliOpts.SystemID != "" {
+		opts.SystemID = cliOpts.SystemID
 	}
 
 	return opts, configInfo, nil

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -29,6 +30,8 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 	outputFileSuffix, _ := cmd.Flags().GetString("output-file-suffix")
 	extraSearchLocations, _ := cmd.Flags().GetStringSlice("extra-file-search-locations")
 	all, _ := cmd.Flags().GetBool("all")
+	projectID, _ := cmd.Flags().GetString("project")
+	systemID, _ := cmd.Flags().GetString("system")
 
 	// Build a ExplicitBoolFlags map so LoadArchiveOptions can distinguish "user set this
 	// flag" from "Cobra zero-value default".
@@ -47,7 +50,9 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 		ExtraFileSearchLocations: extraSearchLocations,
 		All:                      all,
 		Verbose:                  verbose,
-		ExplicitBoolFlags:                  ExplicitBoolFlags,
+		ExplicitBoolFlags:        ExplicitBoolFlags,
+		ProjectID:                projectID,
+		SystemID:                 systemID,
 	}
 
 	opts, configInfo, err := options.LoadArchiveOptions(cliOpts)
@@ -126,7 +131,37 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
-		builder := archive.NewBuilder(workspace, opts)
+		// Resolve --system ambiguity against the parsed workspace.
+		// After this block opts always has both ProjectID and SystemID set
+		// (or just ProjectID, or neither) — never SystemID alone.
+		buildOpts := *opts
+		if systemID != "" && projectID == "" {
+			matches := workspace.FindSystemAcrossProjects(systemID)
+			switch len(matches) {
+			case 0:
+				color.Red("System %q not found in workspace %s.", systemID, workspaceFile)
+				continue
+			case 1:
+				buildOpts.ProjectID = matches[0].ProjectID
+				buildOpts.SystemID = systemID
+			default:
+				projectNames := make([]string, len(matches))
+				for i, m := range matches {
+					projectNames[i] = m.ProjectID
+				}
+
+				color.Red(
+					"System %q exists in multiple projects in %s: %s. Use --project to disambiguate.",
+					systemID,
+					workspaceFile,
+					strings.Join(projectNames, ", "),
+				)
+
+				continue
+			}
+		}
+
+		builder := archive.NewBuilder(workspace, &buildOpts)
 		if err := builder.Build(); err != nil {
 			color.Red("Error building archive for %s: %v", workspaceFile, err)
 			continue
@@ -147,6 +182,8 @@ func init() {
 	archiveCmd.Flags().BoolP("no-include-files-not-in-workspace", "N", false, "do not include files not in workspace")
 	archiveCmd.Flags().StringSliceP("extra-file-search-locations", "l", []string{}, "extra file locations to search")
 	archiveCmd.Flags().BoolP("all", "a", false, "process all found workspace files without prompting")
+	archiveCmd.Flags().StringP("project", "p", "", "restrict archive to the named project within the workspace")
+	archiveCmd.Flags().StringP("system", "y", "", "restrict archive to a single named system (auto-resolved; use --project to disambiguate if the name is not unique)")
 
 	archiveCmd.MarkFlagsMutuallyExclusive("include-compiled-source-files", "no-include-compiled-source-files")
 	archiveCmd.MarkFlagsMutuallyExclusive("include-compiled-module-files", "no-include-compiled-module-files")

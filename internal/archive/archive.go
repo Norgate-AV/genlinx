@@ -23,6 +23,13 @@ var (
 	logRed   = color.New(color.FgRed)
 )
 
+// sanitizeSegment replaces spaces with hyphens so that archive filenames are
+// shell-friendly. It is applied only to each segment of the output filename;
+// nothing inside the archive (file paths, APW content) is affected.
+func sanitizeSegment(s string) string {
+	return strings.ReplaceAll(s, " ", "-")
+}
+
 // Options configures the archive build process, merging config file values with
 // CLI flags.
 type Options struct {
@@ -34,6 +41,11 @@ type Options struct {
 	All                        bool
 	IgnoredFiles               []string
 	Verbose                    bool
+	// ProjectID, when non-empty, restricts the archive to files in this project.
+	ProjectID string
+	// SystemID, when non-empty (and ProjectID is set), further restricts the
+	// archive to files in this system within the named project.
+	SystemID string
 }
 
 // Builder creates a zip archive from a parsed APW workspace.
@@ -61,7 +73,15 @@ func NewBuilder(workspace *apw.APW, opts *Options) *Builder {
 func (b *Builder) Build() error {
 	b.logVerbose(logBlue, "Creating archive...")
 
-	outputFile := fmt.Sprintf("%s.%s", b.apw.ID(), b.opts.OutputFileSuffix)
+	outputName := sanitizeSegment(b.apw.ID())
+	if b.opts.ProjectID != "" {
+		outputName += "-" + sanitizeSegment(b.opts.ProjectID)
+	}
+	if b.opts.SystemID != "" {
+		outputName += "-" + sanitizeSegment(b.opts.SystemID)
+	}
+
+	outputFile := fmt.Sprintf("%s.%s", outputName, b.opts.OutputFileSuffix)
 
 	f, err := os.Create(outputFile)
 	if err != nil {
@@ -82,8 +102,16 @@ func (b *Builder) Build() error {
 		return err
 	}
 
-	// Marshal the workspace with rewritten flat paths and write it to the archive.
-	apwData, err := b.apw.Bytes()
+	// Marshal a scoped copy of the workspace — only the targeted project/system
+	// is included so the APW in the archive is self-consistent with its contents.
+	scopedWS, err := b.apw.ScopedWorkspace(b.opts.ProjectID, b.opts.SystemID)
+	if err != nil {
+		_ = b.zipWriter.Close()
+		_ = f.Close()
+		return fmt.Errorf("failed to scope workspace: %w", err)
+	}
+
+	apwData, err := apw.Marshal(scopedWS)
 	if err != nil {
 		_ = b.zipWriter.Close()
 		_ = f.Close()
@@ -264,11 +292,34 @@ func (b *Builder) addFileToArchive(file apw.File) error {
 // rewrites the FileRef path to just the filename so the marshalled .apw
 // written at the end of Build() reflects the flat layout NetLinx Studio
 // expects after extraction.
+//
+// When b.opts.ProjectID is set, only that project is processed. When
+// b.opts.SystemID is also set, only that system within the project is processed.
 func (b *Builder) addWorkspaceFiles() error {
 	workspaceDir := filepath.Dir(b.apw.FilePath())
 
-	for _, proj := range b.apw.Workspace().Projects {
-		for _, sys := range proj.Systems {
+	projects := b.apw.Workspace().Projects
+	if b.opts.ProjectID != "" {
+		proj, ok := b.apw.Workspace().FindProject(b.opts.ProjectID)
+		if !ok {
+			return fmt.Errorf("project %q not found in workspace", b.opts.ProjectID)
+		}
+
+		projects = []*apw.Project{proj}
+	}
+
+	for _, proj := range projects {
+		systems := proj.Systems
+		if b.opts.SystemID != "" {
+			sys, ok := proj.FindSystem(b.opts.SystemID)
+			if !ok {
+				return fmt.Errorf("system %q not found in project %q", b.opts.SystemID, proj.Identifier)
+			}
+
+			systems = []*apw.System{sys}
+		}
+
+		for _, sys := range systems {
 			for _, fr := range sys.Files {
 				relPath := filepath.FromSlash(strings.ReplaceAll(fr.FilePathName, `\`, `/`))
 				diskPath := filepath.Join(workspaceDir, relPath)
@@ -438,7 +489,20 @@ func (b *Builder) addExtraFiles() error {
 
 	b.logVerbose(logBlue, "Searching for extra files that are not part of the workspace...")
 
-	refs, err := b.apw.GetExtraFileReferences()
+	var (
+		refs []string
+		err  error
+	)
+
+	switch {
+	case b.opts.ProjectID != "" && b.opts.SystemID != "":
+		refs, err = b.apw.GetExtraFileReferencesForSystem(b.opts.ProjectID, b.opts.SystemID)
+	case b.opts.ProjectID != "":
+		refs, err = b.apw.GetExtraFileReferencesForProject(b.opts.ProjectID)
+	default:
+		refs, err = b.apw.GetExtraFileReferences()
+	}
+
 	if err != nil {
 		return err
 	}
