@@ -6,6 +6,46 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
+        "core": {
+            "description": "Global/editor settings",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "editor": {
+                    "description": "Editor command used by 'genlinx config --edit' (e.g. 'code --wait', 'vim')",
+                    "type": "string"
+                }
+            }
+        },
+        "nlrc": {
+            "description": "NetLinx Run Compiler (NLRC) settings shared by the 'build' and 'cfg' commands",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "path": {
+                    "description": "Path to the NLRC executable",
+                    "type": "string"
+                },
+                "includePath": {
+                    "description": "Additional include paths passed to NLRC",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "modulePath": {
+                    "description": "Additional module paths passed to NLRC",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "libraryPath": {
+                    "description": "Additional library paths passed to NLRC",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                }
+            }
+        },
         "cfg": {
             "description": "Options for the 'cfg' command (NetLinx build CFG file generation)",
             "type": "object",
@@ -37,24 +77,6 @@
                 "buildWithSource": {
                     "description": "Include source files in compiled output",
                     "type": "boolean"
-                },
-                "includePath": {
-                    "description": "Additional include paths for the NetLinx compiler",
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "uniqueItems": true
-                },
-                "modulePath": {
-                    "description": "Additional module paths for the NetLinx compiler",
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "uniqueItems": true
-                },
-                "libraryPath": {
-                    "description": "Additional library paths for the NetLinx compiler",
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "uniqueItems": true
                 },
                 "all": {
                     "description": "Automatically select all workspace files without prompting",
@@ -107,35 +129,6 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "nlrc": {
-                    "description": "NetLinx Resource Compiler (NLRC) settings",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "path": {
-                            "description": "Path to the NLRC executable",
-                            "type": "string"
-                        },
-                        "includePath": {
-                            "description": "Additional include paths passed to NLRC",
-                            "type": "array",
-                            "items": { "type": "string" },
-                            "uniqueItems": true
-                        },
-                        "modulePath": {
-                            "description": "Additional module paths passed to NLRC",
-                            "type": "array",
-                            "items": { "type": "string" },
-                            "uniqueItems": true
-                        },
-                        "libraryPath": {
-                            "description": "Additional library paths passed to NLRC",
-                            "type": "array",
-                            "items": { "type": "string" },
-                            "uniqueItems": true
-                        }
-                    }
-                },
                 "all": {
                     "description": "Automatically select all workspace files without prompting",
                     "type": "boolean"

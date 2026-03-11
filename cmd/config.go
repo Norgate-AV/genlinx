@@ -196,14 +196,18 @@ func loadConfigResult(global, local bool) (options.ConfigLoadResult, string, err
 
 // resolveEditor returns the editor to use.
 // Resolution order: $VISUAL → $EDITOR (honoured as-is, user's explicit choice)
-// → first available fallback found on PATH.
+// → core.editor from the genlinx config → first available fallback found on PATH.
 // Returns an error when no fallback is found, directing the user to set $EDITOR.
-//
-// TODO(future): also honour a "core.editor" key from the genlinx config file,
-// inserting it between the env-var check and the PATH fallbacks
 func resolveEditor() (string, error) {
 	for _, env := range []string{"VISUAL", "EDITOR"} {
 		if e := os.Getenv(env); e != "" {
+			return e, nil
+		}
+	}
+
+	// Honour core.editor from the merged genlinx config file.
+	if mergedCfg, _, err := options.LoadMergedConfig(); err == nil {
+		if e := mergedCfg.Core.Editor; e != "" {
 			return e, nil
 		}
 	}

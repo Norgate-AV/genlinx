@@ -51,13 +51,11 @@ func TestGetByDottedKey_TopLevel(t *testing.T) {
 
 func TestGetByDottedKey_Nested(t *testing.T) {
 	m := map[string]any{
-		"build": map[string]any{
-			"nlrc": map[string]any{
-				"path": "/usr/bin/nlrc",
-			},
+		"nlrc": map[string]any{
+			"path": "/usr/bin/nlrc",
 		},
 	}
-	v, ok := getByDottedKey(m, "build.nlrc.path")
+	v, ok := getByDottedKey(m, "nlrc.path")
 	assert.True(t, ok)
 	assert.Equal(t, "/usr/bin/nlrc", v)
 }
@@ -303,8 +301,7 @@ func TestConfigGet_ExistingKey_PrintsValue(t *testing.T) {
 	require.NoError(t, os.Chdir(dir))
 
 	out := captureStdout(t, func() {
-		err := configGet("build.nlrc.path", false, false)
-		require.NoError(t, err)
+		require.NoError(t, configGet("nlrc.path", false, false))
 	})
 
 	// Default NLRC path is non-empty; output should be the path value.
@@ -330,7 +327,7 @@ func TestConfigGet_GlobalNotFound(t *testing.T) {
 	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
 
 	out := captureStdout(t, func() {
-		err := configGet("build.nlrc.path", true, false)
+		err := configGet("nlrc.path", true, false)
 		require.NoError(t, err)
 	})
 
@@ -359,19 +356,16 @@ func captureStdout(t *testing.T, fn func()) string {
 	return string(out)
 }
 
-// requireBuildNLRC is a helper that walks the parsed JSON map down to the
-// build.nlrc object, failing the test if any step is missing.
-func requireBuildNLRC(t *testing.T, out string) map[string]any {
+// requireNLRC is a helper that walks the parsed JSON map down to the
+// nlrc object, failing the test if it is missing.
+func requireNLRC(t *testing.T, out string) map[string]any {
 	t.Helper()
 
 	var m map[string]any
 	require.NoError(t, json.Unmarshal([]byte(out), &m), "output must be valid JSON")
 
-	build, ok := m["build"].(map[string]any)
-	require.True(t, ok, "build key must be present, got: %s", out)
-
-	nlrc, ok := build["nlrc"].(map[string]any)
-	require.True(t, ok, "nlrc key must be present")
+	nlrc, ok := m["nlrc"].(map[string]any)
+	require.True(t, ok, "nlrc key must be present, got: %s", out)
 
 	return nlrc
 }
@@ -380,11 +374,11 @@ func requireBuildNLRC(t *testing.T, out string) map[string]any {
 func TestPrintRawFileConfig_JSON(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".genlinxrc.json")
-	require.NoError(t, os.WriteFile(path, []byte(`{"build":{"nlrc":{"includePath":["./include"]}}}`), 0o644))
+	require.NoError(t, os.WriteFile(path, []byte(`{"nlrc":{"includePath":["./include"]}}`), 0o644))
 
 	out := captureStdout(t, func() { printRawFileConfig(path) })
 
-	nlrc := requireBuildNLRC(t, out)
+	nlrc := requireNLRC(t, out)
 	paths, ok := nlrc["includePath"].([]any)
 	require.True(t, ok, "includePath key must be present (camelCase preserved)")
 	assert.Equal(t, "./include", paths[0])
@@ -395,14 +389,14 @@ func TestPrintRawFileConfig_JSON(t *testing.T) {
 func TestPrintRawFileConfig_YAML(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".genlinxrc.yaml")
-	content := "build:\n  nlrc:\n    includePath:\n      - ./include\n    modulePath:\n      - ./module\n"
+	content := "nlrc:\n  includePath:\n    - ./include\n  modulePath:\n    - ./module\n"
 	require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
 
 	out := captureStdout(t, func() { printRawFileConfig(path) })
 
 	assert.NotEqual(t, "{}", strings.TrimSpace(out), "YAML file must not produce empty output")
 
-	nlrc := requireBuildNLRC(t, out)
+	nlrc := requireNLRC(t, out)
 	paths, ok := nlrc["includePath"].([]any)
 	require.True(t, ok, "includePath key must be present (camelCase preserved)")
 	assert.Equal(t, "./include", paths[0])
@@ -416,12 +410,12 @@ func TestPrintRawFileConfig_YAML(t *testing.T) {
 func TestPrintRawFileConfig_YML(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".genlinxrc.yml")
-	require.NoError(t, os.WriteFile(path, []byte("build:\n  nlrc:\n    includePath:\n      - ./include\n"), 0o644))
+	require.NoError(t, os.WriteFile(path, []byte("nlrc:\n  includePath:\n    - ./include\n"), 0o644))
 
 	out := captureStdout(t, func() { printRawFileConfig(path) })
 
 	assert.NotEqual(t, "{}", strings.TrimSpace(out))
-	nlrc := requireBuildNLRC(t, out)
+	nlrc := requireNLRC(t, out)
 	paths, ok := nlrc["includePath"].([]any)
 	require.True(t, ok, "includePath key must be present (camelCase preserved)")
 	assert.Equal(t, "./include", paths[0])

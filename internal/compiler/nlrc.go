@@ -23,7 +23,7 @@ const (
 // logPattern matches the NLRC compiler log prefix: "ERROR: ..." or "WARNING: ..."
 var logPattern = regexp.MustCompile(`(ERROR|WARNING): .+`)
 
-// Compiler represents a NetLinx compiler
+// Compiler represents a NetLinx Run Compiler (NLRC)
 type Compiler interface {
 	Compile(options CompileOptions) (*CompileResult, error)
 }
@@ -48,13 +48,13 @@ type CompileResult struct {
 	ExitCode int
 }
 
-// NLRCCompiler implements the Compiler interface for NetLinx compiler
+// NLRCCompiler implements the Compiler interface for the NetLinx Run Compiler (NLRC)
 type NLRCCompiler struct {
 	ExecutablePath string
 	env            []string // override subprocess environment (tests only; nil = inherit)
 }
 
-// NewNLRCCompiler creates a new NLRC compiler instance
+// NewNLRCCompiler creates a new NetLinx Run Compiler (NLRC) instance
 func NewNLRCCompiler(executablePath string) *NLRCCompiler {
 	return &NLRCCompiler{
 		ExecutablePath: executablePath,

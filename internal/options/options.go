@@ -319,32 +319,20 @@ func resolveConfigPaths(cfg *config.Config) error {
 
 	var err error
 
-	if cfg.Build.NLRC.Path, err = abs(cfg.Build.NLRC.Path); err != nil {
-		return fmt.Errorf("build.nlrc.path: %w", err)
+	if cfg.NLRC.Path, err = abs(cfg.NLRC.Path); err != nil {
+		return fmt.Errorf("nlrc.path: %w", err)
 	}
 
-	if err = absSlice(cfg.Build.NLRC.IncludePath); err != nil {
-		return fmt.Errorf("build.nlrc.includePath: %w", err)
+	if err = absSlice(cfg.NLRC.IncludePath); err != nil {
+		return fmt.Errorf("nlrc.includePath: %w", err)
 	}
 
-	if err = absSlice(cfg.Build.NLRC.ModulePath); err != nil {
-		return fmt.Errorf("build.nlrc.modulePath: %w", err)
+	if err = absSlice(cfg.NLRC.ModulePath); err != nil {
+		return fmt.Errorf("nlrc.modulePath: %w", err)
 	}
 
-	if err = absSlice(cfg.Build.NLRC.LibraryPath); err != nil {
-		return fmt.Errorf("build.nlrc.libraryPath: %w", err)
-	}
-
-	if err = absSlice(cfg.CFG.IncludePath); err != nil {
-		return fmt.Errorf("cfg.includePath: %w", err)
-	}
-
-	if err = absSlice(cfg.CFG.ModulePath); err != nil {
-		return fmt.Errorf("cfg.modulePath: %w", err)
-	}
-
-	if err = absSlice(cfg.CFG.LibraryPath); err != nil {
-		return fmt.Errorf("cfg.libraryPath: %w", err)
+	if err = absSlice(cfg.NLRC.LibraryPath); err != nil {
+		return fmt.Errorf("nlrc.libraryPath: %w", err)
 	}
 
 	if err = absSlice(cfg.Archive.ExtraFileSearchLocations); err != nil {
@@ -384,23 +372,24 @@ func mergeConfigsWithPresence(base *config.Config, overrides ...configMergeInput
 			continue
 		}
 
+		// Merge NLRC config
+		if cfg.NLRC.Path != "" {
+			result.NLRC.Path = cfg.NLRC.Path
+		}
+
+		if len(cfg.NLRC.IncludePath) > 0 {
+			result.NLRC.IncludePath = prependAndDeduplicate(result.NLRC.IncludePath, cfg.NLRC.IncludePath)
+		}
+
+		if len(cfg.NLRC.ModulePath) > 0 {
+			result.NLRC.ModulePath = prependAndDeduplicate(result.NLRC.ModulePath, cfg.NLRC.ModulePath)
+		}
+
+		if len(cfg.NLRC.LibraryPath) > 0 {
+			result.NLRC.LibraryPath = prependAndDeduplicate(result.NLRC.LibraryPath, cfg.NLRC.LibraryPath)
+		}
+
 		// Merge Build config
-		if cfg.Build.NLRC.Path != "" {
-			result.Build.NLRC.Path = cfg.Build.NLRC.Path
-		}
-
-		if len(cfg.Build.NLRC.IncludePath) > 0 {
-			result.Build.NLRC.IncludePath = prependAndDeduplicate(result.Build.NLRC.IncludePath, cfg.Build.NLRC.IncludePath)
-		}
-
-		if len(cfg.Build.NLRC.ModulePath) > 0 {
-			result.Build.NLRC.ModulePath = prependAndDeduplicate(result.Build.NLRC.ModulePath, cfg.Build.NLRC.ModulePath)
-		}
-
-		if len(cfg.Build.NLRC.LibraryPath) > 0 {
-			result.Build.NLRC.LibraryPath = prependAndDeduplicate(result.Build.NLRC.LibraryPath, cfg.Build.NLRC.LibraryPath)
-		}
-
 		if p.buildAll {
 			result.Build.All = cfg.Build.All
 		}
@@ -428,18 +417,6 @@ func mergeConfigsWithPresence(base *config.Config, overrides ...configMergeInput
 
 		if p.cfgBuildWithSource {
 			result.CFG.BuildWithSource = cfg.CFG.BuildWithSource
-		}
-
-		if len(cfg.CFG.IncludePath) > 0 {
-			result.CFG.IncludePath = prependAndDeduplicate(result.CFG.IncludePath, cfg.CFG.IncludePath)
-		}
-
-		if len(cfg.CFG.ModulePath) > 0 {
-			result.CFG.ModulePath = prependAndDeduplicate(result.CFG.ModulePath, cfg.CFG.ModulePath)
-		}
-
-		if len(cfg.CFG.LibraryPath) > 0 {
-			result.CFG.LibraryPath = prependAndDeduplicate(result.CFG.LibraryPath, cfg.CFG.LibraryPath)
 		}
 
 		if p.cfgAll {

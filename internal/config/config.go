@@ -6,23 +6,35 @@ import (
 
 // Config represents the application configuration
 type Config struct {
+	Core    CoreConfig    `mapstructure:"core"    json:"core"`
+	NLRC    NLRCConfig    `mapstructure:"nlrc"    json:"nlrc"`
 	CFG     CFGConfig     `mapstructure:"cfg"     json:"cfg"`
 	Archive ArchiveConfig `mapstructure:"archive" json:"archive"`
 	Build   BuildConfig   `mapstructure:"build"   json:"build"`
 }
 
+// CoreConfig holds global/editor settings
+type CoreConfig struct {
+	Editor string `mapstructure:"editor" json:"editor"`
+}
+
+// NLRCConfig represents NetLinx Run Compiler (NLRC) configuration shared by the build and cfg commands
+type NLRCConfig struct {
+	Path        string   `mapstructure:"path"        json:"path"`
+	IncludePath []string `mapstructure:"includePath" json:"includePath"`
+	ModulePath  []string `mapstructure:"modulePath"  json:"modulePath"`
+	LibraryPath []string `mapstructure:"libraryPath" json:"libraryPath"`
+}
+
 // CFGConfig represents CFG command configuration
 type CFGConfig struct {
-	OutputFile                string   `mapstructure:"outputFile"                json:"outputFile"`
-	OutputLogFile             string   `mapstructure:"outputLogFile"              json:"outputLogFile"`
-	OutputLogFileOption       string   `mapstructure:"outputLogFileOption"        json:"outputLogFileOption"`
-	OutputLogConsoleOption    bool     `mapstructure:"outputLogConsoleOption"     json:"outputLogConsoleOption"`
-	BuildWithDebugInformation bool     `mapstructure:"buildWithDebugInformation" json:"buildWithDebugInformation"`
-	BuildWithSource           bool     `mapstructure:"buildWithSource"            json:"buildWithSource"`
-	IncludePath               []string `mapstructure:"includePath"                json:"includePath"`
-	ModulePath                []string `mapstructure:"modulePath"                 json:"modulePath"`
-	LibraryPath               []string `mapstructure:"libraryPath"                json:"libraryPath"`
-	All                       bool     `mapstructure:"all"                        json:"all"`
+	OutputFile                string `mapstructure:"outputFile"                json:"outputFile"`
+	OutputLogFile             string `mapstructure:"outputLogFile"              json:"outputLogFile"`
+	OutputLogFileOption       string `mapstructure:"outputLogFileOption"        json:"outputLogFileOption"`
+	OutputLogConsoleOption    bool   `mapstructure:"outputLogConsoleOption"     json:"outputLogConsoleOption"`
+	BuildWithDebugInformation bool   `mapstructure:"buildWithDebugInformation" json:"buildWithDebugInformation"`
+	BuildWithSource           bool   `mapstructure:"buildWithSource"            json:"buildWithSource"`
+	All                       bool   `mapstructure:"all"                        json:"all"`
 }
 
 // ArchiveConfig represents archive command configuration
@@ -38,19 +50,22 @@ type ArchiveConfig struct {
 
 // BuildConfig represents build command configuration
 type BuildConfig struct {
-	NLRC NLRCConfig `mapstructure:"nlrc" json:"nlrc"`
-	All  bool       `mapstructure:"all"  json:"all"`
-}
-
-// NLRCConfig represents NetLinx compiler configuration
-type NLRCConfig struct {
-	Path        string   `mapstructure:"path"        json:"path"`
-	IncludePath []string `mapstructure:"includePath" json:"includePath"`
-	ModulePath  []string `mapstructure:"modulePath"  json:"modulePath"`
-	LibraryPath []string `mapstructure:"libraryPath" json:"libraryPath"`
+	All bool `mapstructure:"all" json:"all"`
 }
 
 var defaultConfig = Config{
+	NLRC: NLRCConfig{
+		Path: utils.NormalizePath("C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe"),
+		IncludePath: utils.NormalizePaths([]string{
+			"C:/Program Files (x86)/Common Files/AMXShare/AXIs",
+		}),
+		ModulePath: utils.NormalizePaths([]string{
+			"C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
+			"C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
+			"C:/Program Files (x86)/Common Files/AMXShare/Duet/module",
+		}),
+		LibraryPath: utils.NormalizePaths([]string{"C:/Program Files (x86)/Common Files/AMXShare/SYCs"}),
+	},
 	CFG: CFGConfig{
 		OutputFile:                "build.cfg",
 		OutputLogFile:             "build.log",
@@ -58,14 +73,7 @@ var defaultConfig = Config{
 		OutputLogConsoleOption:    true,
 		BuildWithDebugInformation: false,
 		BuildWithSource:           false,
-		IncludePath:               utils.NormalizePaths([]string{"C:/Program Files (x86)/Common Files/AMXShare/AXIs"}),
-		ModulePath: utils.NormalizePaths([]string{
-			"C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
-			"C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
-			"C:/Program Files (x86)/Common Files/AMXShare/Duet/module",
-		}),
-		LibraryPath: utils.NormalizePaths([]string{"C:/Program Files (x86)/Common Files/AMXShare/SYCs"}),
-		All:         false,
+		All:                       false,
 	},
 	Archive: ArchiveConfig{
 		OutputFile:                 "archive.zip",
@@ -92,37 +100,20 @@ var defaultConfig = Config{
 		},
 	},
 	Build: BuildConfig{
-		NLRC: NLRCConfig{
-			Path: utils.NormalizePath("C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe"),
-			IncludePath: utils.NormalizePaths([]string{
-				"C:/Program Files (x86)/Common Files/AMXShare/AXIs",
-			}),
-			ModulePath: utils.NormalizePaths([]string{
-				"C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
-				"C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
-				"C:/Program Files (x86)/Common Files/AMXShare/Duet/module",
-			}),
-			LibraryPath: utils.NormalizePaths([]string{"C:/Program Files (x86)/Common Files/AMXShare/SYCs"}),
-		},
 		All: false,
 	},
 }
 
 // NormalizeConfigPaths normalizes all paths in the configuration to OS-specific format
 func NormalizeConfigPaths(config *Config) {
-	// Normalize CFG paths
-	config.CFG.IncludePath = utils.NormalizePaths(config.CFG.IncludePath)
-	config.CFG.ModulePath = utils.NormalizePaths(config.CFG.ModulePath)
-	config.CFG.LibraryPath = utils.NormalizePaths(config.CFG.LibraryPath)
+	// Normalize NLRC paths
+	config.NLRC.Path = utils.NormalizePath(config.NLRC.Path)
+	config.NLRC.IncludePath = utils.NormalizePaths(config.NLRC.IncludePath)
+	config.NLRC.ModulePath = utils.NormalizePaths(config.NLRC.ModulePath)
+	config.NLRC.LibraryPath = utils.NormalizePaths(config.NLRC.LibraryPath)
 
 	// Normalize Archive paths
 	config.Archive.ExtraFileSearchLocations = utils.NormalizePaths(config.Archive.ExtraFileSearchLocations)
-
-	// Normalize Build paths
-	config.Build.NLRC.Path = utils.NormalizePath(config.Build.NLRC.Path)
-	config.Build.NLRC.IncludePath = utils.NormalizePaths(config.Build.NLRC.IncludePath)
-	config.Build.NLRC.ModulePath = utils.NormalizePaths(config.Build.NLRC.ModulePath)
-	config.Build.NLRC.LibraryPath = utils.NormalizePaths(config.Build.NLRC.LibraryPath)
 }
 
 // LoadDefaultConfig returns the default configuration

@@ -68,10 +68,10 @@ func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, erro
 
 	// Create build options from merged config
 	opts := &BuildOptions{
-		IncludePath: mergedCfg.Build.NLRC.IncludePath,
-		ModulePath:  mergedCfg.Build.NLRC.ModulePath,
-		LibraryPath: mergedCfg.Build.NLRC.LibraryPath,
-		NLRCPath:    mergedCfg.Build.NLRC.Path,
+		IncludePath: mergedCfg.NLRC.IncludePath,
+		ModulePath:  mergedCfg.NLRC.ModulePath,
+		LibraryPath: mergedCfg.NLRC.LibraryPath,
+		NLRCPath:    mergedCfg.NLRC.Path,
 		All:         mergedCfg.Build.All,
 	}
 
