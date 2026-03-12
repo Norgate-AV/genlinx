@@ -91,6 +91,7 @@ func (b *Builder) writeBlankLine() {
 // ---------------------------------------------------------------------------
 
 func (b *Builder) convertToComment(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
 	lines := strings.Split(text, "\n")
 	result := make([]string, len(lines))
 
