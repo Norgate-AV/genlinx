@@ -1,10 +1,22 @@
 {
   "name": "${node_pkg}",
   "version": "${version}",
+  "description": "The ${node_os}-${node_arch} binary for @norgate-av/genlinx",
+  "license": "MIT",
   "os": [
     "${node_os}"
   ],
   "cpu": [
     "${node_arch}"
-  ]
+  ],
+  "bin": {
+    "genlinx": "${binary}"
+  },
+  "files": [
+    "${binary}"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Norgate-AV/genlinx.git"
+  }
 }
