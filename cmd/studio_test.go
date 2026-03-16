@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -87,4 +88,37 @@ func (s *StudioBackupOutputSuite) TestFullContentStartsWithXMLHeader() {
 func (s *StudioBackupOutputSuite) TestFullContentEndsWithNewline() {
 	assert.True(s.T(), strings.HasSuffix(string(s.fullContent()), "\n"),
 		"backup file must end with a trailing newline")
+}
+
+// ---------------------------------------------------------------------------
+// defaultBackupFilename
+// ---------------------------------------------------------------------------
+
+type DefaultBackupFilenameSuite struct{ suite.Suite }
+
+func TestDefaultBackupFilenameSuite(t *testing.T) {
+	suite.Run(t, new(DefaultBackupFilenameSuite))
+}
+
+func (s *DefaultBackupFilenameSuite) TestHasEPXExtension() {
+	name := time.Now().Format("netlinx-studio-backup-2006-01-02-150405") + ".epx"
+	assert.True(s.T(), strings.HasSuffix(name, ".epx"),
+		"default filename must end with .epx")
+}
+
+func (s *DefaultBackupFilenameSuite) TestHasPrefix() {
+	name := time.Now().Format("netlinx-studio-backup-2006-01-02-150405") + ".epx"
+	assert.True(s.T(), strings.HasPrefix(name, "netlinx-studio-backup-"),
+		"default filename must start with 'netlinx-studio-backup-'")
+}
+
+func (s *DefaultBackupFilenameSuite) TestContainsDateAndTime() {
+	now := time.Now()
+	name := now.Format("netlinx-studio-backup-2006-01-02-150405") + ".epx"
+	// Date portion e.g. "2026-03-16"
+	assert.Contains(s.T(), name, now.Format("2006-01-02"),
+		"default filename must contain the current date")
+	// Time portion e.g. "150405" (HHmmss)
+	assert.Contains(s.T(), name, now.Format("150405"),
+		"default filename must contain the current time to second precision")
 }

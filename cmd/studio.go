@@ -31,7 +31,7 @@ using NetLinx Studio's native File > Import Preferences option.`,
 
 		output, _ := cmd.Flags().GetString("output")
 		if output == "" {
-			output = time.Now().Format("2006-01-02-1504") + ".epx"
+			output = time.Now().Format("netlinx-studio-backup-2006-01-02-150405") + ".epx"
 		}
 
 		fmt.Println("Reading NetLinx Studio settings from registry...")
