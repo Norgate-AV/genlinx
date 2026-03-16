@@ -78,6 +78,7 @@ func readSubKeyValues(parent registry.Key, subKey string, dest map[string]any) e
 	if err != nil {
 		return nil
 	}
+
 	defer func() { _ = k.Close() }()
 
 	names, err := k.ReadValueNames(0)

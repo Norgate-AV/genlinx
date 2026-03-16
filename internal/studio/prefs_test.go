@@ -108,6 +108,7 @@ func (s *TCPIPHistoryXMLSuite) TestMarshalUsesIndexedElementNames() {
 			{Host: "10.0.0.1", Port: 1319, PingTest: false, Name: "B"},
 		},
 	}
+
 	data, err := xml.Marshal(h)
 	s.Require().NoError(err)
 	xmlStr := string(data)
@@ -130,6 +131,7 @@ func (s *TCPIPHistoryXMLSuite) TestUnmarshalRoundTrip() {
 			{Host: "10.0.0.1", Port: 1319, PingTest: false, Name: "B"},
 		},
 	}
+
 	data, err := xml.Marshal(original)
 	s.Require().NoError(err)
 
@@ -180,6 +182,7 @@ func (s *NetlinxCompilerSettingsXMLSuite) TestMarshalProducesZeroPaddedDirElemen
 		IncludeDirs:     []string{`C:\inc\a`},
 		ModuleDirs:      []string{},
 	}
+
 	data, err := xml.Marshal(cs)
 	s.Require().NoError(err)
 	xmlStr := string(data)
@@ -199,6 +202,7 @@ func (s *NetlinxCompilerSettingsXMLSuite) TestMarshalFixedFieldsPresent() {
 		ShowDebugWindowOnSessionClose: 0,
 		ShowMainAXSOnSessionStart:     1,
 	}
+
 	data, err := xml.Marshal(cs)
 	s.Require().NoError(err)
 	xmlStr := string(data)
@@ -223,6 +227,7 @@ func (s *NetlinxCompilerSettingsXMLSuite) TestRoundTrip() {
 		IncludeDirs:                   []string{`C:\AMX\inc`},
 		ModuleDirs:                    []string{`C:\AMX\mod`},
 	}
+
 	data, err := xml.Marshal(original)
 	s.Require().NoError(err)
 
@@ -258,6 +263,7 @@ func (s *NetlinxCompilerSettingsXMLSuite) TestDirIndexesAreSequential() {
 	cs := NetlinxCompilerSettings{
 		LibraryDirs: []string{`C:\a`, `C:\b`, `C:\c`},
 	}
+
 	data, err := xml.Marshal(cs)
 	s.Require().NoError(err)
 	xmlStr := string(data)

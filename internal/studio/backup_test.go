@@ -84,6 +84,7 @@ func (s *BuildStylesSuite) TestSingleStyle() {
 		"ForegroundColor-0": uint32(0x008000),
 		"Internal-0":        uint32(0),
 	}
+
 	styles := buildStyles(m, "MyKey")
 	s.Require().Len(styles, 1)
 	assert.Equal(s.T(), "MyKey", styles[0].StyleKey)
@@ -104,6 +105,7 @@ func (s *BuildStylesSuite) TestMultipleStylesAreOrderedByIndex() {
 		"StyleType-1": uint32(2),
 		"StyleName-1": "Second",
 	}
+
 	styles := buildStyles(m, "K")
 	s.Require().Len(styles, 3)
 	assert.Equal(s.T(), "First", styles[0].StyleName)
@@ -118,6 +120,7 @@ func (s *BuildStylesSuite) TestNonContiguousIndices() {
 		"StyleType-10": uint32(11),
 		"StyleName-10": "Ten",
 	}
+
 	styles := buildStyles(m, "K")
 	s.Require().Len(styles, 2)
 	assert.Equal(s.T(), "Five", styles[0].StyleName)
@@ -129,6 +132,7 @@ func (s *BuildStylesSuite) TestStyleKeySetOnAllEntries() {
 		"StyleType-0": uint32(1),
 		"StyleType-1": uint32(2),
 	}
+
 	styles := buildStyles(m, "TheKey")
 	for _, st := range styles {
 		assert.Equal(s.T(), "TheKey", st.StyleKey)
@@ -150,6 +154,7 @@ func (s *BuildTCPIPHistorySuite) TestOnlyTCPEntriesIncluded() {
 		"Recent Connection History2": "U-device|0|0|USB||",
 		"Recent Connection History3": "T-10.0.0.1|1319|0|Office||",
 	}
+
 	h := buildTCPIPHistory(m)
 	s.Require().Len(h.Entries, 2)
 	assert.Equal(s.T(), "192.168.1.1", h.Entries[0].Host)
@@ -164,6 +169,7 @@ func (s *BuildTCPIPHistorySuite) TestNumericalIndexOrdering() {
 		"Recent Connection History2":  "T-10.0.0.2|1319|1|A||",
 		"Recent Connection History1":  "T-10.0.0.1|1319|1|B||",
 	}
+
 	h := buildTCPIPHistory(m)
 	s.Require().Len(h.Entries, 3)
 	assert.Equal(s.T(), "10.0.0.1", h.Entries[0].Host)
@@ -176,6 +182,7 @@ func (s *BuildTCPIPHistorySuite) TestNonNumericSuffixSkipped() {
 		"Recent Connection History0": "T-192.168.1.1|1319|1|Lab||",
 		"Recent Connection HistoryX": "T-should-be-skipped|1319|1|||",
 	}
+
 	h := buildTCPIPHistory(m)
 	s.Require().Len(h.Entries, 1)
 	assert.Equal(s.T(), "192.168.1.1", h.Entries[0].Host)
@@ -186,6 +193,7 @@ func (s *BuildTCPIPHistorySuite) TestNonStringValueSkipped() {
 		"Recent Connection History0": uint32(42),
 		"Recent Connection History1": "T-192.168.1.1|1319|1|Lab||",
 	}
+
 	h := buildTCPIPHistory(m)
 	s.Require().Len(h.Entries, 1)
 	assert.Equal(s.T(), "192.168.1.1", h.Entries[0].Host)
@@ -196,6 +204,7 @@ func (s *BuildTCPIPHistorySuite) TestUnrelatedKeysSkipped() {
 		"SomethingElse":              "T-should-skip|1319|1|||",
 		"Recent Connection History0": "T-192.168.1.1|1319|1|Lab||",
 	}
+
 	h := buildTCPIPHistory(m)
 	s.Require().Len(h.Entries, 1)
 }
@@ -209,6 +218,7 @@ func (s *BuildTCPIPHistorySuite) TestPrefixStrippedFromValue() {
 	m := map[string]any{
 		"Recent Connection History0": "T-192.168.1.1|1319|1|Room||",
 	}
+
 	h := buildTCPIPHistory(m)
 	s.Require().Len(h.Entries, 1)
 	// The "T-" prefix must be stripped — the host should just be "192.168.1.1".
