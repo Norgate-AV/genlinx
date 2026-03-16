@@ -60,6 +60,7 @@ func init() {
 	rootCmd.AddCommand(archiveCmd)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(findCmd)
+	rootCmd.AddCommand(ftlCmd)
 	rootCmd.AddCommand(studioCmd)
 
 	// Global flags
