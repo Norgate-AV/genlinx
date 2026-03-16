@@ -5,8 +5,6 @@ import (
 	"sort"
 )
 
-const nlxKeyBase = `Software\AMX Corp.\NetLinx Studio`
-
 // RegistrySettings holds the NetLinx Studio settings read from the Windows registry.
 type RegistrySettings struct {
 	EditorPreferences        map[string]any

@@ -9,6 +9,8 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+const nlxKeyBase = `Software\AMX Corp.\NetLinx Studio`
+
 // ReadRegistry reads all known NetLinx Studio settings from HKCU / HKLM.
 func ReadRegistry() (*RegistrySettings, error) {
 	s := &RegistrySettings{
