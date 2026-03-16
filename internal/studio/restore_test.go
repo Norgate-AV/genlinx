@@ -191,38 +191,34 @@ func (s *PreferencesToRegistryEntriesSuite) TestHttpServerGoesToKITFiles() {
 	assert.False(s.T(), inBatch, "HttpServerPort must not appear in Batch Transfer User Options")
 }
 
-func (s *PreferencesToRegistryEntriesSuite) TestDirListsAreHKLM() {
+func (s *PreferencesToRegistryEntriesSuite) TestDirListsNotInRegistryEntries() {
+	// Directory lists are handled via DiffDirList / replaceDirList, not as
+	// individual RegistryEntry values.
 	prefs := BuildPreferences(fullSettings())
 	entries := PreferencesToRegistryEntries(prefs)
 
 	const libKey = `SOFTWARE\WOW6432Node\AMX Corp.\NetLinx Studio\NLXCompiler_Libs`
-	e, ok := findEntry(entries, libKey, "Dir000")
-	s.Require().True(ok, "NLXCompiler_Libs Dir000 not found")
-	assert.True(s.T(), e.HiveLM, "library dir entries must have HiveLM=true")
-	assert.Equal(s.T(), `C:\AMX\NetLinx\lib`, e.Value)
+	_, ok := findEntry(entries, libKey, "Dir000")
+	assert.False(s.T(), ok, "NLXCompiler_Libs must not appear in RegistryEntry list")
 }
 
-func (s *PreferencesToRegistryEntriesSuite) TestIncludeDirsIndexedCorrectly() {
+func (s *PreferencesToRegistryEntriesSuite) TestIncludeDirsNotInRegistryEntries() {
+	// Include dirs are handled via DiffDirList / replaceDirList.
 	prefs := BuildPreferences(fullSettings())
 	entries := PreferencesToRegistryEntries(prefs)
 
 	const incKey = `SOFTWARE\WOW6432Node\AMX Corp.\NetLinx Studio\NLXCompiler_Includes`
-	e, ok := findEntry(entries, incKey, "Dir000")
-	s.Require().True(ok)
-	assert.Equal(s.T(), `C:\AMX\NetLinx\include`, e.Value)
+	_, ok := findEntry(entries, incKey, "Dir000")
+	assert.False(s.T(), ok, "NLXCompiler_Includes must not appear in RegistryEntry list")
 }
 
-func (s *PreferencesToRegistryEntriesSuite) TestTCPIPHistoryReEncoded() {
+func (s *PreferencesToRegistryEntriesSuite) TestTCPIPHistoryNotIncluded() {
+	// TCP/IP history is excluded from restore: Studio manages it dynamically.
 	prefs := BuildPreferences(fullSettings())
 	entries := PreferencesToRegistryEntries(prefs)
 
-	e, ok := findEntry(entries, "RecentConnectionsHistory", "Recent Connection History0")
-	s.Require().True(ok)
-
-	raw, ok := e.Value.(string)
-	s.Require().True(ok)
-	assert.True(s.T(), strings.HasPrefix(raw, "T-"), "TCP history value must start with 'T-'")
-	assert.Contains(s.T(), raw, "192.168.1.1")
+	_, ok := findEntry(entries, "RecentConnectionsHistory", "Recent Connection History0")
+	assert.False(s.T(), ok, "TCP/IP history must not appear in restore entries")
 }
 
 func (s *PreferencesToRegistryEntriesSuite) TestStyleEntriesHaveCorrectSubKey() {
@@ -495,4 +491,146 @@ func (s *DiffRegistryEntriesSuite) TestEmptyIncomingProducesEmptyDiff() {
 	current := PreferencesToRegistryEntries(prefs)
 	diff := DiffRegistryEntries(current, []RegistryEntry{})
 	assert.Empty(s.T(), diff)
+}
+
+// ---------------------------------------------------------------------------
+// DiffTCPIPHistory
+// ---------------------------------------------------------------------------
+
+type DiffTCPIPHistorySuite struct{ suite.Suite }
+
+func TestDiffTCPIPHistorySuite(t *testing.T) { suite.Run(t, new(DiffTCPIPHistorySuite)) }
+
+func tcpEntries(hosts ...string) []TCPIPEntry {
+	entries := make([]TCPIPEntry, len(hosts))
+	for i, h := range hosts {
+		entries[i] = TCPIPEntry{Host: h, Port: 1319, PingTest: true}
+	}
+
+	return entries
+}
+
+func (s *DiffTCPIPHistorySuite) TestIdenticalReturnsNil() {
+	e := tcpEntries("10.0.0.1", "10.0.0.2")
+	assert.Nil(s.T(), DiffTCPIPHistory(e, e))
+}
+
+func (s *DiffTCPIPHistorySuite) TestBothEmptyReturnsNil() {
+	assert.Nil(s.T(), DiffTCPIPHistory(nil, nil))
+}
+
+func (s *DiffTCPIPHistorySuite) TestIncomingEntryAdded() {
+	current := tcpEntries("10.0.0.1")
+	incoming := tcpEntries("10.0.0.1", "10.0.0.2")
+
+	d := DiffTCPIPHistory(current, incoming)
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), DiffReplaced, d.Status)
+	assert.Equal(s.T(), 1, d.OldValue)
+	assert.Len(s.T(), d.TCPIPReplace, 2)
+}
+
+func (s *DiffTCPIPHistorySuite) TestEntryValueChanged() {
+	d := DiffTCPIPHistory(tcpEntries("10.0.0.1"), tcpEntries("10.0.0.99"))
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), DiffReplaced, d.Status)
+}
+
+func (s *DiffTCPIPHistorySuite) TestOrderChangeDetected() {
+	current := tcpEntries("10.0.0.1", "10.0.0.2")
+	incoming := tcpEntries("10.0.0.2", "10.0.0.1")
+
+	d := DiffTCPIPHistory(current, incoming)
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), DiffReplaced, d.Status)
+}
+
+func (s *DiffTCPIPHistorySuite) TestIncomingEntriesCarried() {
+	d := DiffTCPIPHistory(tcpEntries("10.0.0.1", "10.0.0.2"), tcpEntries("10.0.0.3"))
+	s.Require().NotNil(d)
+	s.Require().Len(d.TCPIPReplace, 1)
+	assert.Equal(s.T(), "10.0.0.3", d.TCPIPReplace[0].Host)
+}
+
+func (s *DiffTCPIPHistorySuite) TestSubKeyIsRecentConnectionsHistory() {
+	d := DiffTCPIPHistory(tcpEntries("a"), tcpEntries("b"))
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), "RecentConnectionsHistory", d.SubKey)
+}
+
+func (s *DiffTCPIPHistorySuite) TestOldValueIsCurrentCount() {
+	d := DiffTCPIPHistory(tcpEntries("a", "b", "c"), tcpEntries("d"))
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), 3, d.OldValue)
+}
+
+// ---------------------------------------------------------------------------
+// DiffDirList
+// ---------------------------------------------------------------------------
+
+type DiffDirListSuite struct{ suite.Suite }
+
+func TestDiffDirListSuite(t *testing.T) { suite.Run(t, new(DiffDirListSuite)) }
+
+const testDirSubKey = `SOFTWARE\WOW6432Node\AMX Corp.\NetLinx Studio\NLXCompiler_Libs`
+
+func (s *DiffDirListSuite) TestIdenticalReturnsNil() {
+	dirs := []string{`C:\AMX\lib`, `C:\AMX\lib2`}
+	assert.Nil(s.T(), DiffDirList(testDirSubKey, dirs, dirs))
+}
+
+func (s *DiffDirListSuite) TestBothEmptyReturnsNil() {
+	assert.Nil(s.T(), DiffDirList(testDirSubKey, nil, nil))
+}
+
+func (s *DiffDirListSuite) TestIncomingEntryAdded() {
+	current := []string{`C:\AMX\lib`}
+	incoming := []string{`C:\AMX\lib`, `C:\AMX\lib2`}
+
+	d := DiffDirList(testDirSubKey, current, incoming)
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), DiffReplaced, d.Status)
+	assert.Equal(s.T(), 1, d.OldValue)
+	assert.Len(s.T(), d.DirReplace, 2)
+}
+
+func (s *DiffDirListSuite) TestEntryValueChanged() {
+	d := DiffDirList(testDirSubKey, []string{`C:\AMX\lib`}, []string{`C:\OTHER\lib`})
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), DiffReplaced, d.Status)
+}
+
+func (s *DiffDirListSuite) TestOrderChangeDetected() {
+	current := []string{`C:\AMX\lib`, `C:\AMX\lib2`}
+	incoming := []string{`C:\AMX\lib2`, `C:\AMX\lib`}
+
+	d := DiffDirList(testDirSubKey, current, incoming)
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), DiffReplaced, d.Status)
+}
+
+func (s *DiffDirListSuite) TestIncomingDirsCarried() {
+	d := DiffDirList(testDirSubKey, []string{`C:\old\lib`}, []string{`C:\new\lib`, `C:\new\lib2`})
+	s.Require().NotNil(d)
+	s.Require().Len(d.DirReplace, 2)
+	assert.Equal(s.T(), `C:\new\lib`, d.DirReplace[0])
+	assert.Equal(s.T(), `C:\new\lib2`, d.DirReplace[1])
+}
+
+func (s *DiffDirListSuite) TestHiveLMIsSet() {
+	d := DiffDirList(testDirSubKey, []string{`C:\a`}, []string{`C:\b`})
+	s.Require().NotNil(d)
+	assert.True(s.T(), d.HiveLM, "HKLM dir list entries must have HiveLM=true")
+}
+
+func (s *DiffDirListSuite) TestSubKeyPreserved() {
+	d := DiffDirList(testDirSubKey, []string{`C:\a`}, []string{`C:\b`})
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), testDirSubKey, d.SubKey)
+}
+
+func (s *DiffDirListSuite) TestOldValueIsCurrentCount() {
+	d := DiffDirList(testDirSubKey, []string{`C:\a`, `C:\b`, `C:\c`}, []string{`C:\d`})
+	s.Require().NotNil(d)
+	assert.Equal(s.T(), 3, d.OldValue)
 }

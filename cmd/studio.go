@@ -21,6 +21,17 @@ var studioCmd = &cobra.Command{
 	Use:   "studio",
 	Short: "NetLinx Studio utilities",
 	Long:  `Tools for interacting with NetLinx Studio settings and configuration.`,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if runtime.GOOS != "windows" {
+			return fmt.Errorf("the studio command is only supported on Windows")
+		}
+
+		if !studio.IsInstalled() {
+			return fmt.Errorf("NetLinx Studio does not appear to be installed on this machine")
+		}
+
+		return nil
+	},
 }
 
 var studioBackupCmd = &cobra.Command{
@@ -30,10 +41,6 @@ var studioBackupCmd = &cobra.Command{
 compatible .epx preferences file. The output file can be re-imported directly
 using NetLinx Studio's native Tools > Import Preferences... option.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if runtime.GOOS != "windows" {
-			return fmt.Errorf("the studio command is only supported on Windows")
-		}
-
 		output, _ := cmd.Flags().GetString("output")
 		if output == "" {
 			output = time.Now().Format("netlinx-studio-backup-2006-01-02-150405") + ".epx"
@@ -87,10 +94,6 @@ The input file may be provided as a flag (--input/-i) or as a positional
 argument.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if runtime.GOOS != "windows" {
-			return fmt.Errorf("the studio command is only supported on Windows")
-		}
-
 		input, _ := cmd.Flags().GetString("input")
 		if input == "" && len(args) > 0 {
 			input = args[0]
@@ -124,6 +127,12 @@ argument.`,
 		}
 
 		if !force {
+			if err := printDiffTable(diff); err != nil {
+				return err
+			}
+
+			fmt.Println()
+
 			confirmed, err := prompt.Confirm(
 				"Restore NetLinx Studio settings?",
 				fmt.Sprintf("%d settings differ from:\n%s\n\nThis will overwrite those registry values.", len(diff), input),
@@ -181,7 +190,11 @@ func writeBackup(path string) error {
 // runDryRun prints the pre-computed diff in a table without touching the registry.
 func runDryRun(diff []studio.DiffEntry) error {
 	fmt.Printf("Dry run — %d entries would be written:\n\n", len(diff))
+	return printDiffTable(diff)
+}
 
+// printDiffTable renders diff as a table to stdout.
+func printDiffTable(diff []studio.DiffEntry) error {
 	green := renderer.Tint{FG: renderer.Colors{color.FgGreen}}
 
 	r := renderer.NewColorized(renderer.ColorizedConfig{
@@ -201,6 +214,29 @@ func runDryRun(diff []studio.DiffEntry) error {
 	table.Header("Status", "Hive", "Subkey", "Name", "Old Value", "New Value")
 
 	for _, d := range diff {
+		if d.Status == studio.DiffReplaced {
+			oldCount, _ := d.OldValue.(int)
+			hive := "HKCU"
+			if d.HiveLM {
+				hive = "HKLM"
+			}
+
+			newCount := len(d.TCPIPReplace)
+			if d.DirReplace != nil {
+				newCount = len(d.DirReplace)
+			}
+
+			_ = table.Append(
+				string(d.Status),
+				hive,
+				d.SubKey,
+				"(all entries)",
+				fmt.Sprintf("%d entries", oldCount),
+				fmt.Sprintf("%d entries", newCount),
+			)
+			continue
+		}
+
 		hive := "HKCU"
 		if d.HiveLM {
 			hive = "HKLM"

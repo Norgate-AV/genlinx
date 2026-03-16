@@ -6,22 +6,81 @@ import "fmt"
 type DiffStatus string
 
 const (
-	DiffAdded   DiffStatus = "ADDED"
-	DiffChanged DiffStatus = "CHANGED"
+	DiffAdded    DiffStatus = "ADDED"
+	DiffChanged  DiffStatus = "CHANGED"
+	DiffReplaced DiffStatus = "REPLACED"
 )
 
 // DiffEntry pairs a registry entry with its diff status and (for CHANGED
 // entries) the value currently in the registry.
 type DiffEntry struct {
 	RegistryEntry
-	Status   DiffStatus
-	OldValue any // populated for DiffChanged; nil for DiffAdded
+	Status       DiffStatus
+	OldValue     any          // CHANGED: current registry value; REPLACED: current entry count (int)
+	TCPIPReplace []TCPIPEntry // REPLACED RecentConnectionsHistory: full incoming TCP/IP list
+	DirReplace   []string     // REPLACED HKLM dir list: full incoming directory list
 }
 
 type entryKey struct {
 	hiveLM    bool
 	subKey    string
 	valueName string
+}
+
+// DiffDirList compares two ordered directory lists. It returns nil when the
+// lists are identical. When they differ it returns a single DiffReplaced
+// DiffEntry carrying the full incoming list so ApplyRegistryDiff can perform
+// a wholesale replacement, matching the behaviour of the native NetLinx
+// Studio settings import.
+func DiffDirList(subKey string, current, incoming []string) *DiffEntry {
+	if len(current) == len(incoming) {
+		equal := true
+		for i := range current {
+			if current[i] != incoming[i] {
+				equal = false
+				break
+			}
+		}
+
+		if equal {
+			return nil
+		}
+	}
+
+	return &DiffEntry{
+		RegistryEntry: RegistryEntry{SubKey: subKey, HiveLM: true},
+		Status:        DiffReplaced,
+		OldValue:      len(current),
+		DirReplace:    incoming,
+	}
+}
+
+// DiffTCPIPHistory compares two ordered lists of TCP/IP history entries by
+// their encoded form. It returns nil when the lists are identical. When they
+// differ it returns a single DiffReplaced DiffEntry that carries the full
+// incoming list so ApplyRegistryDiff can perform a wholesale replacement,
+// matching the behaviour of the native NetLinx Studio settings import.
+func DiffTCPIPHistory(current, incoming []TCPIPEntry) *DiffEntry {
+	if len(current) == len(incoming) {
+		equal := true
+		for i := range current {
+			if current[i].encode() != incoming[i].encode() {
+				equal = false
+				break
+			}
+		}
+
+		if equal {
+			return nil
+		}
+	}
+
+	return &DiffEntry{
+		RegistryEntry: RegistryEntry{SubKey: "RecentConnectionsHistory"},
+		Status:        DiffReplaced,
+		OldValue:      len(current),
+		TCPIPReplace:  incoming,
+	}
 }
 
 // DiffRegistryEntries returns the subset of incoming entries that differ from
@@ -76,10 +135,6 @@ func PreferencesToRegistryEntries(prefs *Preferences) []RegistryEntry {
 
 	add := func(subKey, name string, value any) {
 		entries = append(entries, RegistryEntry{SubKey: subKey, ValueName: name, Value: value})
-	}
-
-	addHKLM := func(subKey, name string, value any) {
-		entries = append(entries, RegistryEntry{SubKey: subKey, ValueName: name, Value: value, HiveLM: true})
 	}
 
 	// -----------------------------------------------------------------------
@@ -207,21 +262,10 @@ func PreferencesToRegistryEntries(prefs *Preferences) []RegistryEntry {
 	add("NLXCompiler_Options", "ShowDebugWindow", uint32(c.ShowDebugWindowOnSessionClose))
 	add("NLXCompiler_Options", "ShowMainAXS", uint32(c.ShowMainAXSOnSessionStart))
 
-	// Directory lists live in HKLM WOW6432Node.
-	const dirBase = `SOFTWARE\WOW6432Node\AMX Corp.\NetLinx Studio\`
-	for i, dir := range c.LibraryDirs {
-		addHKLM(dirBase+"NLXCompiler_Libs", fmt.Sprintf("Dir%03d", i), dir)
-	}
+	// Directory lists (NLXCompiler_Libs, NLXCompiler_Includes, NLXCompiler_Modules)
+	// are handled via DiffDirList / replaceDirList as ordered wholesale replacements.
+	// They do not appear in the entry list.
 
-	for i, dir := range c.IncludeDirs {
-		addHKLM(dirBase+"NLXCompiler_Includes", fmt.Sprintf("Dir%03d", i), dir)
-	}
-
-	for i, dir := range c.ModuleDirs {
-		addHKLM(dirBase+"NLXCompiler_Modules", fmt.Sprintf("Dir%03d", i), dir)
-	}
-
-	// -----------------------------------------------------------------------
 	// Batch Transfer Options
 	// -----------------------------------------------------------------------
 	ft := prefs.FileTransferSettings
@@ -254,14 +298,13 @@ func PreferencesToRegistryEntries(prefs *Preferences) []RegistryEntry {
 	add("Diagnostic Preferences", "DisplayDateStampNotification", uint32(d.DisplayDateStampNotification))
 	add("Diagnostic Preferences", "DisplayDateStampDiagnostics", uint32(d.DisplayDateStampDiagnostics))
 
-	// -----------------------------------------------------------------------
-	// TCP/IP Connection History
-	// -----------------------------------------------------------------------
-	for i, entry := range prefs.TCPIPHistory.Entries {
-		add("RecentConnectionsHistory",
-			fmt.Sprintf("Recent Connection History%d", i),
-			"T-"+entry.encode())
-	}
+	// TCP/IP connection history is intentionally excluded: Studio manages that
+	// list dynamically (inserting/shifting entries on every connection), so
+	// restoring it would overwrite Studio-managed state with stale index
+	// positions and cause cascading diffs on every subsequent restore.
+	//
+	// HKLM compiler directory lists are also excluded for the same reason:
+	// they are restored via DiffDirList as wholesale REPLACED entries.
 
 	return entries
 }

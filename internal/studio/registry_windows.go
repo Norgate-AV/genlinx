@@ -11,6 +11,17 @@ import (
 
 const nlxKeyBase = `Software\AMX Corp.\NetLinx Studio`
 
+// IsInstalled reports whether NetLinx Studio is installed by checking for
+// the existence of its HKCU registry key.
+func IsInstalled() bool {
+	k, err := registry.OpenKey(registry.CURRENT_USER, nlxKeyBase, registry.READ)
+	if err != nil {
+		return false
+	}
+	_ = k.Close()
+	return true
+}
+
 // ReadRegistry reads all known NetLinx Studio settings from HKCU / HKLM.
 func ReadRegistry() (*RegistrySettings, error) {
 	s := &RegistrySettings{

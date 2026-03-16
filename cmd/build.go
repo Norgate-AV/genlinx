@@ -68,6 +68,10 @@ var buildCmd = &cobra.Command{
 
 		nlrc := compiler.NewNLRCCompiler(opts.NLRCPath)
 
+		if _, err := os.Stat(opts.NLRCPath); err != nil {
+			return fmt.Errorf("NLRC compiler not found at %q — is NetLinx Studio installed?\n%w", opts.NLRCPath, err)
+		}
+
 		if len(opts.SourceFiles) > 0 {
 			return executeSourceBuild(opts.SourceFiles, nlrc, opts)
 		}
