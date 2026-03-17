@@ -428,6 +428,18 @@ func (s *FromAPWSuite) TestMasterSrcWithoutTKNOnDisk_Skipped() {
 		withMasterSrc("Main") // no withTKN()
 	list := FromAPW(h.build())
 	assert.Empty(s.T(), list.Items)
+	if s.Len(list.Warnings, 1) {
+		assert.Contains(s.T(), list.Warnings[0], "TKN not found")
+		assert.Contains(s.T(), list.Warnings[0], "[TestSystem]")
+	}
+}
+
+func (s *FromAPWSuite) TestMasterSrcWithoutTKNOnDisk_WarnContainsTKNPath() {
+	h := newSysHelper(s.T(), "0", "10.0.0.1|1319|1|Desc||").
+		withMasterSrc("Main") // no withTKN()
+	list := FromAPW(h.build())
+	s.Require().Len(list.Warnings, 1)
+	assert.Contains(s.T(), list.Warnings[0], "Main.tkn")
 }
 
 func (s *FromAPWSuite) TestTP4_WithCustomDevAddr_ProducesItem() {
@@ -449,12 +461,17 @@ func (s *FromAPWSuite) TestTP4_WithSymbolicDevAddr_Resolved() {
 }
 
 func (s *FromAPWSuite) TestTP4_WithUnresolvableSymbolicDevAddr_Skipped() {
+	// No MasterSrc so the registry stays empty — dvTP_Missing cannot resolve.
 	h := newSysHelper(s.T(), "0", "10.0.0.1|1319|1|Desc||").
-		withMasterSrc("Main").
-		withDefineDevice("DEFINE_DEVICE\nDEFINE_CONSTANT\n"). // no matching definition
 		withPanel(apw.FileTypeTP4, `User Interface\Panel.TP4`, "dvTP_Missing")
 	list := FromAPW(h.build())
 	assert.Empty(s.T(), list.Items)
+	if s.Len(list.Warnings, 1) {
+		assert.Contains(s.T(), list.Warnings[0], "unresolved DevAddr")
+		assert.Contains(s.T(), list.Warnings[0], "dvTP_Missing")
+		assert.Contains(s.T(), list.Warnings[0], "Panel.TP4")
+		assert.Contains(s.T(), list.Warnings[0], "[TestSystem]")
+	}
 }
 
 func (s *FromAPWSuite) TestTP4_WithNoDeviceMap_Skipped() {

@@ -2,6 +2,7 @@ package ftl
 
 import (
 	"encoding/xml"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -26,8 +27,9 @@ const (
 
 // FileTransferList is the root element of a File Transfer List (.ftl) document.
 type FileTransferList struct {
-	XMLName xml.Name `xml:"Items"`
-	Items   []Item   `xml:"Item"`
+	XMLName  xml.Name `xml:"Items"`
+	Items    []Item   `xml:"Item"`
+	Warnings []string `xml:"-"`
 }
 
 // Item represents a single transferable file entry within a File Transfer List.
@@ -146,6 +148,7 @@ func fromAPW(a *apw.APW, projectFilter, systemFilter string) *FileTransferList {
 					system.TransTCPIPEx,
 					sysID,
 					reg,
+					&ftl.Warnings,
 				)
 				ftl.Items = append(ftl.Items, items...)
 			}
@@ -177,6 +180,7 @@ func makeItems(
 	apwDir, workspaceName, projectName, systemName, apwPath, transTCPIPEx string,
 	sysID int,
 	reg deviceRegistry,
+	warns *[]string,
 ) []Item {
 	relPath := normalisePath(fr.FilePathName)
 
@@ -199,7 +203,8 @@ func makeItems(
 		tknRel := strings.TrimSuffix(relPath, filepath.Ext(relPath)) + apw.FileExtensionTKN
 		tknPath := filepath.Join(apwDir, tknRel)
 		if _, err := os.Stat(tknPath); err != nil {
-			return nil // .tkn not on disk — skip
+			*warns = append(*warns, fmt.Sprintf("[%s] TKN not found: %s", systemName, tknRel))
+			return nil
 		}
 
 		item := baseItem
@@ -212,7 +217,7 @@ func makeItems(
 		return []Item{item}
 
 	case apw.FileTypeTP4, apw.FileTypeTP5, apw.FileTypeKPB:
-		return makePanelItems(fr, baseItem, apwDir, relPath, reg)
+		return makePanelItems(fr, baseItem, apwDir, relPath, reg, systemName, warns)
 
 	default:
 		return nil
@@ -226,6 +231,8 @@ func makePanelItems(
 	base Item,
 	apwDir, relPath string,
 	reg deviceRegistry,
+	systemName string,
+	warns *[]string,
 ) []Item {
 	if len(fr.DeviceMaps) == 0 {
 		return nil
@@ -237,6 +244,7 @@ func makePanelItems(
 	for _, dm := range fr.DeviceMaps {
 		dps, ok := resolveDevAddr(dm.DevAddr, reg)
 		if !ok {
+			*warns = append(*warns, fmt.Sprintf("[%s] unresolved DevAddr %q for %s", systemName, dm.DevAddr, filepath.Base(relPath)))
 			continue
 		}
 

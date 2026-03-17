@@ -134,6 +134,10 @@ func generateFTL(workspaceFile, outputPath, projectID, systemID string, verbose 
 		list = ftl.FromAPW(workspace)
 	}
 
+	for _, w := range list.Warnings {
+		color.Yellow("  Warning: %s", w)
+	}
+
 	if len(list.Items) == 0 {
 		color.Yellow("No transferable items found in %s for the selected scope.", workspaceFile)
 		return nil
