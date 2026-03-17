@@ -135,7 +135,7 @@ func generateFTL(workspaceFile, outputPath, projectID, systemID string, verbose 
 	}
 
 	for _, w := range list.Warnings {
-		color.Yellow("  Warning: %s", w)
+		color.New(color.FgYellow).Fprintln(os.Stderr, "WARNING:", w)
 	}
 
 	if len(list.Items) == 0 {
