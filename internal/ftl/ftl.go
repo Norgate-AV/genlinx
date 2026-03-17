@@ -2,7 +2,9 @@ package ftl
 
 import (
 	"encoding/xml"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/Norgate-AV/genlinx/internal/apw"
@@ -15,13 +17,11 @@ const (
 	// ftType is the standard transfer type value used in every FTL item.
 	ftType = 1
 
-	// deviceMaster is the device address used for NetLinx master (TKN) items.
+	// deviceMaster is the device address for NetLinx master (TKN) items.
 	deviceMaster = 0
 
-	// devicePanel is the default device address used for touchpanel items
-	// (TP4, TP5, KPB).  AMX Modero-series panels are addressed at 10001 by
-	// default.
-	devicePanel = 10001
+	// portMaster is the port number for NetLinx master (TKN) items.
+	portMaster = 1
 )
 
 // FileTransferList is the root element of a File Transfer List (.ftl) document.
@@ -56,14 +56,16 @@ type Item struct {
 	// WorkspacePathName is the absolute path to the originating .apw file.
 	WorkspacePathName string `xml:"WorkspacePathName"`
 
-	// Device is the NetLinx device address: 0 for the master (TKN), 10001
-	// for a default panel device (TP4 / TP5 / KPB).
+	// Device is the NetLinx device address: 0 for the master (TKN), or the
+	// device number from the panel's DeviceMap DPS address (TP4 / TP5 / KPB).
 	Device int `xml:"Device"`
 
-	// Port is always 1.
+	// Port is 1 for master (TKN) items; for panel items it comes from the
+	// port component of the panel's DeviceMap DPS address.
 	Port int `xml:"Port"`
 
-	// System is always 0 — Studio uses 0 to mean "same system".
+	// System carries the APW SysID for master (TKN) items, and the system
+	// component of the panel's DeviceMap DPS address for panel items.
 	System int `xml:"System"`
 
 	IsDirectToDevice int `xml:"IsDirectToDevice"`
@@ -112,8 +114,8 @@ func FromAPWSystem(a *apw.APW, projectID, systemID string) *FileTransferList {
 	return fromAPW(a, projectID, systemID)
 }
 
-// fromAPW is the shared implementation.  Empty projectID / systemID act as
-// "include all".
+// fromAPW is the shared implementation.  Empty projectFilter / systemFilter
+// act as "include all".
 func fromAPW(a *apw.APW, projectFilter, systemFilter string) *FileTransferList {
 	apwDir := filepath.Dir(a.FilePath())
 	ws := a.Workspace()
@@ -130,8 +132,11 @@ func fromAPW(a *apw.APW, projectFilter, systemFilter string) *FileTransferList {
 				continue
 			}
 
+			sysID := parseSysID(system.SysID)
+			reg := buildDeviceRegistry(system, apwDir)
+
 			for _, fr := range system.Files {
-				item := makeItem(
+				items := makeItems(
 					fr,
 					apwDir,
 					ws.Identifier,
@@ -139,11 +144,10 @@ func fromAPW(a *apw.APW, projectFilter, systemFilter string) *FileTransferList {
 					system.Identifier,
 					a.FilePath(),
 					system.TransTCPIPEx,
+					sysID,
+					reg,
 				)
-
-				if item != nil {
-					ftl.Items = append(ftl.Items, *item)
-				}
+				ftl.Items = append(ftl.Items, items...)
 			}
 		}
 	}
@@ -151,23 +155,38 @@ func fromAPW(a *apw.APW, projectFilter, systemFilter string) *FileTransferList {
 	return ftl
 }
 
-// makeItem builds a single FTL Item for the given FileRef.  File types that
-// do not produce transferable items (source, include, module, IR, etc.) return
-// nil and are silently skipped.
-func makeItem(
+// parseSysID converts the APW SysID string to an int, defaulting to 0.
+func parseSysID(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil {
+		return 0
+	}
+
+	return n
+}
+
+// makeItems builds the FTL Item(s) for a single FileRef.
+//
+// For MasterSrc files one item is returned if the compiled .tkn exists on
+// disk, otherwise nil.  For panel files (TP4, TP5, KPB) one item is produced
+// per DeviceMap entry whose DevAddr can be resolved to a concrete DPS address;
+// entries with unresolvable symbolic names are silently skipped.  File types
+// that are never transferred (Include, Module, Source, etc.) return nil.
+func makeItems(
 	fr *apw.FileRef,
 	apwDir, workspaceName, projectName, systemName, apwPath, transTCPIPEx string,
-) *Item {
+	sysID int,
+	reg deviceRegistry,
+) []Item {
 	relPath := normalisePath(fr.FilePathName)
 
-	base := &Item{
+	baseItem := Item{
 		Platform:                platformNetLinx,
 		FtType:                  ftType,
 		WorkspaceName:           workspaceName,
 		ProjectName:             projectName,
 		SystemName:              systemName,
 		WorkspacePathName:       apwPath,
-		Port:                    1,
 		IsTpdSendBitmapsEnabled: 1,
 		IsTpdSendFontsEnabled:   1,
 		IsTpdSendIconsEnabled:   1,
@@ -178,31 +197,69 @@ func makeItem(
 	switch fr.Type {
 	case apw.FileTypeMasterSrc:
 		tknRel := strings.TrimSuffix(relPath, filepath.Ext(relPath)) + apw.FileExtensionTKN
-		base.SourceFile = filepath.Join(apwDir, tknRel)
-		base.Device = deviceMaster
-		base.IsRebootRequired = 1
+		tknPath := filepath.Join(apwDir, tknRel)
+		if _, err := os.Stat(tknPath); err != nil {
+			return nil // .tkn not on disk — skip
+		}
 
-	case apw.FileTypeTP4:
-		base.SourceFile = filepath.Join(apwDir, relPath)
-		base.Device = devicePanel
-		base.IsTP4SmartTransferEnabled = 1
+		item := baseItem
+		item.SourceFile = tknPath
+		item.Device = deviceMaster
+		item.Port = portMaster
+		item.System = sysID
+		item.IsRebootRequired = 1
 
-	case apw.FileTypeTP5:
-		base.SourceFile = filepath.Join(apwDir, relPath)
-		base.Device = devicePanel
-		base.IsTP5SmartTransferEnabled = 1
+		return []Item{item}
 
-	case apw.FileTypeKPB:
-		base.SourceFile = filepath.Join(apwDir, relPath)
-		base.Device = devicePanel
-		base.IsKPBSendGlyphEnabled = 1
-		base.IsKPBSendFontEnabled = 1
+	case apw.FileTypeTP4, apw.FileTypeTP5, apw.FileTypeKPB:
+		return makePanelItems(fr, baseItem, apwDir, relPath, reg)
 
 	default:
 		return nil
 	}
+}
 
-	return base
+// makePanelItems resolves each DeviceMap on a panel FileRef and returns one
+// Item per successfully resolved DPS address.
+func makePanelItems(
+	fr *apw.FileRef,
+	base Item,
+	apwDir, relPath string,
+	reg deviceRegistry,
+) []Item {
+	if len(fr.DeviceMaps) == 0 {
+		return nil
+	}
+
+	srcPath := filepath.Join(apwDir, relPath)
+	var items []Item
+
+	for _, dm := range fr.DeviceMaps {
+		dps, ok := resolveDevAddr(dm.DevAddr, reg)
+		if !ok {
+			continue
+		}
+
+		item := base
+		item.SourceFile = srcPath
+		item.Device = dps.Device
+		item.Port = dps.Port
+		item.System = dps.System
+
+		switch fr.Type {
+		case apw.FileTypeTP4:
+			item.IsTP4SmartTransferEnabled = 1
+		case apw.FileTypeTP5:
+			item.IsTP5SmartTransferEnabled = 1
+		case apw.FileTypeKPB:
+			item.IsKPBSendGlyphEnabled = 1
+			item.IsKPBSendFontEnabled = 1
+		}
+
+		items = append(items, item)
+	}
+
+	return items
 }
 
 // normalisePath converts an APW file path (which may use either backslash or
