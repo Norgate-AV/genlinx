@@ -62,8 +62,12 @@ lint:
 vet:
 	go vet ./...
 
+.PHONY: vuln
+vuln:
+	govulncheck ./...
+
 .PHONY: check
-check: test lint vet
+check: test lint vet vuln
 
 .PHONY: man
 man:
