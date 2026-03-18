@@ -245,13 +245,6 @@ Options:
         "outputLogConsoleOption": true,
         "buildWithDebugInformation": false,
         "buildWithSource": false,
-        "includePath": ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
-        "modulePath": [
-            "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
-            "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
-            "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
-        ],
-        "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"],
         "all": false
     },
     "archive": {
@@ -292,11 +285,7 @@ Options:
         "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"]
     },
     "build": {
-        "shell": {
-            "path": "C:/Windows/System32/cmd.exe"
-        },
-        "all": false,
-        "createCfg": true
+        "all": false
     }
 }
 ```
