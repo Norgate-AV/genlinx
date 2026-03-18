@@ -45,7 +45,6 @@ func LoadCfgOptions(cliOpts *CfgCLIOptions) (*cfg.Options, *ConfigLoadInfo, erro
 		IncludePath:               mergedCfg.Compiler.IncludePath,
 		ModulePath:                mergedCfg.Compiler.ModulePath,
 		LibraryPath:               mergedCfg.Compiler.LibraryPath,
-		All:                       mergedCfg.CFG.All,
 	}
 
 	if cliOpts == nil {

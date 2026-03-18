@@ -77,10 +77,6 @@
                 "buildWithSource": {
                     "description": "Include source files in compiled output",
                     "type": "boolean"
-                },
-                "all": {
-                    "description": "Automatically select all workspace files without prompting",
-                    "type": "boolean"
                 }
             }
         },
@@ -117,21 +113,6 @@
                     "type": "array",
                     "items": { "type": "string" },
                     "uniqueItems": true
-                },
-                "all": {
-                    "description": "Automatically select all workspace files without prompting",
-                    "type": "boolean"
-                }
-            }
-        },
-        "build": {
-            "description": "Options for the 'build' command (NetLinx compilation)",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "all": {
-                    "description": "Automatically select all workspace files without prompting",
-                    "type": "boolean"
                 }
             }
         }

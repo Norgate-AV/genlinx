@@ -211,7 +211,7 @@ func TestLoadConfigResult_LocalFlag(t *testing.T) {
 // mergePrintConfigs
 // ---------------------------------------------------------------------------
 
-func TestMergePrintConfigs_ReturnsBuildKey(t *testing.T) {
+func TestMergePrintConfigs_ReturnsCfgKey(t *testing.T) {
 	// Point global config to empty dir so test is isolated.
 	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
 
@@ -222,8 +222,8 @@ func TestMergePrintConfigs_ReturnsBuildKey(t *testing.T) {
 
 	m, err := mergePrintConfigs()
 	require.NoError(t, err)
-	_, hasBuild := m["build"]
-	assert.True(t, hasBuild, "merged config must have a 'build' key")
+	_, hasCfg := m["cfg"]
+	assert.True(t, hasCfg, "merged config must have a 'cfg' key")
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +243,7 @@ func TestConfigList_CombinedPrintsConfig(t *testing.T) {
 	})
 
 	// Combined list always prints the merged config as JSON.
-	assert.Contains(t, out, `"build"`)
+	assert.Contains(t, out, `"compiler"`)
 }
 
 func TestConfigList_GlobalNotFound_PrintsMessage(t *testing.T) {

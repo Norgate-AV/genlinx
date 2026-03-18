@@ -72,7 +72,6 @@ func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, erro
 		ModulePath:   mergedCfg.Compiler.ModulePath,
 		LibraryPath:  mergedCfg.Compiler.LibraryPath,
 		CompilerPath: mergedCfg.Compiler.Path,
-		All:          mergedCfg.Build.All,
 	}
 
 	// Apply CLI options (highest precedence)

@@ -991,28 +991,6 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_OutputPathOverride() {
 	suite.True(filepath.IsAbs(opts.OutputPath), "output path must be resolved to an absolute path")
 }
 
-// TestLoadBuildOptions_AllFromConfig verifies that build.all:true in a local
-// config file is reflected in the merged build options.
-func (suite *OptionsTestSuite) TestLoadBuildOptions_AllFromConfig() {
-	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_all"))
-	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_all"), 0o755))
-
-	suite.Require().NoError(os.WriteFile(
-		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"build":{"all":true}}`),
-		0o644,
-	))
-
-	oldWd, err := os.Getwd()
-	suite.Require().NoError(err)
-	defer os.Chdir(oldWd) //nolint:errcheck
-	suite.Require().NoError(os.Chdir(suite.tempDir))
-
-	opts, _, err := LoadBuildOptions(nil)
-	suite.Require().NoError(err)
-	suite.True(opts.All)
-}
-
 // TestLoadBuildOptions_CLIAllOverridesConfig verifies that CLI All:true is
 // applied even when the config does not set it.
 func (suite *OptionsTestSuite) TestLoadBuildOptions_CLIAllOverridesConfig() {

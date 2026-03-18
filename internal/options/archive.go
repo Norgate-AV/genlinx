@@ -42,7 +42,6 @@ func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLo
 		IncludeCompiledModuleFiles: mergedCfg.Archive.IncludeCompiledModuleFiles,
 		IncludeFilesNotInWorkspace: mergedCfg.Archive.IncludeFilesNotInWorkspace,
 		ExtraFileSearchLocations:   mergedCfg.Archive.ExtraFileSearchLocations,
-		All:                        mergedCfg.Archive.All,
 		IgnoredFiles:               mergedCfg.Archive.IgnoredFiles,
 	}
 

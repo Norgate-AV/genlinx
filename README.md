@@ -244,8 +244,7 @@ Options:
         "outputLogFileOption": "N",
         "outputLogConsoleOption": true,
         "buildWithDebugInformation": false,
-        "buildWithSource": false,
-        "all": false
+        "buildWithSource": false
     },
     "archive": {
         "outputFile": "archive.zip",
@@ -255,8 +254,6 @@ Options:
         "extraFileSearchLocations": [
             "C:/Program Files (x86)/Common Files/AMXShare"
         ],
-        "extraFileArchiveLocation": ".genlinx",
-        "all": false,
         "ignoredFiles": [
             "G4API.axi",
             "NetLinx.axi",
@@ -283,9 +280,6 @@ Options:
             "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
         ],
         "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"]
-    },
-    "build": {
-        "all": false
     }
 }
 ```

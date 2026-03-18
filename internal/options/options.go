@@ -28,12 +28,9 @@ type boolPresence struct {
 	cfgOutputLogConsoleOption    bool
 	cfgBuildWithDebugInformation bool
 	cfgBuildWithSource           bool
-	cfgAll                       bool
 	archiveIncludeCompiledSrc    bool
 	archiveIncludeCompiledMod    bool
 	archiveIncludeFilesNotInWs   bool
-	archiveAll                   bool
-	buildAll                     bool
 }
 
 // configMergeInput packages a config with its boolean-presence information
@@ -50,12 +47,9 @@ func viperBoolPresence(v *viper.Viper) boolPresence {
 		cfgOutputLogConsoleOption:    v.IsSet("cfg.outputLogConsoleOption"),
 		cfgBuildWithDebugInformation: v.IsSet("cfg.buildWithDebugInformation"),
 		cfgBuildWithSource:           v.IsSet("cfg.buildWithSource"),
-		cfgAll:                       v.IsSet("cfg.all"),
 		archiveIncludeCompiledSrc:    v.IsSet("archive.includeCompiledSourceFiles"),
 		archiveIncludeCompiledMod:    v.IsSet("archive.includeCompiledModuleFiles"),
 		archiveIncludeFilesNotInWs:   v.IsSet("archive.includeFilesNotInWorkspace"),
-		archiveAll:                   v.IsSet("archive.all"),
-		buildAll:                     v.IsSet("build.all"),
 	}
 }
 
@@ -389,11 +383,6 @@ func mergeConfigsWithPresence(base *config.Config, overrides ...configMergeInput
 			result.Compiler.LibraryPath = prependAndDeduplicate(result.Compiler.LibraryPath, cfg.Compiler.LibraryPath)
 		}
 
-		// Merge Build config
-		if p.buildAll {
-			result.Build.All = cfg.Build.All
-		}
-
 		// Merge CFG config
 		if cfg.CFG.OutputFile != "" {
 			result.CFG.OutputFile = cfg.CFG.OutputFile
@@ -419,10 +408,6 @@ func mergeConfigsWithPresence(base *config.Config, overrides ...configMergeInput
 			result.CFG.BuildWithSource = cfg.CFG.BuildWithSource
 		}
 
-		if p.cfgAll {
-			result.CFG.All = cfg.CFG.All
-		}
-
 		// Merge Archive config
 		if cfg.Archive.OutputFile != "" {
 			result.Archive.OutputFile = cfg.Archive.OutputFile
@@ -442,10 +427,6 @@ func mergeConfigsWithPresence(base *config.Config, overrides ...configMergeInput
 
 		if len(cfg.Archive.ExtraFileSearchLocations) > 0 {
 			result.Archive.ExtraFileSearchLocations = prependAndDeduplicate(result.Archive.ExtraFileSearchLocations, cfg.Archive.ExtraFileSearchLocations)
-		}
-
-		if p.archiveAll {
-			result.Archive.All = cfg.Archive.All
 		}
 
 		// IgnoredFiles: nil-check distinguishes "absent" from "explicitly empty".

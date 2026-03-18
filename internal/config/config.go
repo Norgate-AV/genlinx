@@ -9,8 +9,7 @@ type Config struct {
 	Core     CoreConfig     `mapstructure:"core"     json:"core"`
 	Compiler CompilerConfig `mapstructure:"compiler" json:"compiler"`
 	CFG      CFGConfig      `mapstructure:"cfg"      json:"cfg"`
-	Archive  ArchiveConfig  `mapstructure:"archive" json:"archive"`
-	Build    BuildConfig    `mapstructure:"build"   json:"build"`
+	Archive  ArchiveConfig  `mapstructure:"archive"  json:"archive"`
 }
 
 // CoreConfig holds global/editor settings
@@ -34,7 +33,6 @@ type CFGConfig struct {
 	OutputLogConsoleOption    bool   `mapstructure:"outputLogConsoleOption"     json:"outputLogConsoleOption"`
 	BuildWithDebugInformation bool   `mapstructure:"buildWithDebugInformation" json:"buildWithDebugInformation"`
 	BuildWithSource           bool   `mapstructure:"buildWithSource"            json:"buildWithSource"`
-	All                       bool   `mapstructure:"all"                        json:"all"`
 }
 
 // ArchiveConfig represents archive command configuration
@@ -44,13 +42,7 @@ type ArchiveConfig struct {
 	IncludeCompiledModuleFiles bool     `mapstructure:"includeCompiledModuleFiles" json:"includeCompiledModuleFiles"`
 	IncludeFilesNotInWorkspace bool     `mapstructure:"includeFilesNotInWorkspace" json:"includeFilesNotInWorkspace"`
 	ExtraFileSearchLocations   []string `mapstructure:"extraFileSearchLocations"   json:"extraFileSearchLocations"`
-	All                        bool     `mapstructure:"all"                        json:"all"`
 	IgnoredFiles               []string `mapstructure:"ignoredFiles"               json:"ignoredFiles"`
-}
-
-// BuildConfig represents build command configuration
-type BuildConfig struct {
-	All bool `mapstructure:"all" json:"all"`
 }
 
 var defaultConfig = Config{
@@ -73,7 +65,6 @@ var defaultConfig = Config{
 		OutputLogConsoleOption:    true,
 		BuildWithDebugInformation: false,
 		BuildWithSource:           false,
-		All:                       false,
 	},
 	Archive: ArchiveConfig{
 		OutputFile:                 "archive.zip",
@@ -81,7 +72,6 @@ var defaultConfig = Config{
 		IncludeCompiledModuleFiles: true,
 		IncludeFilesNotInWorkspace: true,
 		ExtraFileSearchLocations:   utils.NormalizePaths([]string{"C:/Program Files (x86)/Common Files/AMXShare"}),
-		All:                        false,
 		IgnoredFiles: []string{
 			"G4API.axi",
 			"NetLinx.axi",
@@ -98,9 +88,6 @@ var defaultConfig = Config{
 			"snapirouter.jar",
 			"snapirouter2.jar",
 		},
-	},
-	Build: BuildConfig{
-		All: false,
 	},
 }
 
