@@ -1283,3 +1283,121 @@ func TestBuild_MissingExtraRef_WarningIncludesSourceFile(t *testing.T) {
 	require.Contains(t, output, "Panel.axs",
 		"warning must name the source file the reference was found in, not the workspace APW")
 }
+
+// ---------------------------------------------------------------------------
+// Build – documentation files (README*, LICENSE*, CHANGELOG*)
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_README_AddedWhenPresent() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(filepath.Join(wd, "README.md"), []byte("# README"), 0o644))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "README.md" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should include README.md when it is adjacent to the APW file")
+}
+
+func (s *ArchiveTestSuite) TestBuild_LICENSE_AddedWhenPresent() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(filepath.Join(wd, "LICENSE"), []byte("MIT License"), 0o644))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "LICENSE" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should include LICENSE when it is adjacent to the APW file")
+}
+
+func (s *ArchiveTestSuite) TestBuild_CHANGELOG_AddedWhenPresent() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(filepath.Join(wd, "CHANGELOG.md"), []byte("## Changelog"), 0o644))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "CHANGELOG.md" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should include CHANGELOG.md when it is adjacent to the APW file")
+}
+
+func (s *ArchiveTestSuite) TestBuild_DocFiles_MultipleVariants_AllIncluded() {
+	// Verifies glob matching: README*, LICENSE*, CHANGELOG* each match multiple filenames.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	docFiles := []string{"README.md", "README.txt", "LICENSE", "LICENSE.md", "CHANGELOG.md"}
+	for _, name := range docFiles {
+		s.Require().NoError(os.WriteFile(filepath.Join(wd, name), []byte("content"), 0o644))
+	}
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	zipNames := make(map[string]bool)
+	for _, f := range zr.File {
+		zipNames[f.Name] = true
+	}
+
+	for _, name := range docFiles {
+		s.True(zipNames[name], "zip should contain %q", name)
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_DocFiles_NotAddedWhenAbsent() {
+	// When no README*/LICENSE*/CHANGELOG* files are present, Build should
+	// still succeed and the zip should not contain any spurious entries.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	for _, f := range zr.File {
+		s.False(
+			strings.HasPrefix(f.Name, "README") ||
+				strings.HasPrefix(f.Name, "LICENSE") ||
+				strings.HasPrefix(f.Name, "CHANGELOG"),
+			"zip should not contain documentation files when none are present; found %q", f.Name,
+		)
+	}
+}

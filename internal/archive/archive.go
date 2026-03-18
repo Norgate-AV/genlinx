@@ -113,6 +113,12 @@ func (b *Builder) Build() error {
 	// variants of GetExtraFileReferences* re-read those FilePathName values to
 	// locate source files on disk — if they run after the mutation the paths no
 	// longer resolve and no extra refs are found.
+	if err := b.addDocumentationFiles(); err != nil {
+		_ = b.zipWriter.Close()
+		_ = f.Close()
+		return err
+	}
+
 	if err := b.addExtraFiles(); err != nil {
 		_ = b.zipWriter.Close()
 		_ = f.Close()
@@ -354,6 +360,36 @@ func (b *Builder) addWorkspaceFiles() error {
 
 				fr.SetPath(filepath.Base(diskPath))
 			}
+		}
+	}
+
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Documentation files pass (README*, LICENSE*, CHANGELOG* adjacent to APW)
+// ---------------------------------------------------------------------------
+
+// addDocumentationFiles globs for common project documentation files
+// (README*, LICENSE*, CHANGELOG*) in the same directory as the APW file and
+// adds each match to the archive root.
+func (b *Builder) addDocumentationFiles() error {
+	dir := filepath.Dir(b.apw.FilePath())
+	patterns := []string{"README*", "LICENSE*", "CHANGELOG*"}
+
+	for _, pattern := range patterns {
+		matches, err := filepath.Glob(filepath.Join(dir, pattern))
+		if err != nil {
+			return err
+		}
+
+		for _, match := range matches {
+			entryName := zipEntryPath(filepath.Base(match))
+			if err := b.addDiskFile(match, entryName); err != nil {
+				return fmt.Errorf("failed to add documentation file %s: %w", match, err)
+			}
+
+			b.logVerbose(logGreen, "Added documentation file: %s", filepath.Base(match))
 		}
 	}
 
