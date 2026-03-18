@@ -157,31 +157,6 @@ func TestPrintBuildResult_NoErrorsReturnsNil(t *testing.T) {
 	})
 }
 
-// TestBuildCmd_NoAllFlag_Registered verifies that the -A/--no-all flag is
-// registered on the build command with the correct shorthand and default value.
-func TestBuildCmd_NoAllFlag_Registered(t *testing.T) {
-	f := buildCmd.Flags().Lookup("no-all")
-	assert.NotNil(t, f, "--no-all flag must be registered")
-	assert.Equal(t, "A", f.Shorthand)
-	assert.Equal(t, "false", f.DefValue)
-}
-
-// TestBuildCmd_NoAllAndAll_AreMutuallyExclusive verifies that cobra rejects
-// supplying both --all and --no-all at the same time.
-func TestBuildCmd_NoAllAndAll_AreMutuallyExclusive(t *testing.T) {
-	// cobra enforces mutual exclusion during command execution (before RunE).
-	// Execute() always traverses from the root, so drive via rootCmd.
-	rootCmd.SetArgs([]string{"build", "--all", "--no-all"})
-	t.Cleanup(func() {
-		rootCmd.SetArgs(nil)
-		_ = buildCmd.Flags().Set("all", "false")
-		_ = buildCmd.Flags().Set("no-all", "false")
-	})
-
-	err := rootCmd.Execute()
-	assert.ErrorContains(t, err, "[all no-all]")
-}
-
 // TestBuildCmd_PositionalArgsMergedWithSourceFiles verifies that positional
 // arguments are combined with --source-files before the OS guard runs.
 // On non-Windows the guard fires immediately, so we confirm the error is the

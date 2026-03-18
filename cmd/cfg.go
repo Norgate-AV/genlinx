@@ -56,7 +56,6 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 	modulePath, _ := cmd.Flags().GetStringSlice("module-path")
 	libraryPath, _ := cmd.Flags().GetStringSlice("library-path")
 	all, _ := cmd.Flags().GetBool("all")
-	noAll, _ := cmd.Flags().GetBool("no-all")
 
 	if outputLogFileOption != "" && outputLogFileOption != "A" && outputLogFileOption != "N" {
 		return fmt.Errorf("invalid value %q for --output-log-file-option: must be A or N", outputLogFileOption)
@@ -84,17 +83,12 @@ func runCfg(cmd *cobra.Command, _ []string) error {
 		LibraryPath:         libraryPath,
 		All:                 all,
 		Verbose:             verbose,
-		ExplicitBoolFlags:             ExplicitBoolFlags,
+		ExplicitBoolFlags:   ExplicitBoolFlags,
 	}
 
 	opts, configInfo, err := options.LoadCfgOptions(cliOpts)
 	if err != nil {
 		return fmt.Errorf("failed to load cfg options: %w", err)
-	}
-
-	// -A/--no-all explicitly overrides a config-file all:true.
-	if noAll {
-		opts.All = false
 	}
 
 	if verbose {
@@ -195,5 +189,4 @@ func init() {
 	cfgCmd.Flags().StringSliceP("module-path", "m", []string{}, "add additional module paths")
 	cfgCmd.Flags().StringSliceP("library-path", "l", []string{}, "add additional library paths")
 	cfgCmd.Flags().BoolP("all", "a", false, "process all found workspace files without prompting")
-	cfgCmd.Flags().BoolP("no-all", "A", false, "prompt to select workspace files even when multiple are found")
 }
