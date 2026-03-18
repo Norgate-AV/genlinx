@@ -331,7 +331,7 @@ func (suite *IntegrationTestSuite) TestCfgOptions_LocalConfigMergesIncludePaths(
 	t.Setenv("GENLINX_CONFIG_DIR", globalIsolateDir)
 
 	const configJSON = `{
-		"nlrc": {
+		"compiler": {
 			"includePath": ["custom/include"],
 			"modulePath":  ["custom/modules"]
 		}

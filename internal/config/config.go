@@ -6,11 +6,11 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Core    CoreConfig    `mapstructure:"core"    json:"core"`
-	NLRC    NLRCConfig    `mapstructure:"nlrc"    json:"nlrc"`
-	CFG     CFGConfig     `mapstructure:"cfg"     json:"cfg"`
-	Archive ArchiveConfig `mapstructure:"archive" json:"archive"`
-	Build   BuildConfig   `mapstructure:"build"   json:"build"`
+	Core     CoreConfig     `mapstructure:"core"     json:"core"`
+	Compiler CompilerConfig `mapstructure:"compiler" json:"compiler"`
+	CFG      CFGConfig      `mapstructure:"cfg"      json:"cfg"`
+	Archive  ArchiveConfig  `mapstructure:"archive" json:"archive"`
+	Build    BuildConfig    `mapstructure:"build"   json:"build"`
 }
 
 // CoreConfig holds global/editor settings
@@ -18,8 +18,8 @@ type CoreConfig struct {
 	Editor string `mapstructure:"editor" json:"editor"`
 }
 
-// NLRCConfig represents NetLinx Run Compiler (NLRC) configuration shared by the build and cfg commands
-type NLRCConfig struct {
+// CompilerConfig represents NetLinx compiler configuration shared by the build and cfg commands
+type CompilerConfig struct {
 	Path        string   `mapstructure:"path"        json:"path"`
 	IncludePath []string `mapstructure:"includePath" json:"includePath"`
 	ModulePath  []string `mapstructure:"modulePath"  json:"modulePath"`
@@ -54,7 +54,7 @@ type BuildConfig struct {
 }
 
 var defaultConfig = Config{
-	NLRC: NLRCConfig{
+	Compiler: CompilerConfig{
 		Path: utils.NormalizePath("C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe"),
 		IncludePath: utils.NormalizePaths([]string{
 			"C:/Program Files (x86)/Common Files/AMXShare/AXIs",
@@ -106,11 +106,11 @@ var defaultConfig = Config{
 
 // NormalizeConfigPaths normalizes all paths in the configuration to OS-specific format
 func NormalizeConfigPaths(config *Config) {
-	// Normalize NLRC paths
-	config.NLRC.Path = utils.NormalizePath(config.NLRC.Path)
-	config.NLRC.IncludePath = utils.NormalizePaths(config.NLRC.IncludePath)
-	config.NLRC.ModulePath = utils.NormalizePaths(config.NLRC.ModulePath)
-	config.NLRC.LibraryPath = utils.NormalizePaths(config.NLRC.LibraryPath)
+	// Normalize compiler paths
+	config.Compiler.Path = utils.NormalizePath(config.Compiler.Path)
+	config.Compiler.IncludePath = utils.NormalizePaths(config.Compiler.IncludePath)
+	config.Compiler.ModulePath = utils.NormalizePaths(config.Compiler.ModulePath)
+	config.Compiler.LibraryPath = utils.NormalizePaths(config.Compiler.LibraryPath)
 
 	// Normalize Archive paths
 	config.Archive.ExtraFileSearchLocations = utils.NormalizePaths(config.Archive.ExtraFileSearchLocations)

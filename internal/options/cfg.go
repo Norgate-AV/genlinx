@@ -42,9 +42,9 @@ func LoadCfgOptions(cliOpts *CfgCLIOptions) (*cfg.Options, *ConfigLoadInfo, erro
 		OutputLogConsoleOption:    mergedCfg.CFG.OutputLogConsoleOption,
 		BuildWithDebugInformation: mergedCfg.CFG.BuildWithDebugInformation,
 		BuildWithSource:           mergedCfg.CFG.BuildWithSource,
-		IncludePath:               mergedCfg.NLRC.IncludePath,
-		ModulePath:                mergedCfg.NLRC.ModulePath,
-		LibraryPath:               mergedCfg.NLRC.LibraryPath,
+		IncludePath:               mergedCfg.Compiler.IncludePath,
+		ModulePath:                mergedCfg.Compiler.ModulePath,
+		LibraryPath:               mergedCfg.Compiler.LibraryPath,
 		All:                       mergedCfg.CFG.All,
 	}
 

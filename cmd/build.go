@@ -66,22 +66,22 @@ var buildCmd = &cobra.Command{
 			configInfo.Print()
 		}
 
-		nlrc := compiler.NewNLRCCompiler(opts.NLRCPath)
+		c := compiler.NewNetLinxCompiler(opts.CompilerPath)
 
-		if _, err := os.Stat(opts.NLRCPath); err != nil {
-			return fmt.Errorf("NLRC compiler not found at %q — is NetLinx Studio installed?\n%w", opts.NLRCPath, err)
+		if _, err := os.Stat(opts.CompilerPath); err != nil {
+			return fmt.Errorf("compiler not found at %q — is NetLinx Studio installed?\n%w", opts.CompilerPath, err)
 		}
 
 		if len(opts.SourceFiles) > 0 {
-			return executeSourceBuild(opts.SourceFiles, nlrc, opts)
+			return executeSourceBuild(opts.SourceFiles, c, opts)
 		}
 
-		return executeCfgBuild(opts.CFGFiles, nlrc, opts)
+		return executeCfgBuild(opts.CFGFiles, c, opts)
 	},
 }
 
 // executeSourceBuild compiles each source file with a separate compiler invocation.
-func executeSourceBuild(files []string, nlrc compiler.Compiler, opts *options.BuildOptions) error {
+func executeSourceBuild(files []string, c compiler.Compiler, opts *options.BuildOptions) error {
 	for _, file := range files {
 		if opts.Verbose {
 			color.Blue("Executing build for %s...", file)
@@ -91,7 +91,7 @@ func executeSourceBuild(files []string, nlrc compiler.Compiler, opts *options.Bu
 		compileOpts.SourceFiles = []string{file}
 		compileOpts.CFGFiles = nil
 
-		result, err := nlrc.Compile(compileOpts)
+		result, err := c.Compile(compileOpts)
 		if err != nil {
 			return fmt.Errorf("compilation failed for %s: %w", file, err)
 		}
@@ -108,7 +108,7 @@ func executeSourceBuild(files []string, nlrc compiler.Compiler, opts *options.Bu
 // When no files are given it auto-discovers .cfg files in the current working
 // directory. If multiple files are found and --all is not set the user is prompted
 // to select which ones to build.
-func executeCfgBuild(files []string, nlrc compiler.Compiler, opts *options.BuildOptions) error {
+func executeCfgBuild(files []string, c compiler.Compiler, opts *options.BuildOptions) error {
 	if len(files) == 0 {
 		if opts.Verbose {
 			color.Blue("Searching for CFG files...")
@@ -145,7 +145,7 @@ func executeCfgBuild(files []string, nlrc compiler.Compiler, opts *options.Build
 		compileOpts.CFGFiles = []string{file}
 		compileOpts.SourceFiles = nil
 
-		result, err := nlrc.Compile(compileOpts)
+		result, err := c.Compile(compileOpts)
 		if err != nil {
 			return fmt.Errorf("compilation failed for %s: %w", file, err)
 		}

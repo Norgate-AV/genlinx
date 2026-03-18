@@ -319,20 +319,20 @@ func resolveConfigPaths(cfg *config.Config) error {
 
 	var err error
 
-	if cfg.NLRC.Path, err = abs(cfg.NLRC.Path); err != nil {
-		return fmt.Errorf("nlrc.path: %w", err)
+	if cfg.Compiler.Path, err = abs(cfg.Compiler.Path); err != nil {
+		return fmt.Errorf("compiler.path: %w", err)
 	}
 
-	if err = absSlice(cfg.NLRC.IncludePath); err != nil {
-		return fmt.Errorf("nlrc.includePath: %w", err)
+	if err = absSlice(cfg.Compiler.IncludePath); err != nil {
+		return fmt.Errorf("compiler.includePath: %w", err)
 	}
 
-	if err = absSlice(cfg.NLRC.ModulePath); err != nil {
-		return fmt.Errorf("nlrc.modulePath: %w", err)
+	if err = absSlice(cfg.Compiler.ModulePath); err != nil {
+		return fmt.Errorf("compiler.modulePath: %w", err)
 	}
 
-	if err = absSlice(cfg.NLRC.LibraryPath); err != nil {
-		return fmt.Errorf("nlrc.libraryPath: %w", err)
+	if err = absSlice(cfg.Compiler.LibraryPath); err != nil {
+		return fmt.Errorf("compiler.libraryPath: %w", err)
 	}
 
 	if err = absSlice(cfg.Archive.ExtraFileSearchLocations); err != nil {
@@ -372,21 +372,21 @@ func mergeConfigsWithPresence(base *config.Config, overrides ...configMergeInput
 			continue
 		}
 
-		// Merge NLRC config
-		if cfg.NLRC.Path != "" {
-			result.NLRC.Path = cfg.NLRC.Path
+		// Merge compiler config
+		if cfg.Compiler.Path != "" {
+			result.Compiler.Path = cfg.Compiler.Path
 		}
 
-		if len(cfg.NLRC.IncludePath) > 0 {
-			result.NLRC.IncludePath = prependAndDeduplicate(result.NLRC.IncludePath, cfg.NLRC.IncludePath)
+		if len(cfg.Compiler.IncludePath) > 0 {
+			result.Compiler.IncludePath = prependAndDeduplicate(result.Compiler.IncludePath, cfg.Compiler.IncludePath)
 		}
 
-		if len(cfg.NLRC.ModulePath) > 0 {
-			result.NLRC.ModulePath = prependAndDeduplicate(result.NLRC.ModulePath, cfg.NLRC.ModulePath)
+		if len(cfg.Compiler.ModulePath) > 0 {
+			result.Compiler.ModulePath = prependAndDeduplicate(result.Compiler.ModulePath, cfg.Compiler.ModulePath)
 		}
 
-		if len(cfg.NLRC.LibraryPath) > 0 {
-			result.NLRC.LibraryPath = prependAndDeduplicate(result.NLRC.LibraryPath, cfg.NLRC.LibraryPath)
+		if len(cfg.Compiler.LibraryPath) > 0 {
+			result.Compiler.LibraryPath = prependAndDeduplicate(result.Compiler.LibraryPath, cfg.Compiler.LibraryPath)
 		}
 
 		// Merge Build config

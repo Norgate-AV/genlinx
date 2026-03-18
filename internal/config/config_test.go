@@ -36,15 +36,15 @@ func (suite *ConfigTestSuite) TestLoadDefaultConfig() {
 	// Test default values
 	assert.Equal(suite.T(), "build.cfg", config.CFG.OutputFile)
 	assert.Equal(suite.T(), "build.log", config.CFG.OutputLogFile)
-	assert.Contains(suite.T(), config.NLRC.IncludePath, filepath.FromSlash("C:/Program Files (x86)/Common Files/AMXShare/AXIs"))
-	assert.Contains(suite.T(), config.NLRC.ModulePath, filepath.FromSlash("C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle"))
-	assert.Contains(suite.T(), config.NLRC.LibraryPath, filepath.FromSlash("C:/Program Files (x86)/Common Files/AMXShare/SYCs"))
+	assert.Contains(suite.T(), config.Compiler.IncludePath, filepath.FromSlash("C:/Program Files (x86)/Common Files/AMXShare/AXIs"))
+	assert.Contains(suite.T(), config.Compiler.ModulePath, filepath.FromSlash("C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle"))
+	assert.Contains(suite.T(), config.Compiler.LibraryPath, filepath.FromSlash("C:/Program Files (x86)/Common Files/AMXShare/SYCs"))
 }
 
 // TestNormalizeConfigPaths tests path normalization in configuration
 func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 	config := &Config{
-		NLRC: NLRCConfig{
+		Compiler: CompilerConfig{
 			Path:        "C:/program files/../Program Files/NLRC.exe",
 			IncludePath: []string{"./include"},
 			ModulePath:  []string{"./module"},
@@ -58,10 +58,10 @@ func (suite *ConfigTestSuite) TestNormalizeConfigPaths() {
 	NormalizeConfigPaths(config)
 
 	// Test normalized paths
-	assert.Equal(suite.T(), filepath.FromSlash("C:/Program Files/NLRC.exe"), config.NLRC.Path)
-	assert.Equal(suite.T(), filepath.FromSlash("include"), config.NLRC.IncludePath[0])
-	assert.Equal(suite.T(), filepath.FromSlash("module"), config.NLRC.ModulePath[0])
-	assert.Equal(suite.T(), filepath.FromSlash("lib"), config.NLRC.LibraryPath[0])
+	assert.Equal(suite.T(), filepath.FromSlash("C:/Program Files/NLRC.exe"), config.Compiler.Path)
+	assert.Equal(suite.T(), filepath.FromSlash("include"), config.Compiler.IncludePath[0])
+	assert.Equal(suite.T(), filepath.FromSlash("module"), config.Compiler.ModulePath[0])
+	assert.Equal(suite.T(), filepath.FromSlash("lib"), config.Compiler.LibraryPath[0])
 	assert.Equal(suite.T(), filepath.FromSlash("search"), config.Archive.ExtraFileSearchLocations[0])
 }
 

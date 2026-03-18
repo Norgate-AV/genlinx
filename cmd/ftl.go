@@ -24,7 +24,7 @@ var ftlCmd = &cobra.Command{
 An FTL file enumerates every transferable item — compiled master firmware
 (.tkn) and panel binaries (.TP4, .TP5, .KPB) — across the selected scope of
 the workspace.  The resulting file can be imported directly into NetLinx Studio
-(Tools > Open Transfer List...) or the standalone AMX File Transfer Tool.
+or the standalone AMX File Transfer Tool.
 
 Scope can be narrowed with --project and/or --system.  Without those flags the
 entire workspace is included.`,

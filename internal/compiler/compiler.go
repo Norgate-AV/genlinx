@@ -23,7 +23,7 @@ const (
 // logPattern matches the NLRC compiler log prefix: "ERROR: ..." or "WARNING: ..."
 var logPattern = regexp.MustCompile(`(ERROR|WARNING): .+`)
 
-// Compiler represents a NetLinx Run Compiler (NLRC)
+// Compiler represents a NetLinx compiler
 type Compiler interface {
 	Compile(options CompileOptions) (*CompileResult, error)
 }
@@ -48,21 +48,21 @@ type CompileResult struct {
 	ExitCode int
 }
 
-// NLRCCompiler implements the Compiler interface for the NetLinx Run Compiler (NLRC)
-type NLRCCompiler struct {
+// NetLinxCompiler implements the Compiler interface for the NetLinx compiler
+type NetLinxCompiler struct {
 	ExecutablePath string
 	env            []string // override subprocess environment (tests only; nil = inherit)
 }
 
-// NewNLRCCompiler creates a new NetLinx Run Compiler (NLRC) instance
-func NewNLRCCompiler(executablePath string) *NLRCCompiler {
-	return &NLRCCompiler{
+// NewNetLinxCompiler creates a new NetLinx compiler instance
+func NewNetLinxCompiler(executablePath string) *NetLinxCompiler {
+	return &NetLinxCompiler{
 		ExecutablePath: executablePath,
 	}
 }
 
 // Compile compiles NetLinx source files
-func (c *NLRCCompiler) Compile(options CompileOptions) (*CompileResult, error) {
+func (c *NetLinxCompiler) Compile(options CompileOptions) (*CompileResult, error) {
 	args, err := c.BuildArgs(options)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (c *NLRCCompiler) Compile(options CompileOptions) (*CompileResult, error) {
 }
 
 // BuildArgs builds the command line arguments for the compiler
-func (c *NLRCCompiler) BuildArgs(options CompileOptions) ([]string, error) {
+func (c *NetLinxCompiler) BuildArgs(options CompileOptions) ([]string, error) {
 	var args []string
 
 	// Add source files first (they must come before options and be absolute paths)
@@ -203,7 +203,7 @@ func joinNonEmpty(paths []string) string {
 
 // readOutput streams stdout and stderr line-by-line as the compiler runs,
 // printing every line immediately and also accumulating them for parseOutput.
-func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
+func (c *NetLinxCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
 	var output strings.Builder
 
 	// Read stdout
@@ -235,7 +235,7 @@ func (c *NLRCCompiler) readOutput(stdout, stderr io.Reader) (string, error) {
 
 // parseOutput parses compiler output for errors and warnings.
 // It deduplicates results, matching NLRC's output format exactly.
-func (c *NLRCCompiler) parseOutput(output string) ([]string, []string) {
+func (c *NetLinxCompiler) parseOutput(output string) ([]string, []string) {
 	seenErrors := make(map[string]struct{})
 	seenWarnings := make(map[string]struct{})
 

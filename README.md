@@ -281,19 +281,17 @@ Options:
             "snapirouter2.jar"
         ]
     },
+    "compiler": {
+        "path": "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
+        "includePath": ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
+        "modulePath": [
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
+        ],
+        "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"]
+    },
     "build": {
-        "nlrc": {
-            "path": "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
-            "includePath": [
-                "C:/Program Files (x86)/Common Files/AMXShare/AXIs"
-            ],
-            "modulePath": [
-                "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
-                "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
-                "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
-            ],
-            "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"]
-        },
         "shell": {
             "path": "C:/Windows/System32/cmd.exe"
         },

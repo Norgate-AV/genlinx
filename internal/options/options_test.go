@@ -120,13 +120,13 @@ func (suite *OptionsTestSuite) TestPrependAndDeduplicate() {
 // TestResolvePaths tests path resolution to absolute paths
 func (suite *OptionsTestSuite) TestResolvePaths() {
 	opts := &BuildOptions{
-		SourceFiles: []string{"relative/file.axs"},
-		CFGFiles:    []string{"./config.cfg"},
-		IncludePath: []string{"./include"},
-		ModulePath:  []string{"./module"},
-		LibraryPath: []string{"./lib"},
-		OutputPath:  "./output",
-		NLRCPath:    "./nlrc.exe",
+		SourceFiles:  []string{"relative/file.axs"},
+		CFGFiles:     []string{"./config.cfg"},
+		IncludePath:  []string{"./include"},
+		ModulePath:   []string{"./module"},
+		LibraryPath:  []string{"./lib"},
+		OutputPath:   "./output",
+		CompilerPath: "./nlrc.exe",
 	}
 
 	// Change to temp directory for relative path testing
@@ -162,7 +162,7 @@ func (suite *OptionsTestSuite) TestResolvePaths() {
 	}
 
 	assert.True(suite.T(), filepath.IsAbs(opts.OutputPath), "Output path should be absolute: %s", opts.OutputPath)
-	assert.True(suite.T(), filepath.IsAbs(opts.NLRCPath), "NLRC path should be absolute: %s", opts.NLRCPath)
+	assert.True(suite.T(), filepath.IsAbs(opts.CompilerPath), "compiler path should be absolute: %s", opts.CompilerPath)
 }
 
 // TestLoadGlobalConfig tests global configuration loading
@@ -186,7 +186,7 @@ func (suite *OptionsTestSuite) TestLoadGlobalConfig_YAML() {
 	suite.Require().NoError(os.MkdirAll(globalDir, 0o755))
 	suite.T().Setenv("GENLINX_CONFIG_DIR", globalDir)
 
-	content := "nlrc:\n  includePath:\n    - yaml/include\n"
+	content := "compiler:\n  includePath:\n    - yaml/include\n"
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(globalDir, "config.yaml"),
 		[]byte(content), 0o644,
@@ -195,7 +195,7 @@ func (suite *OptionsTestSuite) TestLoadGlobalConfig_YAML() {
 	result, err := LoadGlobalConfig()
 	suite.Require().NoError(err)
 	assert.True(suite.T(), result.Found)
-	assert.Contains(suite.T(), result.Config.NLRC.IncludePath, filepath.FromSlash("yaml/include"))
+	assert.Contains(suite.T(), result.Config.Compiler.IncludePath, filepath.FromSlash("yaml/include"))
 }
 
 // TestLoadGlobalConfig_YML verifies that a global config.yml file is recognised
@@ -205,7 +205,7 @@ func (suite *OptionsTestSuite) TestLoadGlobalConfig_YML() {
 	suite.Require().NoError(os.MkdirAll(globalDir, 0o755))
 	suite.T().Setenv("GENLINX_CONFIG_DIR", globalDir)
 
-	content := "nlrc:\n  includePath:\n    - yml/include\n"
+	content := "compiler:\n  includePath:\n    - yml/include\n"
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(globalDir, "config.yml"),
 		[]byte(content), 0o644,
@@ -214,7 +214,7 @@ func (suite *OptionsTestSuite) TestLoadGlobalConfig_YML() {
 	result, err := LoadGlobalConfig()
 	suite.Require().NoError(err)
 	assert.True(suite.T(), result.Found)
-	assert.Contains(suite.T(), result.Config.NLRC.IncludePath, filepath.FromSlash("yml/include"))
+	assert.Contains(suite.T(), result.Config.Compiler.IncludePath, filepath.FromSlash("yml/include"))
 }
 
 // TestLoadLocalConfig tests local configuration loading with find-up
@@ -222,7 +222,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfig() {
 	// Create a config file in the temp directory
 	configFile := filepath.Join(suite.tempDir, ".genlinxrc.json")
 	configContent := `{
-		"nlrc": {
+		"compiler": {
 			"includePath": ["test/include"]
 		}
 	}`
@@ -243,7 +243,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfig() {
 	suite.Require().NoError(err)
 	assert.NotNil(suite.T(), result.Config)
 	assert.True(suite.T(), result.Found)
-	assert.Contains(suite.T(), result.Config.NLRC.IncludePath, filepath.FromSlash("test/include"))
+	assert.Contains(suite.T(), result.Config.Compiler.IncludePath, filepath.FromSlash("test/include"))
 }
 
 // TestLoadLocalConfig_Formats verifies that every supported filename and format
@@ -256,27 +256,27 @@ func (suite *OptionsTestSuite) TestLoadLocalConfig_Formats() {
 	}{
 		{
 			filename: ".genlinxrc.yaml",
-			content:  "nlrc:\n  includePath:\n    - yaml/include\n",
+			content:  "compiler:\n  includePath:\n    - yaml/include\n",
 			wantPath: "yaml/include",
 		},
 		{
 			filename: ".genlinxrc.yml",
-			content:  "nlrc:\n  includePath:\n    - yml/include\n",
+			content:  "compiler:\n  includePath:\n    - yml/include\n",
 			wantPath: "yml/include",
 		},
 		{
 			filename: ".genlinx.json",
-			content:  `{"nlrc":{"includePath":["genlinx/include"]}}`,
+			content:  `{"compiler":{"includePath":["genlinx/include"]}}`,
 			wantPath: "genlinx/include",
 		},
 		{
 			filename: ".genlinx.yaml",
-			content:  "nlrc:\n  includePath:\n    - genlinxyaml/include\n",
+			content:  "compiler:\n  includePath:\n    - genlinxyaml/include\n",
 			wantPath: "genlinxyaml/include",
 		},
 		{
 			filename: ".genlinx.yml",
-			content:  "nlrc:\n  includePath:\n    - genlinxyml/include\n",
+			content:  "compiler:\n  includePath:\n    - genlinxyml/include\n",
 			wantPath: "genlinxyml/include",
 		},
 	}
@@ -298,7 +298,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfig_Formats() {
 			result, err := LoadLocalConfig()
 			suite.Require().NoError(err)
 			assert.True(suite.T(), result.Found, "config not found for %s", tc.filename)
-			assert.Contains(suite.T(), result.Config.NLRC.IncludePath,
+			assert.Contains(suite.T(), result.Config.Compiler.IncludePath,
 				filepath.FromSlash(tc.wantPath), "wrong include path for %s", tc.filename)
 		})
 	}
@@ -316,7 +316,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfigFindUp() {
 	// Create config file in parent directory
 	configFile := filepath.Join(parentDir, ".genlinxrc.json")
 	configContent := `{
-		"nlrc": {
+		"compiler": {
 			"modulePath": ["findup/module"]
 		}
 	}`
@@ -337,7 +337,7 @@ func (suite *OptionsTestSuite) TestLoadLocalConfigFindUp() {
 	suite.Require().NoError(err)
 	assert.NotNil(suite.T(), result.Config)
 	assert.True(suite.T(), result.Found)
-	assert.Contains(suite.T(), result.Config.NLRC.ModulePath, filepath.FromSlash("findup/module"))
+	assert.Contains(suite.T(), result.Config.Compiler.ModulePath, filepath.FromSlash("findup/module"))
 }
 
 // TestLoadLocalConfigNoConfig tests when no local config is found
@@ -356,20 +356,20 @@ func (suite *OptionsTestSuite) TestLoadLocalConfigNoConfig() {
 	assert.NotNil(suite.T(), result.Config)
 	assert.False(suite.T(), result.Found)
 	// Should return empty config
-	assert.Empty(suite.T(), result.Config.NLRC.IncludePath)
+	assert.Empty(suite.T(), result.Config.Compiler.IncludePath)
 }
 
 // TestMergeConfigs tests configuration merging
 func (suite *OptionsTestSuite) TestMergeConfigs() {
 	config1 := &config.Config{
-		NLRC: config.NLRCConfig{
+		Compiler: config.CompilerConfig{
 			IncludePath: []string{"config1/include"},
 			Path:        "config1.exe",
 		},
 	}
 
 	config2 := &config.Config{
-		NLRC: config.NLRCConfig{
+		Compiler: config.CompilerConfig{
 			IncludePath: []string{"config2/include"},
 			ModulePath:  []string{"config2/module"},
 		},
@@ -378,24 +378,24 @@ func (suite *OptionsTestSuite) TestMergeConfigs() {
 	merged := mergeConfigs(config1, config2)
 
 	// Should contain items from both configs
-	assert.Contains(suite.T(), merged.NLRC.IncludePath, "config1/include")
-	assert.Contains(suite.T(), merged.NLRC.IncludePath, "config2/include")
-	assert.Contains(suite.T(), merged.NLRC.ModulePath, "config2/module")
-	assert.Equal(suite.T(), "config1.exe", merged.NLRC.Path)
+	assert.Contains(suite.T(), merged.Compiler.IncludePath, "config1/include")
+	assert.Contains(suite.T(), merged.Compiler.IncludePath, "config2/include")
+	assert.Contains(suite.T(), merged.Compiler.ModulePath, "config2/module")
+	assert.Equal(suite.T(), "config1.exe", merged.Compiler.Path)
 }
 
 // TestBuildOptionsStruct tests the BuildOptions struct
 func (suite *OptionsTestSuite) TestBuildOptionsStruct() {
 	opts := &BuildOptions{
-		SourceFiles: []string{"file1.axs", "file2.axi"},
-		CFGFiles:    []string{"config.cfg"},
-		IncludePath: []string{"include1", "include2"},
-		ModulePath:  []string{"module1", "module2"},
-		LibraryPath: []string{"lib1", "lib2"},
-		OutputPath:  "output/",
-		NLRCPath:    "nlrc.exe",
-		All:         true,
-		Verbose:     true,
+		SourceFiles:  []string{"file1.axs", "file2.axi"},
+		CFGFiles:     []string{"config.cfg"},
+		IncludePath:  []string{"include1", "include2"},
+		ModulePath:   []string{"module1", "module2"},
+		LibraryPath:  []string{"lib1", "lib2"},
+		OutputPath:   "output/",
+		CompilerPath: "nlrc.exe",
+		All:          true,
+		Verbose:      true,
 	}
 
 	assert.Len(suite.T(), opts.SourceFiles, 2)
@@ -403,7 +403,7 @@ func (suite *OptionsTestSuite) TestBuildOptionsStruct() {
 	assert.Len(suite.T(), opts.ModulePath, 2)
 	assert.Len(suite.T(), opts.LibraryPath, 2)
 	assert.Equal(suite.T(), "output/", opts.OutputPath)
-	assert.Equal(suite.T(), "nlrc.exe", opts.NLRCPath)
+	assert.Equal(suite.T(), "nlrc.exe", opts.CompilerPath)
 	assert.True(suite.T(), opts.All)
 	assert.True(suite.T(), opts.Verbose)
 }
@@ -433,56 +433,56 @@ func (suite *OptionsTestSuite) TestCLIOptionsStruct() {
 // default < global < local precedence used in LoadBuildOptions.
 func (suite *OptionsTestSuite) TestMergeConfigs_LaterConfigWins() {
 	defaultCfg := &config.Config{
-		NLRC: config.NLRCConfig{Path: "default.exe"},
+		Compiler: config.CompilerConfig{Path: "default.exe"},
 	}
 
 	globalCfg := &config.Config{
-		NLRC: config.NLRCConfig{Path: "global.exe"},
+		Compiler: config.CompilerConfig{Path: "global.exe"},
 	}
 
 	localCfg := &config.Config{
-		NLRC: config.NLRCConfig{Path: "local.exe"},
+		Compiler: config.CompilerConfig{Path: "local.exe"},
 	}
 
 	merged := mergeConfigs(defaultCfg, globalCfg, localCfg)
 
 	// local is last — it must win
-	assert.Equal(suite.T(), "local.exe", merged.NLRC.Path)
+	assert.Equal(suite.T(), "local.exe", merged.Compiler.Path)
 }
 
 // TestMergeConfigs_EmptyLaterDoesNotOverride verifies that an empty string field
 // in a later config does not wipe out a value set by an earlier config.
 func (suite *OptionsTestSuite) TestMergeConfigs_EmptyLaterDoesNotOverride() {
 	config1 := &config.Config{
-		NLRC: config.NLRCConfig{Path: "config1.exe"},
+		Compiler: config.CompilerConfig{Path: "config1.exe"},
 	}
 
 	config2 := &config.Config{} // Path is "" (zero value)
 
 	merged := mergeConfigs(config1, config2)
 
-	assert.Equal(suite.T(), "config1.exe", merged.NLRC.Path)
+	assert.Equal(suite.T(), "config1.exe", merged.Compiler.Path)
 }
 
 // TestMergeConfigs_IncludePathAccumulates verifies that include paths from
 // multiple configs are accumulated (not overwritten) in precedence order.
 func (suite *OptionsTestSuite) TestMergeConfigs_IncludePathAccumulates() {
 	config1 := &config.Config{
-		NLRC: config.NLRCConfig{IncludePath: []string{"global/include"}},
+		Compiler: config.CompilerConfig{IncludePath: []string{"global/include"}},
 	}
 
 	config2 := &config.Config{
-		NLRC: config.NLRCConfig{IncludePath: []string{"local/include"}},
+		Compiler: config.CompilerConfig{IncludePath: []string{"local/include"}},
 	}
 
 	merged := mergeConfigs(config1, config2)
 
-	assert.Contains(suite.T(), merged.NLRC.IncludePath, "global/include")
-	assert.Contains(suite.T(), merged.NLRC.IncludePath, "local/include")
-	assert.Len(suite.T(), merged.NLRC.IncludePath, 2)
+	assert.Contains(suite.T(), merged.Compiler.IncludePath, "global/include")
+	assert.Contains(suite.T(), merged.Compiler.IncludePath, "local/include")
+	assert.Len(suite.T(), merged.Compiler.IncludePath, 2)
 	// Later config (config2 / local) paths must be prepended before earlier config (config1 / global)
-	assert.Equal(suite.T(), "local/include", merged.NLRC.IncludePath[0], "later config path should come first")
-	assert.Equal(suite.T(), "global/include", merged.NLRC.IncludePath[1])
+	assert.Equal(suite.T(), "local/include", merged.Compiler.IncludePath[0], "later config path should come first")
+	assert.Equal(suite.T(), "global/include", merged.Compiler.IncludePath[1])
 }
 
 // TestMergeConfigs_DeduplicatesPaths verifies that identical paths present in
@@ -491,17 +491,17 @@ func (suite *OptionsTestSuite) TestMergeConfigs_IncludePathAccumulates() {
 func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesPaths() {
 	sharedPath := "C:/Common/AMXShare/AXIs"
 	config1 := &config.Config{
-		NLRC: config.NLRCConfig{IncludePath: []string{sharedPath}},
+		Compiler: config.CompilerConfig{IncludePath: []string{sharedPath}},
 	}
 
 	config2 := &config.Config{
-		NLRC: config.NLRCConfig{IncludePath: []string{sharedPath}},
+		Compiler: config.CompilerConfig{IncludePath: []string{sharedPath}},
 	}
 
 	merged := mergeConfigs(config1, config2)
 
-	assert.Len(suite.T(), merged.NLRC.IncludePath, 1, "shared path should only appear once")
-	assert.Equal(suite.T(), sharedPath, merged.NLRC.IncludePath[0])
+	assert.Len(suite.T(), merged.Compiler.IncludePath, 1, "shared path should only appear once")
+	assert.Equal(suite.T(), sharedPath, merged.Compiler.IncludePath[0])
 }
 
 // TestMergeConfigs_DeduplicatesNormalized verifies that the same physical
@@ -515,7 +515,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesNormalized() {
 
 	// Simulate the default config — already normalized (as LoadDefaultConfig produces).
 	defaultCfg := &config.Config{
-		NLRC: config.NLRCConfig{IncludePath: []string{rawPath}},
+		Compiler: config.CompilerConfig{IncludePath: []string{rawPath}},
 	}
 
 	config.NormalizeConfigPaths(defaultCfg)
@@ -523,7 +523,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesNormalized() {
 	// Simulate a global config loaded from a JSON file with forward slashes,
 	// then normalized by loadGlobalConfig.
 	globalCfg := &config.Config{
-		NLRC: config.NLRCConfig{IncludePath: []string{rawPath}},
+		Compiler: config.CompilerConfig{IncludePath: []string{rawPath}},
 	}
 
 	config.NormalizeConfigPaths(globalCfg)
@@ -532,7 +532,7 @@ func (suite *OptionsTestSuite) TestMergeConfigs_DeduplicatesNormalized() {
 	// must deduplicate down to a single entry.
 	merged := mergeConfigs(defaultCfg, globalCfg)
 
-	assert.Len(suite.T(), merged.NLRC.IncludePath, 1,
+	assert.Len(suite.T(), merged.Compiler.IncludePath, 1,
 		"same path must deduplicate after normalization")
 }
 
@@ -602,12 +602,12 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_NoConfigs() {
 	assert.False(suite.T(), info.GlobalResult.Found)
 	assert.False(suite.T(), info.LocalResult.Found)
 
-	// Default NLRC path must be present
-	assert.NotEmpty(suite.T(), merged.NLRC.Path)
+	// Default compiler path must be present
+	assert.NotEmpty(suite.T(), merged.Compiler.Path)
 	// Default include / module / library paths must be non-empty
-	assert.NotEmpty(suite.T(), merged.NLRC.IncludePath)
-	assert.NotEmpty(suite.T(), merged.NLRC.ModulePath)
-	assert.NotEmpty(suite.T(), merged.NLRC.LibraryPath)
+	assert.NotEmpty(suite.T(), merged.Compiler.IncludePath)
+	assert.NotEmpty(suite.T(), merged.Compiler.ModulePath)
+	assert.NotEmpty(suite.T(), merged.Compiler.LibraryPath)
 }
 
 // TestLoadMergedConfig_LocalPrependsBeforeDefault verifies that a local config's
@@ -619,7 +619,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_LocalPrependsBeforeDefault()
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"includePath":["local/include"]}}`),
+		[]byte(`{"compiler":{"includePath":["local/include"]}}`),
 		0o644,
 	))
 
@@ -634,12 +634,12 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_LocalPrependsBeforeDefault()
 	assert.True(suite.T(), info.LocalResult.Found)
 
 	// local/include must appear first
-	assert.True(suite.T(), strings.Contains(merged.NLRC.IncludePath[0], "local"),
-		"local path must be first, got: %v", merged.NLRC.IncludePath)
+	assert.True(suite.T(), strings.Contains(merged.Compiler.IncludePath[0], "local"),
+		"local path must be first, got: %v", merged.Compiler.IncludePath)
 
 	// No duplicates
 	seen := make(map[string]int)
-	for _, p := range merged.NLRC.IncludePath {
+	for _, p := range merged.Compiler.IncludePath {
 		seen[p]++
 	}
 
@@ -657,7 +657,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_GlobalPrependsBeforeDefault(
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(globalDir, "config.json"),
-		[]byte(`{"nlrc":{"includePath":["global/include"]}}`),
+		[]byte(`{"compiler":{"includePath":["global/include"]}}`),
 		0o644,
 	))
 
@@ -673,12 +673,12 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_GlobalPrependsBeforeDefault(
 	assert.False(suite.T(), info.LocalResult.Found)
 
 	// global/include must appear first
-	assert.True(suite.T(), strings.Contains(merged.NLRC.IncludePath[0], "global"),
-		"global path must be first, got: %v", merged.NLRC.IncludePath)
+	assert.True(suite.T(), strings.Contains(merged.Compiler.IncludePath[0], "global"),
+		"global path must be first, got: %v", merged.Compiler.IncludePath)
 
 	// No duplicates
 	seen := make(map[string]int)
-	for _, p := range merged.NLRC.IncludePath {
+	for _, p := range merged.Compiler.IncludePath {
 		seen[p]++
 	}
 
@@ -697,13 +697,13 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllThreeLayers() {
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(globalDir, "config.json"),
-		[]byte(`{"nlrc":{"includePath":["global/include"]}}`),
+		[]byte(`{"compiler":{"includePath":["global/include"]}}`),
 		0o644,
 	))
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"includePath":["local/include"]}}`),
+		[]byte(`{"compiler":{"includePath":["local/include"]}}`),
 		0o644,
 	))
 
@@ -718,7 +718,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllThreeLayers() {
 	assert.True(suite.T(), info.GlobalResult.Found)
 	assert.True(suite.T(), info.LocalResult.Found)
 
-	paths := merged.NLRC.IncludePath
+	paths := merged.Compiler.IncludePath
 	localIdx, globalIdx, defaultIdx := -1, -1, -1
 	for i, p := range paths {
 		switch {
@@ -758,7 +758,7 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_ResolvesRelativePaths() {
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"includePath":["./include"],"modulePath":["./module"]}}`),
+		[]byte(`{"compiler":{"includePath":["./include"],"modulePath":["./module"]}}`),
 		0o644,
 	))
 
@@ -773,17 +773,17 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_ResolvesRelativePaths() {
 	wantInclude := filepath.Join(suite.tempDir, "include")
 	wantModule := filepath.Join(suite.tempDir, "module")
 
-	assert.Contains(suite.T(), merged.NLRC.IncludePath, wantInclude,
+	assert.Contains(suite.T(), merged.Compiler.IncludePath, wantInclude,
 		"relative ./include must resolve to absolute path")
-	assert.Contains(suite.T(), merged.NLRC.ModulePath, wantModule,
+	assert.Contains(suite.T(), merged.Compiler.ModulePath, wantModule,
 		"relative ./module must resolve to absolute path")
 
 	// Every path in the merged result must be absolute
-	for _, p := range merged.NLRC.IncludePath {
+	for _, p := range merged.Compiler.IncludePath {
 		assert.True(suite.T(), filepath.IsAbs(p), "IncludePath must be absolute: %s", p)
 	}
 
-	for _, p := range merged.NLRC.ModulePath {
+	for _, p := range merged.Compiler.ModulePath {
 		assert.True(suite.T(), filepath.IsAbs(p), "ModulePath must be absolute: %s", p)
 	}
 }
@@ -803,10 +803,10 @@ func (suite *OptionsTestSuite) TestLoadMergedConfig_AllPathsAbsolute() {
 	merged, _, err := LoadMergedConfig()
 	suite.Require().NoError(err)
 
-	allPaths := []string{merged.NLRC.Path}
-	allPaths = append(allPaths, merged.NLRC.IncludePath...)
-	allPaths = append(allPaths, merged.NLRC.ModulePath...)
-	allPaths = append(allPaths, merged.NLRC.LibraryPath...)
+	allPaths := []string{merged.Compiler.Path}
+	allPaths = append(allPaths, merged.Compiler.IncludePath...)
+	allPaths = append(allPaths, merged.Compiler.ModulePath...)
+	allPaths = append(allPaths, merged.Compiler.LibraryPath...)
 	allPaths = append(allPaths, merged.Archive.ExtraFileSearchLocations...)
 
 	for _, p := range allPaths {
@@ -827,7 +827,7 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_CLIPathsPrependedBeforeConfi
 	suite.T().Setenv("GENLINX_CONFIG_DIR", noGlobalDir)
 
 	// Write a local config with an include path
-	configContent := `{"nlrc":{"includePath":["config/include"]}}`
+	configContent := `{"compiler":{"includePath":["config/include"]}}`
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
 		[]byte(configContent),
@@ -875,19 +875,19 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_NilCLI() {
 	suite.Require().NotNil(opts)
 	suite.Require().NotNil(info)
 	suite.True(info.DefaultLoaded)
-	suite.NotEmpty(opts.NLRCPath)
+	suite.NotEmpty(opts.CompilerPath)
 	suite.NotEmpty(opts.IncludePath)
 }
 
-// TestLoadBuildOptions_NLRCPathFromConfig verifies that a local config's
-// nlrc.path overrides the built-in default.
-func (suite *OptionsTestSuite) TestLoadBuildOptions_NLRCPathFromConfig() {
+// TestLoadBuildOptions_CompilerPathFromConfig verifies that a local config's
+// compiler.path overrides the built-in default.
+func (suite *OptionsTestSuite) TestLoadBuildOptions_CompilerPathFromConfig() {
 	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_build_nlrc"))
 	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_build_nlrc"), 0o755))
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"path":"C:/custom/NLRC.exe"}}`),
+		[]byte(`{"compiler":{"path":"C:/custom/NLRC.exe"}}`),
 		0o644,
 	))
 
@@ -898,8 +898,8 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_NLRCPathFromConfig() {
 
 	opts, _, err := LoadBuildOptions(nil)
 	suite.Require().NoError(err)
-	suite.Contains(opts.NLRCPath, "custom",
-		"local config nlrc.path must override the built-in default")
+	suite.Contains(opts.CompilerPath, "custom",
+		"local config compiler.path must override the built-in default")
 }
 
 // TestLoadBuildOptions_ModulePathPrependedBeforeConfig verifies that CLI-supplied
@@ -910,7 +910,7 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_ModulePathPrependedBeforeCon
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"modulePath":["config/module"]}}`),
+		[]byte(`{"compiler":{"modulePath":["config/module"]}}`),
 		0o644,
 	))
 
@@ -946,7 +946,7 @@ func (suite *OptionsTestSuite) TestLoadBuildOptions_LibraryPathPrependedBeforeCo
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"libraryPath":["config/lib"]}}`),
+		[]byte(`{"compiler":{"libraryPath":["config/lib"]}}`),
 		0o644,
 	))
 
@@ -1425,7 +1425,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIIncludePathPrependedBeforeC
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"includePath":["config/include"]}}`),
+		[]byte(`{"compiler":{"includePath":["config/include"]}}`),
 		0o644,
 	))
 
@@ -1464,7 +1464,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLIModulePathPrependedBeforeCo
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"modulePath":["config/module"]}}`),
+		[]byte(`{"compiler":{"modulePath":["config/module"]}}`),
 		0o644,
 	))
 
@@ -1503,7 +1503,7 @@ func (suite *OptionsTestSuite) TestLoadCfgOptions_CLILibraryPathPrependedBeforeC
 
 	suite.Require().NoError(os.WriteFile(
 		filepath.Join(suite.tempDir, ".genlinxrc.json"),
-		[]byte(`{"nlrc":{"libraryPath":["config/lib"]}}`),
+		[]byte(`{"compiler":{"libraryPath":["config/lib"]}}`),
 		0o644,
 	))
 

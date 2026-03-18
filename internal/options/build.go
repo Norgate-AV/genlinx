@@ -31,8 +31,8 @@ type BuildOptions struct {
 	// Whether to enable verbose output
 	Verbose bool
 
-	// NLRC compiler path
-	NLRCPath string
+	// Compiler path
+	CompilerPath string
 }
 
 // MergeOptions merges configuration from multiple sources with proper precedence
@@ -68,11 +68,11 @@ func LoadBuildOptions(cliOpts *CLIOptions) (*BuildOptions, *ConfigLoadInfo, erro
 
 	// Create build options from merged config
 	opts := &BuildOptions{
-		IncludePath: mergedCfg.NLRC.IncludePath,
-		ModulePath:  mergedCfg.NLRC.ModulePath,
-		LibraryPath: mergedCfg.NLRC.LibraryPath,
-		NLRCPath:    mergedCfg.NLRC.Path,
-		All:         mergedCfg.Build.All,
+		IncludePath:  mergedCfg.Compiler.IncludePath,
+		ModulePath:   mergedCfg.Compiler.ModulePath,
+		LibraryPath:  mergedCfg.Compiler.LibraryPath,
+		CompilerPath: mergedCfg.Compiler.Path,
+		All:          mergedCfg.Build.All,
 	}
 
 	// Apply CLI options (highest precedence)
@@ -164,10 +164,10 @@ func (o *BuildOptions) resolvePaths() error {
 		}
 	}
 
-	// Resolve NLRC path
-	if o.NLRCPath != "" {
-		if o.NLRCPath, err = filepath.Abs(o.NLRCPath); err != nil {
-			return fmt.Errorf("failed to resolve NLRC path %s: %w", o.NLRCPath, err)
+	// Resolve compiler path
+	if o.CompilerPath != "" {
+		if o.CompilerPath, err = filepath.Abs(o.CompilerPath); err != nil {
+			return fmt.Errorf("failed to resolve compiler path %s: %w", o.CompilerPath, err)
 		}
 	}
 

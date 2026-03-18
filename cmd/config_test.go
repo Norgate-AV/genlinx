@@ -51,11 +51,11 @@ func TestGetByDottedKey_TopLevel(t *testing.T) {
 
 func TestGetByDottedKey_Nested(t *testing.T) {
 	m := map[string]any{
-		"nlrc": map[string]any{
+		"compiler": map[string]any{
 			"path": "/usr/bin/nlrc",
 		},
 	}
-	v, ok := getByDottedKey(m, "nlrc.path")
+	v, ok := getByDottedKey(m, "compiler.path")
 	assert.True(t, ok)
 	assert.Equal(t, "/usr/bin/nlrc", v)
 }
@@ -274,7 +274,7 @@ func TestConfigList_LocalNotFound_PrintsMessage(t *testing.T) {
 
 func TestConfigList_LocalFound_PrintsFileContents(t *testing.T) {
 	dir := t.TempDir()
-	content := `{"build":{"nlrc":{"path":"custom.exe"}}}`
+	content := `{"build":{"compiler":{"path":"custom.exe"}}}`
 	require.NoError(t, os.WriteFile(filepath.Join(dir, ".genlinxrc.json"), []byte(content), 0o644))
 
 	origWd, _ := os.Getwd()
@@ -301,10 +301,10 @@ func TestConfigGet_ExistingKey_PrintsValue(t *testing.T) {
 	require.NoError(t, os.Chdir(dir))
 
 	out := captureStdout(t, func() {
-		require.NoError(t, configGet("nlrc.path", false, false))
+		require.NoError(t, configGet("compiler.path", false, false))
 	})
 
-	// Default NLRC path is non-empty; output should be the path value.
+	// Default compiler path is non-empty; output should be the path value.
 	assert.NotEmpty(t, strings.TrimSpace(out))
 }
 
@@ -327,7 +327,7 @@ func TestConfigGet_GlobalNotFound(t *testing.T) {
 	t.Setenv("GENLINX_CONFIG_DIR", t.TempDir())
 
 	out := captureStdout(t, func() {
-		err := configGet("nlrc.path", true, false)
+		err := configGet("compiler.path", true, false)
 		require.NoError(t, err)
 	})
 
@@ -356,30 +356,30 @@ func captureStdout(t *testing.T, fn func()) string {
 	return string(out)
 }
 
-// requireNLRC is a helper that walks the parsed JSON map down to the
-// nlrc object, failing the test if it is missing.
-func requireNLRC(t *testing.T, out string) map[string]any {
+// requireCompiler is a helper that walks the parsed JSON map down to the
+// compiler object, failing the test if it is missing.
+func requireCompiler(t *testing.T, out string) map[string]any {
 	t.Helper()
 
 	var m map[string]any
 	require.NoError(t, json.Unmarshal([]byte(out), &m), "output must be valid JSON")
 
-	nlrc, ok := m["nlrc"].(map[string]any)
-	require.True(t, ok, "nlrc key must be present, got: %s", out)
+	compiler, ok := m["compiler"].(map[string]any)
+	require.True(t, ok, "compiler key must be present, got: %s", out)
 
-	return nlrc
+	return compiler
 }
 
 // TestPrintRawFileConfig_JSON verifies JSON pretty-printing with camelCase key preservation.
 func TestPrintRawFileConfig_JSON(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".genlinxrc.json")
-	require.NoError(t, os.WriteFile(path, []byte(`{"nlrc":{"includePath":["./include"]}}`), 0o644))
+	require.NoError(t, os.WriteFile(path, []byte(`{"compiler":{"includePath":["./include"]}}`), 0o644))
 
 	out := captureStdout(t, func() { printRawFileConfig(path) })
 
-	nlrc := requireNLRC(t, out)
-	paths, ok := nlrc["includePath"].([]any)
+	compiler := requireCompiler(t, out)
+	paths, ok := compiler["includePath"].([]any)
 	require.True(t, ok, "includePath key must be present (camelCase preserved)")
 	assert.Equal(t, "./include", paths[0])
 }
@@ -389,19 +389,19 @@ func TestPrintRawFileConfig_JSON(t *testing.T) {
 func TestPrintRawFileConfig_YAML(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".genlinxrc.yaml")
-	content := "nlrc:\n  includePath:\n    - ./include\n  modulePath:\n    - ./module\n"
+	content := "compiler:\n  includePath:\n    - ./include\n  modulePath:\n    - ./module\n"
 	require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
 
 	out := captureStdout(t, func() { printRawFileConfig(path) })
 
 	assert.NotEqual(t, "{}", strings.TrimSpace(out), "YAML file must not produce empty output")
 
-	nlrc := requireNLRC(t, out)
-	paths, ok := nlrc["includePath"].([]any)
+	compiler := requireCompiler(t, out)
+	paths, ok := compiler["includePath"].([]any)
 	require.True(t, ok, "includePath key must be present (camelCase preserved)")
 	assert.Equal(t, "./include", paths[0])
 
-	modPaths, ok := nlrc["modulePath"].([]any)
+	modPaths, ok := compiler["modulePath"].([]any)
 	require.True(t, ok, "modulePath key must be present")
 	assert.Equal(t, "./module", modPaths[0])
 }
@@ -410,13 +410,13 @@ func TestPrintRawFileConfig_YAML(t *testing.T) {
 func TestPrintRawFileConfig_YML(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".genlinxrc.yml")
-	require.NoError(t, os.WriteFile(path, []byte("nlrc:\n  includePath:\n    - ./include\n"), 0o644))
+	require.NoError(t, os.WriteFile(path, []byte("compiler:\n  includePath:\n    - ./include\n"), 0o644))
 
 	out := captureStdout(t, func() { printRawFileConfig(path) })
 
 	assert.NotEqual(t, "{}", strings.TrimSpace(out))
-	nlrc := requireNLRC(t, out)
-	paths, ok := nlrc["includePath"].([]any)
+	compiler := requireCompiler(t, out)
+	paths, ok := compiler["includePath"].([]any)
 	require.True(t, ok, "includePath key must be present (camelCase preserved)")
 	assert.Equal(t, "./include", paths[0])
 }

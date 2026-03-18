@@ -17,29 +17,29 @@
                 }
             }
         },
-        "nlrc": {
-            "description": "NetLinx Run Compiler (NLRC) settings shared by the 'build' and 'cfg' commands",
+        "compiler": {
+            "description": "NetLinx compiler settings shared by the 'build' and 'cfg' commands",
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "path": {
-                    "description": "Path to the NLRC executable",
+                    "description": "Path to the NetLinx compiler executable",
                     "type": "string"
                 },
                 "includePath": {
-                    "description": "Additional include paths passed to NLRC",
+                    "description": "Additional include paths passed to the compiler",
                     "type": "array",
                     "items": { "type": "string" },
                     "uniqueItems": true
                 },
                 "modulePath": {
-                    "description": "Additional module paths passed to NLRC",
+                    "description": "Additional module paths passed to the compiler",
                     "type": "array",
                     "items": { "type": "string" },
                     "uniqueItems": true
                 },
                 "libraryPath": {
-                    "description": "Additional library paths passed to NLRC",
+                    "description": "Additional library paths passed to the compiler",
                     "type": "array",
                     "items": { "type": "string" },
                     "uniqueItems": true

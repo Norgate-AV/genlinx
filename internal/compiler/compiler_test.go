@@ -43,10 +43,10 @@ func (suite *CompilerTestSuite) TearDownTest() {
 	_ = os.RemoveAll(suite.tempDir)
 }
 
-// TestNewNLRCCompiler tests creating a new NLRC compiler instance
-func (suite *CompilerTestSuite) TestNewNLRCCompiler() {
+// TestNewNetLinxCompiler tests creating a new NetLinx compiler instance
+func (suite *CompilerTestSuite) TestNewNetLinxCompiler() {
 	executablePath := "C:/Program Files/NLRC.exe"
-	compiler := NewNLRCCompiler(executablePath)
+	compiler := NewNetLinxCompiler(executablePath)
 
 	assert.NotNil(suite.T(), compiler)
 	assert.Equal(suite.T(), executablePath, compiler.ExecutablePath)
@@ -59,7 +59,7 @@ func (suite *CompilerTestSuite) TestBuildArgs() {
 	suite.Require().NoError(os.WriteFile(file1, []byte{}, 0o644))
 	suite.Require().NoError(os.WriteFile(file2, []byte{}, 0o644))
 
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	options := CompileOptions{
 		SourceFiles: []string{file1, file2},
@@ -103,7 +103,7 @@ func (suite *CompilerTestSuite) TestBuildArgsWithCFG() {
 	suite.Require().NoError(os.WriteFile(cfg1, []byte{}, 0o644))
 	suite.Require().NoError(os.WriteFile(cfg2, []byte{}, 0o644))
 
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	options := CompileOptions{
 		SourceFiles: []string{},
@@ -125,7 +125,7 @@ func (suite *CompilerTestSuite) TestBuildArgsWithCFG() {
 // TestBuildArgs_CFGFileNotFound verifies that a CFG file that does not exist
 // on disk is rejected before the compiler runs.
 func (suite *CompilerTestSuite) TestBuildArgs_CFGFileNotFound() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	_, err := compiler.BuildArgs(CompileOptions{
 		CFGFiles: []string{filepath.Join(suite.tempDir, "nonexistent.cfg")},
@@ -139,7 +139,7 @@ func (suite *CompilerTestSuite) TestBuildArgsEmptyPaths() {
 	testFile := filepath.Join(suite.tempDir, "test.axs")
 	suite.Require().NoError(os.WriteFile(testFile, []byte{}, 0o644))
 
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	options := CompileOptions{
 		SourceFiles: []string{testFile},
@@ -174,7 +174,7 @@ func (suite *CompilerTestSuite) TestBuildArgsNoOptions() {
 	minimalFile := filepath.Join(suite.tempDir, "minimal.axs")
 	suite.Require().NoError(os.WriteFile(minimalFile, []byte{}, 0o644))
 
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	options := CompileOptions{
 		SourceFiles: []string{minimalFile},
@@ -228,18 +228,18 @@ func (suite *CompilerTestSuite) TestCompileResultStruct() {
 	assert.Equal(suite.T(), 0, result.ExitCode)
 }
 
-// TestNLRCCompilerStruct tests the NLRCCompiler struct
-func (suite *CompilerTestSuite) TestNLRCCompilerStruct() {
-	compiler := &NLRCCompiler{
+// TestNetLinxCompilerStruct tests the NetLinxCompiler struct
+func (suite *CompilerTestSuite) TestNetLinxCompilerStruct() {
+	compiler := &NetLinxCompiler{
 		ExecutablePath: "C:/NLRC.exe",
 	}
 
 	assert.Equal(suite.T(), "C:/NLRC.exe", compiler.ExecutablePath)
 }
 
-// TestCompilerInterface tests that NLRCCompiler implements the Compiler interface
+// TestCompilerInterface tests that NetLinxCompiler implements the Compiler interface
 func (suite *CompilerTestSuite) TestCompilerInterface() {
-	var compiler Compiler = &NLRCCompiler{
+	var compiler Compiler = &NetLinxCompiler{
 		ExecutablePath: "test.exe",
 	}
 
@@ -252,7 +252,7 @@ func (suite *CompilerTestSuite) TestBuildArgsOrder() {
 	sourceFile := filepath.Join(suite.tempDir, "source.axs")
 	suite.Require().NoError(os.WriteFile(sourceFile, []byte{}, 0o644))
 
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	options := CompileOptions{
 		SourceFiles: []string{sourceFile},
@@ -313,7 +313,7 @@ func (suite *CompilerTestSuite) TestBuildArgsOrder() {
 
 // TestParseOutput_Empty verifies that empty output produces no errors or warnings.
 func (suite *CompilerTestSuite) TestParseOutput_Empty() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	errors, warnings := compiler.parseOutput("")
 	assert.Empty(suite.T(), errors)
 	assert.Empty(suite.T(), warnings)
@@ -322,7 +322,7 @@ func (suite *CompilerTestSuite) TestParseOutput_Empty() {
 // TestParseOutput_Errors verifies that lines containing the NLRC "ERROR: "
 // prefix are classified as errors.
 func (suite *CompilerTestSuite) TestParseOutput_Errors() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	output := "ERROR: undefined variable 'foo'\nERROR: missing semicolon"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 2)
@@ -334,7 +334,7 @@ func (suite *CompilerTestSuite) TestParseOutput_Errors() {
 // TestParseOutput_Warnings verifies that lines containing the NLRC "WARNING: "
 // prefix are classified as warnings.
 func (suite *CompilerTestSuite) TestParseOutput_Warnings() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	output := "WARNING: unused variable 'x'\nWARNING: deprecated function"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Empty(suite.T(), errors)
@@ -346,7 +346,7 @@ func (suite *CompilerTestSuite) TestParseOutput_Warnings() {
 // TestParseOutput_Mixed verifies that a realistic NLRC output block is
 // classified correctly — plain lines are ignored.
 func (suite *CompilerTestSuite) TestParseOutput_Mixed() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	output := "Compiling test.axs\nERROR: undefined variable\nWARNING: deprecated usage\nCompilation complete"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 1)
@@ -359,7 +359,7 @@ func (suite *CompilerTestSuite) TestParseOutput_Mixed() {
 // non-NLRC prefixes (e.g. "Error:", "warning:", "0 errors found") are not
 // matched, preventing false positives.
 func (suite *CompilerTestSuite) TestParseOutput_NonNLRCFormatIgnored() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	output := "Error: wrong case\nwarning: also wrong\n0 error(s) found\nBuild succeeded with 0 warnings"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Empty(suite.T(), errors)
@@ -369,7 +369,7 @@ func (suite *CompilerTestSuite) TestParseOutput_NonNLRCFormatIgnored() {
 // TestParseOutput_DuplicatesDeduped verifies that duplicate log lines are only
 // reported once.
 func (suite *CompilerTestSuite) TestParseOutput_DuplicatesDeduped() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	output := "ERROR: undefined variable\nERROR: undefined variable\nWARNING: deprecated usage\nWARNING: deprecated usage"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 1)
@@ -380,7 +380,7 @@ func (suite *CompilerTestSuite) TestParseOutput_DuplicatesDeduped() {
 // "ERROR: " prefix is classified as an error even if it also contains the word
 // "warning" in its message.
 func (suite *CompilerTestSuite) TestParseOutput_ErrorPrecedesWarningKeyword() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	output := "ERROR: this warning-like message is still an error"
 	errors, warnings := compiler.parseOutput(output)
 	assert.Len(suite.T(), errors, 1)
@@ -394,7 +394,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_CFGTakesPrecedenceOverSourceFiles(
 	cfgFile := filepath.Join(suite.tempDir, "project.cfg")
 	suite.Require().NoError(os.WriteFile(cfgFile, []byte{}, 0o644))
 
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	options := CompileOptions{
 		SourceFiles: []string{"should_be_ignored.axs"},
 		CFGFiles:    []string{cfgFile},
@@ -416,7 +416,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_CFGTakesPrecedenceOverSourceFiles(
 // TestBuildArgs_BothSourceAndCFGEmpty verifies that when both SourceFiles and
 // CFGFiles are empty, no source or cfg arguments are generated.
 func (suite *CompilerTestSuite) TestBuildArgs_BothSourceAndCFGEmpty() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	options := CompileOptions{
 		SourceFiles: []string{},
 		CFGFiles:    []string{},
@@ -439,7 +439,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_SourceFileExistsOnDisk() {
 	sourceFile := filepath.Join(suite.tempDir, "TestMain.axs")
 	suite.Require().NoError(os.WriteFile(sourceFile, []byte("PROGRAM_NAME='TestMain'\n"), 0o644))
 
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 	options := CompileOptions{
 		SourceFiles: []string{sourceFile},
 		CFGFiles:    []string{},
@@ -457,7 +457,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_SourceFileExistsOnDisk() {
 // TestBuildArgs_InvalidExtension verifies that a file with an unsupported
 // extension (including bare flags like "-") is rejected before the compiler runs.
 func (suite *CompilerTestSuite) TestBuildArgs_InvalidExtension() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	for _, name := range []string{"-", "file.txt", "file", "file.cfg"} {
 		_, err := compiler.BuildArgs(CompileOptions{SourceFiles: []string{name}})
@@ -469,7 +469,7 @@ func (suite *CompilerTestSuite) TestBuildArgs_InvalidExtension() {
 // TestBuildArgs_SourceFileNotFound verifies that a well-formed filename that
 // does not exist on disk is rejected before the compiler runs.
 func (suite *CompilerTestSuite) TestBuildArgs_SourceFileNotFound() {
-	compiler := NewNLRCCompiler("test.exe")
+	compiler := NewNetLinxCompiler("test.exe")
 
 	_, err := compiler.BuildArgs(CompileOptions{
 		SourceFiles: []string{filepath.Join(suite.tempDir, "nonexistent.axs")},
@@ -484,7 +484,7 @@ func (suite *CompilerTestSuite) TestCompile_BadExecutable() {
 	sourceFile := filepath.Join(suite.tempDir, "test.axs")
 	suite.Require().NoError(os.WriteFile(sourceFile, []byte{}, 0o644))
 
-	compiler := NewNLRCCompiler("/no/such/compiler/nlrc.exe")
+	compiler := NewNetLinxCompiler("/no/such/compiler/nlrc.exe")
 	options := CompileOptions{
 		SourceFiles: []string{sourceFile},
 	}
@@ -514,7 +514,7 @@ func captureStdout(fn func()) string {
 // TestReadOutput_StreamsAllOutput verifies that readOutput prints every line
 // immediately (streams in real time) and returns the full accumulated output.
 func (suite *CompilerTestSuite) TestReadOutput_StreamsAllOutput() {
-	c := NewNLRCCompiler("test.exe")
+	c := NewNetLinxCompiler("test.exe")
 
 	captured := captureStdout(func() {
 		out, err := c.readOutput(
@@ -550,7 +550,7 @@ func (suite *CompilerTestSuite) TestCompile_AlwaysStreamsOutput() {
 	suite.Require().NoError(os.WriteFile(placeholder, []byte{}, 0o644))
 
 	captured := captureStdout(func() {
-		c := &NLRCCompiler{
+		c := &NetLinxCompiler{
 			ExecutablePath: os.Args[0],
 			env:            append(os.Environ(), "GENLINX_FAKE_COMPILER="+fakeOutput),
 		}
