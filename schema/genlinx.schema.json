@@ -108,6 +108,12 @@
                     "items": { "type": "string" },
                     "uniqueItems": true
                 },
+                "extraGlobPatterns": {
+                    "description": "Glob patterns for extra files/directories to include in the archive (supports ** for recursive matching)",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
                 "ignoredFiles": {
                     "description": "Filenames to exclude from the archive even if found in search locations",
                     "type": "array",

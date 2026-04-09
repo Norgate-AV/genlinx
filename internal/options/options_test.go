@@ -1549,6 +1549,209 @@ func TestGlobalConfigPath_EndsInConfigJSON(t *testing.T) {
 		"GlobalConfigPath must end in config.json, got: %s", got)
 }
 
+// ---------------------------------------------------------------------------
+// LoadArchiveOptions – ExtraGlobPatterns
+// ---------------------------------------------------------------------------
+
+// TestLoadArchiveOptions_ExtraGlobPatterns_NilCLI_UsesConfig verifies that
+// ExtraGlobPatterns declared in the config file are loaded when no CLI opts
+// are provided.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraGlobPatterns_NilCLI_UsesConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_agp_nil"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_agp_nil"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"extraGlobPatterns":["dist/*.jar","icons/**"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadArchiveOptions(nil)
+	suite.Require().NoError(err)
+	suite.Contains(opts.ExtraGlobPatterns, "dist/*.jar")
+	suite.Contains(opts.ExtraGlobPatterns, "icons/**")
+}
+
+// TestLoadArchiveOptions_ExtraGlobPatterns_CLIOnlyWithNoCfg verifies that
+// patterns supplied on the CLI are stored when no config file is present.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraGlobPatterns_CLIOnlyWithNoCfg() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_agp_cli"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_agp_cli"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &ArchiveCLIOptions{
+		ExtraGlobPatterns: []string{"plugins/**"},
+		ExplicitBoolFlags: map[string]bool{},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+	suite.Contains(opts.ExtraGlobPatterns, "plugins/**")
+}
+
+// TestLoadArchiveOptions_ExtraGlobPatterns_CLIPrependedBeforeConfig verifies
+// that CLI-supplied patterns are prepended before config-file patterns in the
+// merged result, matching the precedence behaviour of ExtraFileSearchLocations.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraGlobPatterns_CLIPrependedBeforeConfig() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_agp_prepend"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_agp_prepend"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"extraGlobPatterns":["config/*.cfg"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &ArchiveCLIOptions{
+		ExtraGlobPatterns: []string{"cli/**"},
+		ExplicitBoolFlags: map[string]bool{},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+
+	cliIdx, cfgIdx := -1, -1
+	for i, p := range opts.ExtraGlobPatterns {
+		if strings.Contains(p, "cli") {
+			cliIdx = i
+		}
+
+		if strings.Contains(p, "config") {
+			cfgIdx = i
+		}
+	}
+
+	suite.NotEqual(-1, cliIdx, "CLI glob pattern should be present in merged result")
+	suite.NotEqual(-1, cfgIdx, "config-file glob pattern should be present in merged result")
+	suite.Less(cliIdx, cfgIdx, "CLI glob pattern must appear before config-file pattern")
+}
+
+// TestLoadArchiveOptions_ExtraGlobPatterns_Deduplicated verifies that identical
+// patterns appearing in both the CLI and the config file are deduplicated.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraGlobPatterns_Deduplicated() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_agp_dedup"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_agp_dedup"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"extraGlobPatterns":["shared/**"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &ArchiveCLIOptions{
+		ExtraGlobPatterns: []string{"shared/**"}, // same as config
+		ExplicitBoolFlags: map[string]bool{},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+
+	count := 0
+	for _, p := range opts.ExtraGlobPatterns {
+		if p == "shared/**" {
+			count++
+		}
+	}
+
+	suite.Equal(1, count, "duplicate pattern shared/** must appear only once after merge")
+}
+
+// TestLoadArchiveOptions_ExtraGlobPatterns_MultipleCLIPatterns verifies that
+// multiple patterns passed on the CLI are all stored.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraGlobPatterns_MultipleCLIPatterns() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_agp_multi"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_agp_multi"), 0o755))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	cliOpts := &ArchiveCLIOptions{
+		ExtraGlobPatterns: []string{"dist/*.jar", "**/*.json", "docs"},
+		ExplicitBoolFlags: map[string]bool{},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+	suite.Contains(opts.ExtraGlobPatterns, "dist/*.jar")
+	suite.Contains(opts.ExtraGlobPatterns, "**/*.json")
+	suite.Contains(opts.ExtraGlobPatterns, "docs")
+}
+
+// TestLoadArchiveOptions_ExtraGlobPatterns_EmptyCLI_NoOverride verifies that
+// an empty CLI ExtraGlobPatterns slice does not wipe out config-file patterns.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraGlobPatterns_EmptyCLI_NoOverride() {
+	suite.T().Setenv("GENLINX_CONFIG_DIR", filepath.Join(suite.tempDir, "no_global_agp_empty"))
+	suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tempDir, "no_global_agp_empty"), 0o755))
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(suite.tempDir, ".genlinxrc.json"),
+		[]byte(`{"archive":{"extraGlobPatterns":["assets/**"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	// CLI provides no patterns (empty slice — equivalent to flag not set).
+	cliOpts := &ArchiveCLIOptions{
+		ExtraGlobPatterns: []string{},
+		ExplicitBoolFlags: map[string]bool{},
+	}
+
+	opts, _, err := LoadArchiveOptions(cliOpts)
+	suite.Require().NoError(err)
+	suite.Contains(opts.ExtraGlobPatterns, "assets/**",
+		"config-file pattern must be preserved when CLI provides no patterns")
+}
+
+// TestLoadArchiveOptions_ExtraGlobPatterns_GlobalConfigLoaded verifies that
+// ExtraGlobPatterns declared in the global config are surfaced in the merged
+// result when no local config is present.
+func (suite *OptionsTestSuite) TestLoadArchiveOptions_ExtraGlobPatterns_GlobalConfigLoaded() {
+	globalDir := filepath.Join(suite.tempDir, "global_agp")
+	suite.Require().NoError(os.MkdirAll(globalDir, 0o755))
+	suite.T().Setenv("GENLINX_CONFIG_DIR", globalDir)
+
+	suite.Require().NoError(os.WriteFile(
+		filepath.Join(globalDir, "config.json"),
+		[]byte(`{"archive":{"extraGlobPatterns":["global/**"]}}`),
+		0o644,
+	))
+
+	oldWd, err := os.Getwd()
+	suite.Require().NoError(err)
+	defer os.Chdir(oldWd) //nolint:errcheck
+	suite.Require().NoError(os.Chdir(suite.tempDir))
+
+	opts, _, err := LoadArchiveOptions(nil)
+	suite.Require().NoError(err)
+	suite.Contains(opts.ExtraGlobPatterns, "global/**",
+		"ExtraGlobPatterns from global config must be present in merged result")
+}
+
 // TestGlobalConfigPath_UnderConfigDir verifies that the config.json resides
 // inside GlobalConfigDir.
 func TestGlobalConfigPath_UnderConfigDir(t *testing.T) {

@@ -429,6 +429,10 @@ func mergeConfigsWithPresence(base *config.Config, overrides ...configMergeInput
 			result.Archive.ExtraFileSearchLocations = prependAndDeduplicate(result.Archive.ExtraFileSearchLocations, cfg.Archive.ExtraFileSearchLocations)
 		}
 
+		if len(cfg.Archive.ExtraGlobPatterns) > 0 {
+			result.Archive.ExtraGlobPatterns = prependAndDeduplicate(result.Archive.ExtraGlobPatterns, cfg.Archive.ExtraGlobPatterns)
+		}
+
 		// IgnoredFiles: nil-check distinguishes "absent" from "explicitly empty".
 		if cfg.Archive.IgnoredFiles != nil {
 			result.Archive.IgnoredFiles = cfg.Archive.IgnoredFiles

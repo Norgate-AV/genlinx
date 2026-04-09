@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/fatih/color"
 
 	"github.com/Norgate-AV/genlinx/internal/apw"
@@ -42,6 +43,7 @@ type Options struct {
 	IncludeCompiledModuleFiles bool
 	IncludeFilesNotInWorkspace bool
 	ExtraFileSearchLocations   []string
+	ExtraGlobPatterns          []string
 	All                        bool
 	IgnoredFiles               []string
 	Verbose                    bool
@@ -114,6 +116,12 @@ func (b *Builder) Build() error {
 	// locate source files on disk — if they run after the mutation the paths no
 	// longer resolve and no extra refs are found.
 	if err := b.addDocumentationFiles(); err != nil {
+		_ = b.zipWriter.Close()
+		_ = f.Close()
+		return err
+	}
+
+	if err := b.addGlobPatternFiles(); err != nil {
 		_ = b.zipWriter.Close()
 		_ = f.Close()
 		return err
@@ -390,6 +398,70 @@ func (b *Builder) addDocumentationFiles() error {
 			}
 
 			b.logVerbose(logGreen, "Added documentation file: %s", filepath.Base(match))
+		}
+	}
+
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Glob pattern files pass
+// ---------------------------------------------------------------------------
+
+// addGlobPatternFiles expands each pattern in opts.ExtraGlobPatterns (using
+// doublestar for ** support) relative to the APW directory and adds every
+// matched file to the archive root. Directories are walked recursively.
+// Duplicate entries are silently skipped by the seenEntries guard.
+func (b *Builder) addGlobPatternFiles() error {
+	if len(b.opts.ExtraGlobPatterns) == 0 {
+		return nil
+	}
+
+	b.logVerbose(logBlue, "Searching for files matching extra glob patterns...")
+
+	dir := filepath.Dir(b.apw.FilePath())
+	fsys := os.DirFS(dir)
+
+	for _, pattern := range b.opts.ExtraGlobPatterns {
+		matches, err := doublestar.Glob(fsys, filepath.ToSlash(pattern))
+		if err != nil {
+			return fmt.Errorf("invalid glob pattern %q: %w", pattern, err)
+		}
+
+		for _, match := range matches {
+			absMatch := filepath.Join(dir, filepath.FromSlash(match))
+
+			info, err := os.Stat(absMatch)
+			if err != nil {
+				warnf("glob match not accessible, skipping: %s", absMatch)
+				continue
+			}
+
+			if info.IsDir() {
+				if err := filepath.WalkDir(absMatch, func(p string, d fs.DirEntry, err error) error {
+					if err != nil || d.IsDir() {
+						return nil
+					}
+
+					entryName := zipEntryPath(filepath.Base(p))
+					if addErr := b.addDiskFile(p, entryName); addErr != nil {
+						warnf("could not add glob-matched file %s: %v", p, addErr)
+					} else {
+						b.logVerbose(logGreen, "Added (glob): %s", filepath.Base(p))
+					}
+
+					return nil
+				}); err != nil {
+					warnf("error walking glob-matched directory %s: %v", absMatch, err)
+				}
+			} else {
+				entryName := zipEntryPath(filepath.Base(absMatch))
+				if err := b.addDiskFile(absMatch, entryName); err != nil {
+					warnf("could not add glob-matched file %s: %v", absMatch, err)
+				} else {
+					b.logVerbose(logGreen, "Added (glob): %s", filepath.Base(absMatch))
+				}
+			}
 		}
 	}
 

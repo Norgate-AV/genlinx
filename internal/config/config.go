@@ -42,6 +42,7 @@ type ArchiveConfig struct {
 	IncludeCompiledModuleFiles bool     `mapstructure:"includeCompiledModuleFiles" json:"includeCompiledModuleFiles"`
 	IncludeFilesNotInWorkspace bool     `mapstructure:"includeFilesNotInWorkspace" json:"includeFilesNotInWorkspace"`
 	ExtraFileSearchLocations   []string `mapstructure:"extraFileSearchLocations"   json:"extraFileSearchLocations"`
+	ExtraGlobPatterns          []string `mapstructure:"extraGlobPatterns"          json:"extraGlobPatterns"`
 	IgnoredFiles               []string `mapstructure:"ignoredFiles"               json:"ignoredFiles"`
 }
 

@@ -19,6 +19,7 @@ type ArchiveCLIOptions struct {
 	// so the CLI can override the merged config value only when the user asked.
 	ExplicitBoolFlags        map[string]bool
 	ExtraFileSearchLocations []string
+	ExtraGlobPatterns        []string
 	All                      bool
 	Verbose                  bool
 	// ProjectID, when non-empty, restricts the archive to a single project.
@@ -42,6 +43,7 @@ func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLo
 		IncludeCompiledModuleFiles: mergedCfg.Archive.IncludeCompiledModuleFiles,
 		IncludeFilesNotInWorkspace: mergedCfg.Archive.IncludeFilesNotInWorkspace,
 		ExtraFileSearchLocations:   mergedCfg.Archive.ExtraFileSearchLocations,
+		ExtraGlobPatterns:          mergedCfg.Archive.ExtraGlobPatterns,
 		IgnoredFiles:               mergedCfg.Archive.IgnoredFiles,
 	}
 
@@ -80,6 +82,13 @@ func LoadArchiveOptions(cliOpts *ArchiveCLIOptions) (*archive.Options, *ConfigLo
 		opts.ExtraFileSearchLocations = prependAndDeduplicate(
 			opts.ExtraFileSearchLocations,
 			cliOpts.ExtraFileSearchLocations,
+		)
+	}
+
+	if len(cliOpts.ExtraGlobPatterns) > 0 {
+		opts.ExtraGlobPatterns = prependAndDeduplicate(
+			opts.ExtraGlobPatterns,
+			cliOpts.ExtraGlobPatterns,
 		)
 	}
 

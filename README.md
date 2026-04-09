@@ -137,6 +137,7 @@ Options:
   -N, --include-files-not-in-workspace           include files not in workspace
   -l, --extra-file-search-locations <string...>  extra file locations to search
   -p, --extra-file-archive-location <string>     location to place extra files in the archive
+  -g, --extra-glob-patterns <string...>          glob patterns for extra files/directories to include in the archive (supports **)
   --verbose                                      verbose output
   -h, --help                                     display help for command
 ```

@@ -30,6 +30,7 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 	workspaceFiles, _ := cmd.Flags().GetStringSlice("workspace-files")
 	outputFileSuffix, _ := cmd.Flags().GetString("output-file-suffix")
 	extraSearchLocations, _ := cmd.Flags().GetStringSlice("extra-file-search-locations")
+	extraGlobPatterns, _ := cmd.Flags().GetStringSlice("extra-glob-patterns")
 	all, _ := cmd.Flags().GetBool("all")
 	projectID, _ := cmd.Flags().GetString("project")
 	systemID, _ := cmd.Flags().GetString("system")
@@ -49,6 +50,7 @@ func runArchive(cmd *cobra.Command, _ []string) error {
 		WorkspaceFiles:           workspaceFiles,
 		OutputFileSuffix:         outputFileSuffix,
 		ExtraFileSearchLocations: extraSearchLocations,
+		ExtraGlobPatterns:        extraGlobPatterns,
 		All:                      all,
 		Verbose:                  verbose,
 		ExplicitBoolFlags:        ExplicitBoolFlags,
@@ -201,6 +203,7 @@ func init() {
 	archiveCmd.Flags().BoolP("include-files-not-in-workspace", "n", false, "include files not in workspace")
 	archiveCmd.Flags().BoolP("no-include-files-not-in-workspace", "N", false, "do not include files not in workspace")
 	archiveCmd.Flags().StringSliceP("extra-file-search-locations", "l", []string{}, "extra file locations to search")
+	archiveCmd.Flags().StringSliceP("extra-glob-patterns", "g", []string{}, "glob patterns for extra files/directories to include in the archive (supports **)")
 	archiveCmd.Flags().BoolP("all", "a", false, "process all found workspace files without prompting")
 	archiveCmd.Flags().StringP("project", "p", "", "restrict archive to the named project within the workspace")
 	archiveCmd.Flags().StringP("system", "y", "", "restrict archive to a single named system (auto-resolved; use --project to disambiguate if the name is not unique)")

@@ -1401,3 +1401,341 @@ func (s *ArchiveTestSuite) TestBuild_DocFiles_NotAddedWhenAbsent() {
 		)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Build – extra glob patterns
+// ---------------------------------------------------------------------------
+
+// createFile is a test helper that writes a file with the given content,
+// creating parent directories as needed.
+func createFile(t *testing.T, path string, content string) {
+	t.Helper()
+	require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+	require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
+}
+
+// zipEntrySet returns the set of entry names in a zip file as a map for O(1) lookup.
+func zipEntrySet(t *testing.T, zipPath string) map[string]bool {
+	t.Helper()
+	zr, err := zip.OpenReader(zipPath)
+	require.NoError(t, err)
+
+	defer func() { _ = zr.Close() }()
+	names := make(map[string]bool, len(zr.File))
+
+	for _, f := range zr.File {
+		names[f.Name] = true
+	}
+
+	return names
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_Empty_NothingExtra() {
+	// No ExtraGlobPatterns → the zip contains only the standard workspace files.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "extra.txt"), "not included")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = nil
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.False(entries["extra.txt"], "extra.txt should not be added when ExtraGlobPatterns is empty")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_SingleFileWildcard_MatchesFile() {
+	// *.txt at the APW directory level — matches one file.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "notes.txt"), "some notes")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"*.txt"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["notes.txt"], "*.txt should match notes.txt at the APW directory level")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_ExactFilename_MatchesFile() {
+	// Exact filename with no wildcards.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "deploy.cfg"), "# deploy config")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"deploy.cfg"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["deploy.cfg"], "exact filename pattern should match deploy.cfg")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_SubdirWildcard_MatchesMultipleFiles() {
+	// scripts/*.sh matches all .sh files in a subdirectory.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "scripts", "deploy.sh"), "#!/bin/sh")
+	createFile(s.T(), filepath.Join(wd, "scripts", "build.sh"), "#!/bin/sh")
+	createFile(s.T(), filepath.Join(wd, "scripts", "notes.txt"), "ignored")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"scripts/*.sh"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["deploy.sh"], "scripts/*.sh should match deploy.sh")
+	s.True(entries["build.sh"], "scripts/*.sh should match build.sh")
+	s.False(entries["notes.txt"], "scripts/*.sh should not match notes.txt in the same dir")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DirectoryMatch_WalksAllFiles() {
+	// When the pattern matches a directory, every file inside is added.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "assets", "icon.png"), "PNG")
+	createFile(s.T(), filepath.Join(wd, "assets", "splash.png"), "PNG")
+	createFile(s.T(), filepath.Join(wd, "assets", "font.ttf"), "TTF")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"assets"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["icon.png"], "directory match should add icon.png")
+	s.True(entries["splash.png"], "directory match should add splash.png")
+	s.True(entries["font.ttf"], "directory match should add font.ttf")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DoubleStarRecursive_MatchesAllDepths() {
+	// **/*.json matches .json files at any depth under the APW directory.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "config.json"), "{}")
+	createFile(s.T(), filepath.Join(wd, "sub", "settings.json"), "{}")
+	createFile(s.T(), filepath.Join(wd, "sub", "deep", "data.json"), "{}")
+	createFile(s.T(), filepath.Join(wd, "sub", "deep", "notes.txt"), "not matched")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"**/*.json"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["config.json"], "**/*.json should match config.json at root")
+	s.True(entries["settings.json"], "**/*.json should match settings.json in sub/")
+	s.True(entries["data.json"], "**/*.json should match data.json in sub/deep/")
+	s.False(entries["notes.txt"], "**/*.json should not match notes.txt")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DoubleStarDirectory_MatchesAllFilesUnder() {
+	// dist/** matches every file under the dist/ directory at any depth.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "dist", "app.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "dist", "lib", "util.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "dist", "lib", "core.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "other", "skip.jar"), "JAR")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"dist/**"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["app.jar"], "dist/** should match app.jar")
+	s.True(entries["util.jar"], "dist/** should match util.jar in dist/lib/")
+	s.True(entries["core.jar"], "dist/** should match core.jar in dist/lib/")
+	s.False(entries["skip.jar"], "dist/** should not match skip.jar under other/")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_MultiplePatterns_UnionOfMatches() {
+	// Two patterns — each adds different files; the archive should contain all.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "docs", "manual.pdf"), "PDF")
+	createFile(s.T(), filepath.Join(wd, "icons", "app.ico"), "ICO")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"docs/*.pdf", "icons/*.ico"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["manual.pdf"], "docs/*.pdf should match manual.pdf")
+	s.True(entries["app.ico"], "icons/*.ico should match app.ico")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_NoMatches_NoError() {
+	// A pattern that matches nothing should not cause an error and should not
+	// produce any unexpected entries in the archive.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"nonexistent/**", "*.xyzzy"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	for name := range entries {
+		isKnown := name == "TestWorkspace.apw" ||
+			name == "TestMain.axs" ||
+			name == "TestModule.axs" ||
+			name == "TestInclude.axi"
+		s.True(isKnown, "unexpected entry %q from non-matching patterns", name)
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DuplicateWithWorkspaceFile_AddedOnce() {
+	// A glob pattern that also matches a file already added by addWorkspaceFiles
+	// must not produce a duplicate zip entry.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	// TestMain.axs is already in the workspace. The glob also matches it.
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"Source/*.axs"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	count := 0
+	for _, f := range zr.File {
+		if f.Name == "TestMain.axs" {
+			count++
+		}
+	}
+
+	s.Equal(1, count, "TestMain.axs should appear exactly once even when matched by both workspace and glob")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DuplicateAcrossPatterns_AddedOnce() {
+	// Two separate patterns that both resolve to the same physical file should
+	// only produce a single zip entry for that file.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "shared", "common.axi"), "// common")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"shared/common.axi", "shared/*.axi"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	count := 0
+	for _, f := range zr.File {
+		if f.Name == "common.axi" {
+			count++
+		}
+	}
+
+	s.Equal(1, count, "common.axi should appear exactly once despite matching two patterns")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_FilesAddedAtArchiveRoot() {
+	// Files matched by a pattern in a subdirectory are placed at the archive
+	// root using only their filename (flat layout), not their relative path.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "config", "prod.cfg"), "# prod")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"config/*.cfg"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["prod.cfg"], "glob-matched file should be stored at archive root as bare filename")
+	s.False(entries["config/prod.cfg"], "glob-matched file must not retain its subdirectory prefix in the archive")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_NestedDir_AllFilesAddedFlat() {
+	// A deeply nested directory structure under a glob match should have all
+	// files added flat at the archive root.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "plugins", "audio", "midi.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "plugins", "video", "h264.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "plugins", "video", "codecs", "avc.so"), "ELF")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"plugins/**"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["midi.jar"], "plugins/** should add midi.jar at archive root")
+	s.True(entries["h264.jar"], "plugins/** should add h264.jar at archive root")
+	s.True(entries["avc.so"], "plugins/** should add deeply nested avc.so at archive root")
+
+	for name := range entries {
+		s.False(strings.Contains(name, "/"),
+			"all entries should be at archive root (no path separator), got %q", name)
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_InvalidPattern_ReturnsError() {
+	// An invalid glob pattern (unclosed bracket) must cause Build to return a
+	// non-nil error rather than silently succeeding or panicking.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"[invalid"}
+	err := NewBuilder(a, opts).Build()
+	s.Error(err, "Build should return an error for an invalid glob pattern")
+	s.Contains(err.Error(), "invalid glob pattern", "error message should identify the bad pattern")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_CharacterClass_MatchesCorrectFiles() {
+	// [ab]*.txt matches files starting with 'a' or 'b'.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "alpha.txt"), "a")
+	createFile(s.T(), filepath.Join(wd, "bravo.txt"), "b")
+	createFile(s.T(), filepath.Join(wd, "zulu.txt"), "z — not matched")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"[ab]*.txt"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["alpha.txt"], "[ab]*.txt should match alpha.txt")
+	s.True(entries["bravo.txt"], "[ab]*.txt should match bravo.txt")
+	s.False(entries["zulu.txt"], "[ab]*.txt should not match zulu.txt")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_SingleCharWildcard_MatchesCorrectFiles() {
+	// v?.cfg matches v1.cfg, vX.cfg but not v10.cfg (two chars after 'v').
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "v1.cfg"), "ver1")
+	createFile(s.T(), filepath.Join(wd, "vX.cfg"), "verX")
+	createFile(s.T(), filepath.Join(wd, "v10.cfg"), "ver10 — not matched")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"v?.cfg"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["v1.cfg"], "v?.cfg should match v1.cfg")
+	s.True(entries["vX.cfg"], "v?.cfg should match vX.cfg")
+	s.False(entries["v10.cfg"], "v?.cfg should not match v10.cfg (two chars after v)")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_Verbose_LogsAddedFiles() {
+	// When Verbose is true, addGlobPatternFiles logs each file it adds.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "extra.bin"), "data")
+
+	opts := defaultOpts()
+	opts.Verbose = true
+	opts.ExtraGlobPatterns = []string{"*.bin"}
+
+	out := captureStdout(s.T(), func() {
+		s.Require().NoError(NewBuilder(a, opts).Build())
+	})
+
+	s.Contains(out, "extra.bin", "verbose output should mention the glob-matched file")
+	s.Contains(out, "glob", "verbose output should indicate the file came from a glob pattern")
+}
