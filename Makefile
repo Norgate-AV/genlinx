@@ -48,7 +48,7 @@ run: build
 	./$(BIN_DIR)/$(TARGET)
 
 install: build
-	cp $(BIN_DIR)/$(TARGET) $(GOBIN)/$(APP_NAME)-go.exe
+	cp $(BIN_DIR)/$(TARGET) $(GOBIN)/$(APP_NAME).exe
 
 .PHONY: fmt
 fmt:
