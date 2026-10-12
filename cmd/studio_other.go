@@ -15,7 +15,3 @@ func studioBackupRunE(_ *cobra.Command, _ []string) error {
 func studioRestoreRunE(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("the studio command is only supported on Windows")
 }
-
-func writeBackup(_ string) error {
-	return fmt.Errorf("the studio command is only supported on Windows")
-}
