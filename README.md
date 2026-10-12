@@ -53,25 +53,6 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 
 ## Installation :zap:
 
-### Homebrew (macOS / Linux)
-
-```bash
-brew install norgate-av/tap/genlinx
-```
-
-### Scoop (Windows)
-
-```bash
-scoop bucket add norgate-av https://github.com/Norgate-AV/scoop-bucket
-scoop install genlinx
-```
-
-### Arch Linux (AUR)
-
-```bash
-yay -S genlinx-bin
-```
-
 ### Go install
 
 ```bash
@@ -86,7 +67,7 @@ npm install -g @norgate-av/genlinx
 
 ### Direct download
 
-Pre-built binaries for Linux, macOS, and Windows (including `.deb`, `.rpm`, `.apk`) are available on the [GitHub Releases](https://github.com/Norgate-AV/genlinx/releases) page.
+Pre-built binaries for Linux, macOS, and Windows are available on the [GitHub Releases](https://github.com/Norgate-AV/genlinx/releases) page.
 
 ## Usage :rocket:
 
