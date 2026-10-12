@@ -49,6 +49,11 @@ for file in "${FILES[@]}"; do
     fi
 done
 
+if git diff --cached --quiet; then
+    echo "Nothing to commit, skipping"
+    exit 0
+fi
+
 git commit -m "chore: bump version to $TAG [skip ci]" || {
     echo "Failed to commit changes"
     exit 1
