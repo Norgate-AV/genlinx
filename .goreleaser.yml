@@ -48,8 +48,8 @@ release:
 
 dockers:
   - image_templates:
-      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-amd64"
-      - "ghcr.io/Norgate-AV-genlinx:latest-amd64"
+      - "ghcr.io/norgate-av/genlinx:{{ .Version }}-amd64"
+      - "ghcr.io/norgate-av/genlinx:latest-amd64"
     dockerfile: Dockerfile
     use: buildx
     build_flag_templates:
@@ -66,8 +66,8 @@ dockers:
       - internal
     goarch: amd64
   - image_templates:
-      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-arm64"
-      - "ghcr.io/Norgate-AV-genlinx:latest-arm64"
+      - "ghcr.io/norgate-av/genlinx:{{ .Version }}-arm64"
+      - "ghcr.io/norgate-av/genlinx:latest-arm64"
     dockerfile: Dockerfile
     use: buildx
     build_flag_templates:
@@ -85,11 +85,11 @@ dockers:
     goarch: arm64
 
 docker_manifests:
-  - name_template: "ghcr.io/Norgate-AV-genlinx:{{ .Version }}"
+  - name_template: "ghcr.io/norgate-av/genlinx:{{ .Version }}"
     image_templates:
-      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-amd64"
-      - "ghcr.io/Norgate-AV-genlinx:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/Norgate-AV-genlinx:latest"
+      - "ghcr.io/norgate-av/genlinx:{{ .Version }}-amd64"
+      - "ghcr.io/norgate-av/genlinx:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/norgate-av/genlinx:latest"
     image_templates:
-      - "ghcr.io/Norgate-AV-genlinx:latest-amd64"
-      - "ghcr.io/Norgate-AV-genlinx:latest-arm64"
+      - "ghcr.io/norgate-av/genlinx:latest-amd64"
+      - "ghcr.io/norgate-av/genlinx:latest-arm64"
