@@ -31,11 +31,12 @@ func PrintTable(devices []Device) {
 		Separator: green,
 	})
 
-	table := tablewriter.NewTable(os.Stdout,
+	table := tablewriter.NewTable(
+		os.Stdout,
 		tablewriter.WithRenderer(r),
 		tablewriter.WithConfig(tablewriter.Config{
 			Header: tw.CellConfig{
-				Formatting: tw.CellFormatting{Alignment: tw.AlignCenter},
+				Alignment: tw.CellAlignment{Global: tw.AlignCenter},
 			},
 		}),
 	)
