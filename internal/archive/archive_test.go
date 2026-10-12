@@ -1,0 +1,1741 @@
+package archive
+
+import (
+	"archive/zip"
+	"bytes"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/Norgate-AV/genlinx/internal/apw"
+)
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+func minimalAPW(id string) []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>` + id + `</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>TestProject</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>TestSystem</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>TestMain</Identifier>
+                <FilePathName>Source\TestMain.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Module">
+                <Identifier>TestModule</Identifier>
+                <FilePathName>Module\TestModule.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>TestInclude</Identifier>
+                <FilePathName>Include\TestInclude.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+// setupWorkspace writes a minimal APW and all its referenced files (Source,
+// Module, Include) to a temp directory, changes the working directory to that
+// temp dir (restored after the test), and returns the parsed APW.
+func setupWorkspace(t *testing.T, id string) *apw.APW {
+	t.Helper()
+	dir := t.TempDir()
+
+	data := minimalAPW(id)
+	apwPath := filepath.Join(dir, id+".apw")
+	require.NoError(t, os.WriteFile(apwPath, data, 0o644))
+
+	// Create all referenced files so they are flagged as Exists=true in the APW.
+	for _, sub := range []struct{ dir, name string }{
+		{"Source", "TestMain.axs"},
+		{"Module", "TestModule.axs"},
+		{"Include", "TestInclude.axi"},
+	} {
+		subDir := filepath.Join(dir, sub.dir)
+		require.NoError(t, os.MkdirAll(subDir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(subDir, sub.name), []byte(`PROGRAM_NAME='test'`), 0o644))
+	}
+
+	a, err := apw.Parse(apwPath, data)
+	require.NoError(t, err)
+
+	// Build() writes the zip to the current working directory.
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	require.NoError(t, os.Chdir(dir))
+
+	return a
+}
+
+// minimalAPWFull is like minimalAPW but with configurable project and system identifiers.
+func minimalAPWFull(wsID, projectID, systemID string) []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>` + wsID + `</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>` + projectID + `</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>` + systemID + `</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>TestMain</Identifier>
+                <FilePathName>Source\TestMain.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+// setupWorkspaceWithIDs is like setupWorkspace but with configurable project
+// and system identifiers, allowing tests to use identifiers that contain spaces.
+func setupWorkspaceWithIDs(t *testing.T, wsID, projectID, systemID string) *apw.APW {
+	t.Helper()
+	dir := t.TempDir()
+
+	data := minimalAPWFull(wsID, projectID, systemID)
+	apwPath := filepath.Join(dir, wsID+".apw")
+	require.NoError(t, os.WriteFile(apwPath, data, 0o644))
+
+	subDir := filepath.Join(dir, "Source")
+	require.NoError(t, os.MkdirAll(subDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(subDir, "TestMain.axs"), []byte(`PROGRAM_NAME='test'`), 0o644))
+
+	a, err := apw.Parse(apwPath, data)
+	require.NoError(t, err)
+
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	require.NoError(t, os.Chdir(dir))
+
+	return a
+}
+
+func defaultOpts() *Options {
+	return &Options{
+		OutputFileSuffix:           "zip",
+		IncludeCompiledSourceFiles: false,
+		IncludeCompiledModuleFiles: false,
+		IncludeFilesNotInWorkspace: false,
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Suite
+// ---------------------------------------------------------------------------
+
+type ArchiveTestSuite struct {
+	suite.Suite
+}
+
+func TestArchiveSuite(t *testing.T) {
+	suite.Run(t, new(ArchiveTestSuite))
+}
+
+// ---------------------------------------------------------------------------
+// NewBuilder
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestNewBuilder_NotNil() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	b := NewBuilder(a, defaultOpts())
+	s.Require().NotNil(b)
+}
+
+// ---------------------------------------------------------------------------
+// Build – file creation
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_CreatesZipFile() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zipPath := filepath.Join(wd, "TestWorkspace.zip")
+	_, statErr := os.Stat(zipPath)
+	s.NoError(statErr, "zip file should exist after Build()")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFileNamed_IDdotSuffix() {
+	a := setupWorkspace(s.T(), "MyProject")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "MyProject.archive.zip"))
+	s.NoError(statErr, "output file should follow <id>.<suffix> naming")
+}
+
+// ---------------------------------------------------------------------------
+// Build – zip contents
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_ZipContains_WorkspaceFile() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zipPath := filepath.Join(wd, "TestWorkspace.zip")
+	zr, err := zip.OpenReader(zipPath)
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "TestWorkspace.apw" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should contain the workspace .apw file")
+}
+
+func (s *ArchiveTestSuite) TestBuild_ZipContains_SourceFile() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zipPath := filepath.Join(wd, "TestWorkspace.zip")
+	zr, err := zip.OpenReader(zipPath)
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "TestMain.axs" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should contain TestMain.axs at the archive root")
+}
+
+func (s *ArchiveTestSuite) TestBuild_ZipEntry_ModuleUsesRelativePath() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "TestModule.axs" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should contain TestModule.axs at the archive root")
+}
+
+func (s *ArchiveTestSuite) TestBuild_ZipEntry_IncludeUsesRelativePath() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "TestInclude.axi" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should contain TestInclude.axi at the archive root")
+}
+
+func (s *ArchiveTestSuite) TestBuild_ZipEntry_NoAbsolutePaths() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	for _, f := range zr.File {
+		// A zip entry must never start with a drive letter (C:/) or a leading slash.
+		s.False(strings.HasPrefix(f.Name, "/"), "entry %q must not start with /", f.Name)
+		if len(f.Name) >= 2 {
+			s.NotEqual(':', rune(f.Name[1]), "entry %q must not be an absolute Windows path", f.Name)
+		}
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_ValidZip() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	data, err := os.ReadFile(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	s.True(bytes.HasPrefix(data, []byte("PK")), "output should be a valid zip file (PK magic bytes)")
+}
+
+// ---------------------------------------------------------------------------
+// Build – compiled file inclusion
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_AddedWithRelativePath() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	// Create the pre-compiled .tko file next to the module source.
+	wd, _ := os.Getwd()
+	tkoPath := filepath.Join(wd, "Module", "TestModule.tko")
+	s.Require().NoError(os.WriteFile(tkoPath, []byte("compiled-module"), 0o644))
+
+	opts := defaultOpts()
+	opts.IncludeCompiledModuleFiles = true
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "TestModule.tko" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should contain TestModule.tko at the archive root")
+}
+
+func (s *ArchiveTestSuite) TestBuild_CompiledModuleFile_SkippedWhenOptionFalse() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	// Even if the .tko exists on disk it should NOT appear in the zip when
+	// IncludeCompiledModuleFiles is false (the default).
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(wd, "Module", "TestModule.tko"),
+		[]byte("compiled-module"), 0o644,
+	))
+
+	opts := defaultOpts() // IncludeCompiledModuleFiles = false
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	for _, f := range zr.File {
+		s.NotEqual("TestModule.tko", f.Name,
+			"compiled .tko should not be in zip when IncludeCompiledModuleFiles=false")
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_AddedWithRelativePath() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	// TestMain is type MasterSrc — compiled to .tkn.
+	wd, _ := os.Getwd()
+	tknPath := filepath.Join(wd, "Source", "TestMain.tkn")
+	s.Require().NoError(os.WriteFile(tknPath, []byte("compiled-source"), 0o644))
+
+	opts := defaultOpts()
+	opts.IncludeCompiledSourceFiles = true
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "TestMain.tkn" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should contain TestMain.tkn at the archive root")
+}
+
+func (s *ArchiveTestSuite) TestBuild_ExtraModuleFile_TKOAddedToArchiveRoot() {
+	// Verify that an extra .axs file treated as a Module adds both itself and
+	// its compiled .tko counterpart at the archive root (flat layout).
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	// Simulate an extra module file that was located on disk.
+	// We exercise addFileToArchive directly by creating the apw.File manually
+	// and calling Build with a builder that has a pre-populated locatedExtraRefs.
+	// Instead, we test via the public Build() path using a fabricated IsExtra file
+	// injected through addModuleItem, which we call directly.
+
+	// Create a fake extra module file on disk (with its .tko counterpart).
+	extraDir := filepath.Join(wd, "ExtraModules")
+	s.Require().NoError(os.MkdirAll(extraDir, 0o755))
+	extraAxsPath := filepath.Join(extraDir, "ExtraLib.axs")
+	extraTkoPath := filepath.Join(extraDir, "ExtraLib.tko")
+	s.Require().NoError(os.WriteFile(extraAxsPath, []byte("PROGRAM_NAME='extra'"), 0o644))
+	s.Require().NoError(os.WriteFile(extraTkoPath, []byte("compiled-extra-module"), 0o644))
+
+	opts := defaultOpts()
+	opts.IncludeCompiledModuleFiles = true
+
+	b := NewBuilder(a, opts)
+
+	// Open a real zip writer so we can call addModuleItem directly.
+	zipPath := filepath.Join(wd, "extra_test.zip")
+	f, err := os.Create(zipPath)
+	s.Require().NoError(err)
+	b.zipWriter = zip.NewWriter(f)
+
+	extraFile := apw.File{
+		Type:    apw.FileTypeModule,
+		Path:    extraAxsPath,
+		Exists:  true,
+		IsExtra: true,
+	}
+
+	s.Require().NoError(b.addModuleItem(extraFile))
+	s.Require().NoError(b.zipWriter.Close())
+	s.Require().NoError(f.Close())
+
+	zr, err := zip.OpenReader(zipPath)
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var axsFound, tkoFound bool
+	for _, zf := range zr.File {
+		if zf.Name == "ExtraLib.axs" {
+			axsFound = true
+		}
+		if zf.Name == "ExtraLib.tko" {
+			tkoFound = true
+		}
+	}
+
+	s.True(axsFound, "extra .axs should be added at the archive root")
+	s.True(tkoFound, "compiled .tko should be added at the archive root alongside extra .axs")
+}
+
+// ---------------------------------------------------------------------------
+// Build – extra files (IncludeFilesNotInWorkspace)
+// ---------------------------------------------------------------------------
+
+// writeDefineModule overwrites the master source file with content that
+// references ExtraLib via a define_module directive, triggering the extra-file
+// discovery pipeline when IncludeFilesNotInWorkspace is true.
+func writeDefineModule(t *testing.T, wd string) {
+	t.Helper()
+	src := filepath.Join(wd, "Source", "TestMain.axs")
+	require.NoError(t, os.WriteFile(src, []byte("PROGRAM_NAME='test'\ndefine_module 'ExtraLib'\n"), 0o644))
+}
+
+// createExtraLibDir creates a search directory containing ExtraLib.axs and
+// returns the directory path.
+func createExtraLibDir(t *testing.T, wd string) string {
+	t.Helper()
+	dir := filepath.Join(wd, "ExtraLibs")
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "ExtraLib.axs"), []byte("PROGRAM_NAME='extra'"), 0o644))
+	return dir
+}
+
+func (s *ArchiveTestSuite) TestBuild_CompiledSourceFile_SkippedWhenOptionFalse() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	// Even if the .tkn exists on disk it should NOT appear in the zip when
+	// IncludeCompiledSourceFiles is false (the default).
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(wd, "Source", "TestMain.tkn"),
+		[]byte("compiled-source"), 0o644,
+	))
+
+	opts := defaultOpts() // IncludeCompiledSourceFiles = false
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	for _, f := range zr.File {
+		s.NotEqual("TestMain.tkn", f.Name,
+			"compiled .tkn should not be in zip when IncludeCompiledSourceFiles=false")
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_IncludeFilesNotInWorkspace_False_NoExtraFiles() {
+	// Even when a define_module reference and a matching file on disk exist,
+	// no extra files should be added when IncludeFilesNotInWorkspace is false.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts() // IncludeFilesNotInWorkspace = false
+	opts.ExtraFileSearchLocations = []string{extraDir}
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	for _, f := range zr.File {
+		s.NotEqual("ExtraLib.axs", f.Name,
+			"no extra files should appear when IncludeFilesNotInWorkspace=false; found %q", f.Name)
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_IncludeFilesNotInWorkspace_True_AddsExtraFiles() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "ExtraLib.axs" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "extra file should be added at the archive root when IncludeFilesNotInWorkspace=true")
+}
+
+func (s *ArchiveTestSuite) TestBuild_IgnoredFiles_ExcludesFromExtraSearch() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+	opts.IgnoredFiles = []string{"ExtraLib.axs"}
+	err := NewBuilder(a, opts).Build()
+	s.Require().NoError(err)
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	for _, f := range zr.File {
+		s.NotEqual("ExtraLib.axs", f.Name,
+			"ignored file should not appear in zip even when IncludeFilesNotInWorkspace=true")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// zipEntryPath
+// ---------------------------------------------------------------------------
+
+func TestZipEntryPath_ForwardSlashes(t *testing.T) {
+	result := zipEntryPath(`Source\SubDir\file.axs`)
+	if result != "Source/SubDir/file.axs" {
+		t.Errorf("expected forward slashes, got %q", result)
+	}
+}
+
+func TestZipEntryPath_AlreadyForwardSlashes(t *testing.T) {
+	result := zipEntryPath("Source/SubDir/file.axs")
+	if result != "Source/SubDir/file.axs" {
+		t.Errorf("unexpected result: %q", result)
+	}
+}
+
+func TestZipEntryPath_CleansDots(t *testing.T) {
+	result := zipEntryPath("Source/./SubDir/../file.axs")
+	if result != "Source/file.axs" {
+		t.Errorf("expected cleaned path, got %q", result)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Build – verbose output (covers displayZippedFiles + logVerbose)
+// ---------------------------------------------------------------------------
+
+// captureStdout redirects os.Stdout for the duration of fn and returns the
+// captured output. It is defined locally because the archive package is an
+// internal package; the cmd package helper is not accessible here.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+
+	orig := os.Stdout
+	os.Stdout = w
+	fn()
+	require.NoError(t, w.Close())
+	os.Stdout = orig
+
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(r)
+	require.NoError(t, err)
+
+	return buf.String()
+}
+
+func (s *ArchiveTestSuite) TestBuild_Verbose_PrintsEntries() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	opts := defaultOpts()
+	opts.Verbose = true
+
+	out := captureStdout(s.T(), func() {
+		err := NewBuilder(a, opts).Build()
+		s.Require().NoError(err)
+	})
+
+	// displayZippedFiles prints "--> <entry>" for every zip entry.
+	s.Contains(out, "-->", "verbose output should list entries with --> prefix")
+}
+
+func (s *ArchiveTestSuite) TestBuild_NonVerbose_NoEntryList() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	opts := defaultOpts()
+	opts.Verbose = false
+
+	out := captureStdout(s.T(), func() {
+		err := NewBuilder(a, opts).Build()
+		s.Require().NoError(err)
+	})
+
+	// Without verbose, displayZippedFiles must not run.
+	s.NotContains(out, "-->", "non-verbose build should not list entries")
+}
+
+func (s *ArchiveTestSuite) TestBuild_Verbose_LogsExtraFileSearch() {
+	// Exercises getFileReferencesFromFiles' logVerbose("Searching %s ...") branch.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.Verbose = true
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+
+	out := captureStdout(s.T(), func() {
+		err := NewBuilder(a, opts).Build()
+		s.Require().NoError(err)
+	})
+
+	// getFileReferencesFromFiles logs "Searching <file> for references..."
+	s.Contains(out, "Searching", "verbose output should mention file search activity")
+}
+
+// ---------------------------------------------------------------------------
+// Build – flat APW in zip
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_WorkspaceAPW_HasFlatPaths() {
+	// After Build() the .apw entry in the zip must have FilePathName values that
+	// are bare filenames (no subdirectory prefix), because the archive is flat.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	err := NewBuilder(a, defaultOpts()).Build()
+	s.Require().NoError(err)
+
+	wd, _ := os.Getwd()
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	// Find and read the .apw entry.
+	var apwData []byte
+	for _, f := range zr.File {
+		if f.Name == "TestWorkspace.apw" {
+			rc, err := f.Open()
+			s.Require().NoError(err)
+			apwData, err = io.ReadAll(rc)
+			_ = rc.Close()
+			s.Require().NoError(err)
+			break
+		}
+	}
+
+	s.Require().NotEmpty(apwData, "zip must contain TestWorkspace.apw")
+
+	// Parse the archived APW and verify all FileRef paths are bare filenames.
+	parsed, err := apw.Parse("TestWorkspace.apw", apwData)
+	s.Require().NoError(err)
+
+	for _, proj := range parsed.Workspace().Projects {
+		for _, sys := range proj.Systems {
+			for _, fr := range sys.Files {
+				base := filepath.Base(fr.FilePathName)
+				s.Equal(base, fr.FilePathName,
+					"FileRef path in archived .apw should be a bare filename, got %q", fr.FilePathName)
+			}
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Build – deduplication
+// ---------------------------------------------------------------------------
+
+// sharedIncludeAPW returns a workspace with two systems that both reference the
+// same shared include file, simulating the real-world pattern that triggers
+// duplicate zip entries without deduplication.
+func sharedIncludeAPW(id string) []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>` + id + `</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>TestProject</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>System1</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>Main1</Identifier>
+                <FilePathName>Source\Main1.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>Shared</Identifier>
+                <FilePathName>Include\Shared.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+        <System IsActive="false" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>System2</Identifier>
+            <SysID>2</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>Main2</Identifier>
+                <FilePathName>Source\Main2.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>Shared</Identifier>
+                <FilePathName>Include\Shared.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+func (s *ArchiveTestSuite) TestBuild_SharedFile_AddedOnlyOnce() {
+	// A file referenced by multiple systems must appear exactly once in the zip.
+	dir := s.T().TempDir()
+
+	data := sharedIncludeAPW("SharedWorkspace")
+	apwPath := filepath.Join(dir, "SharedWorkspace.apw")
+	s.Require().NoError(os.WriteFile(apwPath, data, 0o644))
+
+	for _, sub := range []struct{ d, n string }{
+		{"Source", "Main1.axs"},
+		{"Source", "Main2.axs"},
+		{"Include", "Shared.axi"},
+	} {
+		s.Require().NoError(os.MkdirAll(filepath.Join(dir, sub.d), 0o755))
+		s.Require().NoError(os.WriteFile(filepath.Join(dir, sub.d, sub.n), []byte(`PROGRAM_NAME='test'`), 0o644))
+	}
+
+	a, err := apw.Parse(apwPath, data)
+	s.Require().NoError(err)
+
+	oldWd, _ := os.Getwd()
+	s.T().Cleanup(func() { _ = os.Chdir(oldWd) })
+	s.Require().NoError(os.Chdir(dir))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(dir, "SharedWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	count := 0
+	for _, f := range zr.File {
+		if f.Name == "Shared.axi" {
+			count++
+		}
+	}
+
+	s.Equal(1, count, "Shared.axi should appear exactly once in the zip, got %d entries", count)
+}
+
+// ---------------------------------------------------------------------------
+// sanitizeSegment
+// ---------------------------------------------------------------------------
+
+func TestSanitizeSegment_NoSpaces(t *testing.T) {
+	require.Equal(t, "KingstonUniversity", sanitizeSegment("KingstonUniversity"))
+}
+
+func TestSanitizeSegment_SingleSpace(t *testing.T) {
+	require.Equal(t, "Kingston-University", sanitizeSegment("Kingston University"))
+}
+
+func TestSanitizeSegment_MultipleSpaces(t *testing.T) {
+	require.Equal(t, "Large-Classroom-Type-C", sanitizeSegment("Large Classroom Type C"))
+}
+
+func TestSanitizeSegment_AlreadyHyphenated(t *testing.T) {
+	require.Equal(t, "KU-Large-Classroom", sanitizeSegment("KU-Large-Classroom"))
+}
+
+func TestSanitizeSegment_Empty(t *testing.T) {
+	require.Equal(t, "", sanitizeSegment(""))
+}
+
+// ---------------------------------------------------------------------------
+// Build – output filename sanitization and scoped naming
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_SpacesInWorkspaceID_ReplacedWithHyphens() {
+	a := setupWorkspace(s.T(), "Kingston University")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "Kingston-University.archive.zip"))
+	s.NoError(statErr, "spaces in workspace ID should be replaced with hyphens in archive filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_SpacesInProjectID_ReplacedWithHyphens() {
+	a := setupWorkspaceWithIDs(s.T(), "TestWorkspace", "My Project", "TestSystem")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "My Project"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "TestWorkspace-My-Project.archive.zip"))
+	s.NoError(statErr, "spaces in project ID should be replaced with hyphens in archive filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_SpacesInSystemID_ReplacedWithHyphens() {
+	a := setupWorkspaceWithIDs(s.T(), "TestWorkspace", "TestProject", "My System")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "TestProject"
+	opts.SystemID = "My System"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "TestWorkspace-TestProject-My-System.archive.zip"))
+	s.NoError(statErr, "spaces in system ID should be replaced with hyphens in archive filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_AllSegmentsWithSpaces_AllSanitized() {
+	a := setupWorkspaceWithIDs(s.T(), "Kingston University", "My Project", "My System")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "My Project"
+	opts.SystemID = "My System"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "Kingston-University-My-Project-My-System.archive.zip"))
+	s.NoError(statErr, "all three segments with spaces should produce a fully hyphenated filename")
+}
+
+func (s *ArchiveTestSuite) TestBuild_OutputFile_ProjectAndSystemIDAppended() {
+	// Regression: when both ProjectID and SystemID are set, both must appear in
+	// the filename (guards against the auto-resolve bug where SystemID was dropped).
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	opts := defaultOpts()
+	opts.OutputFileSuffix = "archive.zip"
+	opts.ProjectID = "TestProject"
+	opts.SystemID = "TestSystem"
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	wd, _ := os.Getwd()
+	_, statErr := os.Stat(filepath.Join(wd, "TestWorkspace-TestProject-TestSystem.archive.zip"))
+	s.NoError(statErr, "archive filename should include both project and system ID suffixes")
+}
+
+// ---------------------------------------------------------------------------
+// Build – scoped extra file inclusion (regression: FileRef path mutation)
+// ---------------------------------------------------------------------------
+//
+// addWorkspaceFiles() mutates FileRef.FilePathName to a bare filename for the
+// flat-layout APW written inside the archive. The scoped GetExtraFileReferences*
+// functions re-read those paths from the workspace tree; if called after the
+// mutation they receive bare filenames that don't resolve on disk, so no extra
+// files are found. Correct ordering (addExtraFiles before addWorkspaceFiles)
+// must be preserved. These tests guard against regression.
+
+func (s *ArchiveTestSuite) TestBuild_ProjectScoped_IncludesExtraFilesReferencedBySourceFiles() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.ProjectID = "TestProject"
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace-TestProject.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "ExtraLib.axs" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "project-scoped archive should include extra files referenced by source files")
+}
+
+func (s *ArchiveTestSuite) TestBuild_SystemScoped_IncludesExtraFilesReferencedBySourceFiles() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	writeDefineModule(s.T(), wd)
+	extraDir := createExtraLibDir(s.T(), wd)
+
+	opts := defaultOpts()
+	opts.ProjectID = "TestProject"
+	opts.SystemID = "TestSystem"
+	opts.IncludeFilesNotInWorkspace = true
+	opts.ExtraFileSearchLocations = []string{extraDir}
+
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace-TestProject-TestSystem.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "ExtraLib.axs" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "system-scoped archive should include extra files referenced by source files")
+}
+
+// crossScopeAPWData builds an APW where SharedLib.axi is listed in the
+// workspace under ProjectB/SystemB but is #included by ProjectA/SystemA's
+// main source file.
+func crossScopeAPWData(id string) []byte {
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>` + id + `</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>ProjectA</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemA</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainA</Identifier>
+                <FilePathName>Source\MainA.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+    <Project>
+        <Identifier>ProjectB</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemB</Identifier>
+            <SysID>2</SysID>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>SharedLib</Identifier>
+                <FilePathName>Include\SharedLib.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+}
+
+// setupCrossScopeWorkspace builds a cross-scope workspace on disk:
+//   - ProjectA/SystemA: MainA.axs that #includes SharedLib.axi
+//   - ProjectB/SystemB: SharedLib.axi (listed in APW, exists on disk)
+//
+// Returns the parsed APW.  The caller's working directory is changed to the
+// temp dir so that Build() writes the zip there.
+func setupCrossScopeWorkspace(t *testing.T, id string) *apw.APW {
+	t.Helper()
+	dir := t.TempDir()
+
+	data := crossScopeAPWData(id)
+	apwPath := filepath.Join(dir, id+".apw")
+	require.NoError(t, os.WriteFile(apwPath, data, 0o644))
+
+	// Write MainA.axs — references SharedLib.axi via #include.
+	srcDir := filepath.Join(dir, "Source")
+	require.NoError(t, os.MkdirAll(srcDir, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(srcDir, "MainA.axs"),
+		[]byte("PROGRAM_NAME='main'\n#include 'SharedLib.axi'\n"),
+		0o644,
+	))
+
+	// Write SharedLib.axi — listed in the APW under ProjectB/SystemB.
+	incDir := filepath.Join(dir, "Include")
+	require.NoError(t, os.MkdirAll(incDir, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(incDir, "SharedLib.axi"),
+		[]byte("// shared library\n"),
+		0o644,
+	))
+
+	a, err := apw.Parse(apwPath, data)
+	require.NoError(t, err)
+
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	require.NoError(t, os.Chdir(dir))
+
+	return a
+}
+
+// TestBuild_SystemScoped_IncludesFileFromAnotherScope verifies that a file
+// listed in the workspace under a different project/system is correctly
+// discovered and included when building a scoped archive.  This tests the fix
+// for the isInWorkspace cross-scope bug where such files were silently dropped.
+func (s *ArchiveTestSuite) TestBuild_SystemScoped_IncludesFileFromAnotherScope() {
+	a := setupCrossScopeWorkspace(s.T(), "CrossScope")
+	wd, _ := os.Getwd()
+
+	opts := defaultOpts()
+	opts.ProjectID = "ProjectA"
+	opts.SystemID = "SystemA"
+	opts.IncludeFilesNotInWorkspace = true
+	// The workspace dir itself is the search location — SharedLib.axi is in Include/.
+	opts.ExtraFileSearchLocations = []string{wd}
+
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "CrossScope-ProjectA-SystemA.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "SharedLib.axi" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found,
+		"SharedLib.axi is listed in the workspace under a different system: "+
+			"it must still be included in a scoped archive that references it")
+}
+
+// ---------------------------------------------------------------------------
+// sanitizeSegment
+// ---------------------------------------------------------------------------
+
+func TestSanitizeSegment(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "no spaces unchanged",
+			input: "MyProject",
+			want:  "MyProject",
+		},
+		{
+			name:  "single space becomes hyphen",
+			input: "My Project",
+			want:  "My-Project",
+		},
+		{
+			name:  "multiple spaces each become one hyphen",
+			input: "My  Project",
+			want:  "My-Project",
+		},
+		{
+			name:  "space-dash-space (e.g. project name with separator) collapses",
+			input: "Penryn Road - Main Building",
+			want:  "Penryn-Road-Main-Building",
+		},
+		{
+			name:  "leading and trailing spaces become single hyphens",
+			input: " Leading",
+			want:  "-Leading",
+		},
+		{
+			name:  "already hyphenated unchanged",
+			input: "Already-Hyphenated",
+			want:  "Already-Hyphenated",
+		},
+		{
+			name:  "empty string unchanged",
+			input: "",
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeSegment(tt.input)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// warnf attribution — missing extra-file reference names the source file
+// ---------------------------------------------------------------------------
+
+// TestBuild_MissingExtraRef_WarningIncludesSourceFile verifies that when a
+// reference cannot be found on disk, the warning written to stderr names the
+// source file the reference was found in rather than the workspace APW.
+func TestBuild_MissingExtraRef_WarningIncludesSourceFile(t *testing.T) {
+	dir := t.TempDir()
+
+	// Build an APW with one source file that #includes an unknown module.
+	data := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>TestWS</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>TestProject</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>TestSystem</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>Panel</Identifier>
+                <FilePathName>Source\Panel.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>`)
+
+	apwPath := filepath.Join(dir, "TestWS.apw")
+	require.NoError(t, os.WriteFile(apwPath, data, 0o644))
+
+	sourceDir := filepath.Join(dir, "Source")
+	require.NoError(t, os.MkdirAll(sourceDir, 0o755))
+	// Panel.axs references mMissingModule — which does not exist anywhere on disk.
+	require.NoError(t, os.WriteFile(
+		filepath.Join(sourceDir, "Panel.axs"),
+		[]byte("define_module 'mMissingModule' mm()\n"),
+		0o644,
+	))
+
+	a, err := apw.Parse(apwPath, data)
+	require.NoError(t, err)
+
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	require.NoError(t, os.Chdir(dir))
+
+	opts := &Options{
+		OutputFileSuffix:           "zip",
+		IncludeFilesNotInWorkspace: true,
+		ExtraFileSearchLocations:   []string{dir},
+	}
+
+	// Redirect stderr so we can assert on the warning text.
+	origStderr := os.Stderr
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stderr = w
+	t.Cleanup(func() { os.Stderr = origStderr })
+
+	_ = NewBuilder(a, opts).Build()
+
+	require.NoError(t, w.Close())
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+
+	output := buf.String()
+	require.Contains(t, output, "mMissingModule",
+		"warning must mention the unresolved reference")
+	require.Contains(t, output, "Panel.axs",
+		"warning must name the source file the reference was found in, not the workspace APW")
+}
+
+// ---------------------------------------------------------------------------
+// Build – documentation files (README*, LICENSE*, CHANGELOG*)
+// ---------------------------------------------------------------------------
+
+func (s *ArchiveTestSuite) TestBuild_README_AddedWhenPresent() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(filepath.Join(wd, "README.md"), []byte("# README"), 0o644))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "README.md" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should include README.md when it is adjacent to the APW file")
+}
+
+func (s *ArchiveTestSuite) TestBuild_LICENSE_AddedWhenPresent() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(filepath.Join(wd, "LICENSE"), []byte("MIT License"), 0o644))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "LICENSE" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should include LICENSE when it is adjacent to the APW file")
+}
+
+func (s *ArchiveTestSuite) TestBuild_CHANGELOG_AddedWhenPresent() {
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	s.Require().NoError(os.WriteFile(filepath.Join(wd, "CHANGELOG.md"), []byte("## Changelog"), 0o644))
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	var found bool
+	for _, f := range zr.File {
+		if f.Name == "CHANGELOG.md" {
+			found = true
+			break
+		}
+	}
+
+	s.True(found, "zip should include CHANGELOG.md when it is adjacent to the APW file")
+}
+
+func (s *ArchiveTestSuite) TestBuild_DocFiles_MultipleVariants_AllIncluded() {
+	// Verifies glob matching: README*, LICENSE*, CHANGELOG* each match multiple filenames.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	docFiles := []string{"README.md", "README.txt", "LICENSE", "LICENSE.md", "CHANGELOG.md"}
+	for _, name := range docFiles {
+		s.Require().NoError(os.WriteFile(filepath.Join(wd, name), []byte("content"), 0o644))
+	}
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	zipNames := make(map[string]bool)
+	for _, f := range zr.File {
+		zipNames[f.Name] = true
+	}
+
+	for _, name := range docFiles {
+		s.True(zipNames[name], "zip should contain %q", name)
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_DocFiles_NotAddedWhenAbsent() {
+	// When no README*/LICENSE*/CHANGELOG* files are present, Build should
+	// still succeed and the zip should not contain any spurious entries.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	s.Require().NoError(NewBuilder(a, defaultOpts()).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	for _, f := range zr.File {
+		s.False(
+			strings.HasPrefix(f.Name, "README") ||
+				strings.HasPrefix(f.Name, "LICENSE") ||
+				strings.HasPrefix(f.Name, "CHANGELOG"),
+			"zip should not contain documentation files when none are present; found %q", f.Name,
+		)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Build – extra glob patterns
+// ---------------------------------------------------------------------------
+
+// createFile is a test helper that writes a file with the given content,
+// creating parent directories as needed.
+func createFile(t *testing.T, path string, content string) {
+	t.Helper()
+	require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+	require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
+}
+
+// zipEntrySet returns the set of entry names in a zip file as a map for O(1) lookup.
+func zipEntrySet(t *testing.T, zipPath string) map[string]bool {
+	t.Helper()
+	zr, err := zip.OpenReader(zipPath)
+	require.NoError(t, err)
+
+	defer func() { _ = zr.Close() }()
+	names := make(map[string]bool, len(zr.File))
+
+	for _, f := range zr.File {
+		names[f.Name] = true
+	}
+
+	return names
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_Empty_NothingExtra() {
+	// No ExtraGlobPatterns → the zip contains only the standard workspace files.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "extra.txt"), "not included")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = nil
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.False(entries["extra.txt"], "extra.txt should not be added when ExtraGlobPatterns is empty")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_SingleFileWildcard_MatchesFile() {
+	// *.txt at the APW directory level — matches one file.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "notes.txt"), "some notes")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"*.txt"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["notes.txt"], "*.txt should match notes.txt at the APW directory level")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_ExactFilename_MatchesFile() {
+	// Exact filename with no wildcards.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "deploy.cfg"), "# deploy config")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"deploy.cfg"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["deploy.cfg"], "exact filename pattern should match deploy.cfg")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_SubdirWildcard_MatchesMultipleFiles() {
+	// scripts/*.sh matches all .sh files in a subdirectory.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "scripts", "deploy.sh"), "#!/bin/sh")
+	createFile(s.T(), filepath.Join(wd, "scripts", "build.sh"), "#!/bin/sh")
+	createFile(s.T(), filepath.Join(wd, "scripts", "notes.txt"), "ignored")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"scripts/*.sh"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["deploy.sh"], "scripts/*.sh should match deploy.sh")
+	s.True(entries["build.sh"], "scripts/*.sh should match build.sh")
+	s.False(entries["notes.txt"], "scripts/*.sh should not match notes.txt in the same dir")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DirectoryMatch_WalksAllFiles() {
+	// When the pattern matches a directory, every file inside is added.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "assets", "icon.png"), "PNG")
+	createFile(s.T(), filepath.Join(wd, "assets", "splash.png"), "PNG")
+	createFile(s.T(), filepath.Join(wd, "assets", "font.ttf"), "TTF")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"assets"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["icon.png"], "directory match should add icon.png")
+	s.True(entries["splash.png"], "directory match should add splash.png")
+	s.True(entries["font.ttf"], "directory match should add font.ttf")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DoubleStarRecursive_MatchesAllDepths() {
+	// **/*.json matches .json files at any depth under the APW directory.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "config.json"), "{}")
+	createFile(s.T(), filepath.Join(wd, "sub", "settings.json"), "{}")
+	createFile(s.T(), filepath.Join(wd, "sub", "deep", "data.json"), "{}")
+	createFile(s.T(), filepath.Join(wd, "sub", "deep", "notes.txt"), "not matched")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"**/*.json"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["config.json"], "**/*.json should match config.json at root")
+	s.True(entries["settings.json"], "**/*.json should match settings.json in sub/")
+	s.True(entries["data.json"], "**/*.json should match data.json in sub/deep/")
+	s.False(entries["notes.txt"], "**/*.json should not match notes.txt")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DoubleStarDirectory_MatchesAllFilesUnder() {
+	// dist/** matches every file under the dist/ directory at any depth.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "dist", "app.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "dist", "lib", "util.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "dist", "lib", "core.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "other", "skip.jar"), "JAR")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"dist/**"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["app.jar"], "dist/** should match app.jar")
+	s.True(entries["util.jar"], "dist/** should match util.jar in dist/lib/")
+	s.True(entries["core.jar"], "dist/** should match core.jar in dist/lib/")
+	s.False(entries["skip.jar"], "dist/** should not match skip.jar under other/")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_MultiplePatterns_UnionOfMatches() {
+	// Two patterns — each adds different files; the archive should contain all.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "docs", "manual.pdf"), "PDF")
+	createFile(s.T(), filepath.Join(wd, "icons", "app.ico"), "ICO")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"docs/*.pdf", "icons/*.ico"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["manual.pdf"], "docs/*.pdf should match manual.pdf")
+	s.True(entries["app.ico"], "icons/*.ico should match app.ico")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_NoMatches_NoError() {
+	// A pattern that matches nothing should not cause an error and should not
+	// produce any unexpected entries in the archive.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"nonexistent/**", "*.xyzzy"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	for name := range entries {
+		isKnown := name == "TestWorkspace.apw" ||
+			name == "TestMain.axs" ||
+			name == "TestModule.axs" ||
+			name == "TestInclude.axi"
+		s.True(isKnown, "unexpected entry %q from non-matching patterns", name)
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DuplicateWithWorkspaceFile_AddedOnce() {
+	// A glob pattern that also matches a file already added by addWorkspaceFiles
+	// must not produce a duplicate zip entry.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+
+	// TestMain.axs is already in the workspace. The glob also matches it.
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"Source/*.axs"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	count := 0
+	for _, f := range zr.File {
+		if f.Name == "TestMain.axs" {
+			count++
+		}
+	}
+
+	s.Equal(1, count, "TestMain.axs should appear exactly once even when matched by both workspace and glob")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_DuplicateAcrossPatterns_AddedOnce() {
+	// Two separate patterns that both resolve to the same physical file should
+	// only produce a single zip entry for that file.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "shared", "common.axi"), "// common")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"shared/common.axi", "shared/*.axi"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	zr, err := zip.OpenReader(filepath.Join(wd, "TestWorkspace.zip"))
+	s.Require().NoError(err)
+	defer func() { _ = zr.Close() }()
+
+	count := 0
+	for _, f := range zr.File {
+		if f.Name == "common.axi" {
+			count++
+		}
+	}
+
+	s.Equal(1, count, "common.axi should appear exactly once despite matching two patterns")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_FilesAddedAtArchiveRoot() {
+	// Files matched by a pattern in a subdirectory are placed at the archive
+	// root using only their filename (flat layout), not their relative path.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "config", "prod.cfg"), "# prod")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"config/*.cfg"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["prod.cfg"], "glob-matched file should be stored at archive root as bare filename")
+	s.False(entries["config/prod.cfg"], "glob-matched file must not retain its subdirectory prefix in the archive")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_NestedDir_AllFilesAddedFlat() {
+	// A deeply nested directory structure under a glob match should have all
+	// files added flat at the archive root.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "plugins", "audio", "midi.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "plugins", "video", "h264.jar"), "JAR")
+	createFile(s.T(), filepath.Join(wd, "plugins", "video", "codecs", "avc.so"), "ELF")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"plugins/**"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["midi.jar"], "plugins/** should add midi.jar at archive root")
+	s.True(entries["h264.jar"], "plugins/** should add h264.jar at archive root")
+	s.True(entries["avc.so"], "plugins/** should add deeply nested avc.so at archive root")
+
+	for name := range entries {
+		s.False(strings.Contains(name, "/"),
+			"all entries should be at archive root (no path separator), got %q", name)
+	}
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_InvalidPattern_ReturnsError() {
+	// An invalid glob pattern (unclosed bracket) must cause Build to return a
+	// non-nil error rather than silently succeeding or panicking.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"[invalid"}
+	err := NewBuilder(a, opts).Build()
+	s.Error(err, "Build should return an error for an invalid glob pattern")
+	s.Contains(err.Error(), "invalid glob pattern", "error message should identify the bad pattern")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_CharacterClass_MatchesCorrectFiles() {
+	// [ab]*.txt matches files starting with 'a' or 'b'.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "alpha.txt"), "a")
+	createFile(s.T(), filepath.Join(wd, "bravo.txt"), "b")
+	createFile(s.T(), filepath.Join(wd, "zulu.txt"), "z — not matched")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"[ab]*.txt"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["alpha.txt"], "[ab]*.txt should match alpha.txt")
+	s.True(entries["bravo.txt"], "[ab]*.txt should match bravo.txt")
+	s.False(entries["zulu.txt"], "[ab]*.txt should not match zulu.txt")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_SingleCharWildcard_MatchesCorrectFiles() {
+	// v?.cfg matches v1.cfg, vX.cfg but not v10.cfg (two chars after 'v').
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "v1.cfg"), "ver1")
+	createFile(s.T(), filepath.Join(wd, "vX.cfg"), "verX")
+	createFile(s.T(), filepath.Join(wd, "v10.cfg"), "ver10 — not matched")
+
+	opts := defaultOpts()
+	opts.ExtraGlobPatterns = []string{"v?.cfg"}
+	s.Require().NoError(NewBuilder(a, opts).Build())
+
+	entries := zipEntrySet(s.T(), filepath.Join(wd, "TestWorkspace.zip"))
+	s.True(entries["v1.cfg"], "v?.cfg should match v1.cfg")
+	s.True(entries["vX.cfg"], "v?.cfg should match vX.cfg")
+	s.False(entries["v10.cfg"], "v?.cfg should not match v10.cfg (two chars after v)")
+}
+
+func (s *ArchiveTestSuite) TestBuild_GlobPatterns_Verbose_LogsAddedFiles() {
+	// When Verbose is true, addGlobPatternFiles logs each file it adds.
+	a := setupWorkspace(s.T(), "TestWorkspace")
+	wd, _ := os.Getwd()
+	createFile(s.T(), filepath.Join(wd, "extra.bin"), "data")
+
+	opts := defaultOpts()
+	opts.Verbose = true
+	opts.ExtraGlobPatterns = []string{"*.bin"}
+
+	out := captureStdout(s.T(), func() {
+		s.Require().NoError(NewBuilder(a, opts).Build())
+	})
+
+	s.Contains(out, "extra.bin", "verbose output should mention the glob-matched file")
+	s.Contains(out, "glob", "verbose output should indicate the file came from a glob pattern")
+}

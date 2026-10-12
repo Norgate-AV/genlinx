@@ -1,0 +1,126 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://github.com/Norgate-AV/genlinx/genlinx.schema.json",
+    "title": "genlinx configuration",
+    "description": "Configuration schema for genlinx (.genlinxrc.json, config.json)",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "core": {
+            "description": "Global/editor settings",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "editor": {
+                    "description": "Editor command used by 'genlinx config --edit' (e.g. 'code --wait', 'vim')",
+                    "type": "string"
+                }
+            }
+        },
+        "compiler": {
+            "description": "NetLinx compiler settings shared by the 'build' and 'cfg' commands",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "path": {
+                    "description": "Path to the NetLinx compiler executable",
+                    "type": "string"
+                },
+                "includePath": {
+                    "description": "Additional include paths passed to the compiler",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "modulePath": {
+                    "description": "Additional module paths passed to the compiler",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "libraryPath": {
+                    "description": "Additional library paths passed to the compiler",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                }
+            }
+        },
+        "cfg": {
+            "description": "Options for the 'cfg' command (NetLinx build CFG file generation)",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "outputFile": {
+                    "description": "Output CFG filename suffix (e.g. 'build.cfg')",
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.cfg$"
+                },
+                "outputLogFile": {
+                    "description": "Output log filename suffix (e.g. 'build.log')",
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.log$"
+                },
+                "outputLogFileOption": {
+                    "description": "Log file write mode: 'A' = append, 'N' = new/overwrite",
+                    "type": "string",
+                    "enum": ["A", "N"]
+                },
+                "outputLogConsoleOption": {
+                    "description": "Whether to echo compiler output to the console",
+                    "type": "boolean"
+                },
+                "buildWithDebugInformation": {
+                    "description": "Include debug information in compiled output",
+                    "type": "boolean"
+                },
+                "buildWithSource": {
+                    "description": "Include source files in compiled output",
+                    "type": "boolean"
+                }
+            }
+        },
+        "archive": {
+            "description": "Options for the 'archive' command (ZIP archive creation)",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "outputFile": {
+                    "description": "Output archive filename suffix (e.g. 'archive.zip')",
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_\\-\\.]+\\.zip$"
+                },
+                "includeCompiledSourceFiles": {
+                    "description": "Include compiled source files (.tkn) in the archive",
+                    "type": "boolean"
+                },
+                "includeCompiledModuleFiles": {
+                    "description": "Include compiled module files (.tko) in the archive",
+                    "type": "boolean"
+                },
+                "includeFilesNotInWorkspace": {
+                    "description": "Include files found in search locations that are not referenced by the workspace",
+                    "type": "boolean"
+                },
+                "extraFileSearchLocations": {
+                    "description": "Additional directories to search for files to include in the archive",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "extraGlobPatterns": {
+                    "description": "Glob patterns for extra files/directories to include in the archive (supports ** for recursive matching)",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                },
+                "ignoredFiles": {
+                    "description": "Filenames to exclude from the archive even if found in search locations",
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "uniqueItems": true
+                }
+            }
+        }
+    }
+}

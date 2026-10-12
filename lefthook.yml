@@ -1,0 +1,82 @@
+pre-commit:
+  parallel: true
+  commands:
+    # Go formatting
+    go-fmt:
+      glob: "*.go"
+      run: |
+        go fmt ./...
+        git add .
+
+    # Go module tidying
+    go-mod-tidy:
+      files: git diff --name-only --cached
+      glob: "{go.mod,go.sum}"
+      run: |
+        go mod tidy
+        git add go.mod go.sum
+
+    # Go vetting
+    go-vet:
+      glob: "*.go"
+      run: |
+        go vet ./...
+
+    # Go linting
+    golangci-lint:
+      glob: "*.go"
+      run: |
+        go tool golangci-lint run --fix
+        git add .
+
+    # Run tests
+    go-test:
+      glob: "*.go"
+      run: |
+        go test ./...
+
+    # Trailing whitespace and merge conflict marker checks
+    # Exclude testdata/ — golden files must match code output exactly.
+    trailing-whitespace:
+      run: git diff --check --cached -- . ':(exclude)*/testdata/**'
+
+pre-push:
+  parallel: true
+  commands:
+    # Run comprehensive tests before push
+    go-test-race:
+      run: |
+        go test -race ./...
+
+    # Security scan
+    # gosec:
+    #   run: |
+    #     if command -v gosec >/dev/null 2>&1; then
+    #       go tool gosec ./...
+    #     else
+    #       echo "⚠️  gosec not installed, skipping security scan"
+    #     fi
+
+    # Vulnerability check
+    # govulncheck:
+    #   run: |
+    #     if command -v govulncheck >/dev/null 2>&1; then
+    #       go tool govulncheck ./...
+    #     else
+    #       echo "⚠️  govulncheck not installed, skipping vulnerability check"
+    #     fi
+
+commit-msg:
+  commands:
+    # Conventional commit format validation
+    commitizen:
+      run: ./scripts/commitizen.sh {1}
+    spell-check:
+      run: ./scripts/spellcheck.sh {1}
+
+colors: true
+
+output:
+  - execution_out
+  - execution_info
+  - summary

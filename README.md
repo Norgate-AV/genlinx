@@ -137,6 +137,7 @@ Options:
   -N, --include-files-not-in-workspace           include files not in workspace
   -l, --extra-file-search-locations <string...>  extra file locations to search
   -p, --extra-file-archive-location <string>     location to place extra files in the archive
+  -g, --extra-glob-patterns <string...>          glob patterns for extra files/directories to include in the archive (supports **)
   --verbose                                      verbose output
   -h, --help                                     display help for command
 ```
@@ -244,15 +245,7 @@ Options:
         "outputLogFileOption": "N",
         "outputLogConsoleOption": true,
         "buildWithDebugInformation": false,
-        "buildWithSource": false,
-        "includePath": ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
-        "modulePath": [
-            "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
-            "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
-            "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
-        ],
-        "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"],
-        "all": false
+        "buildWithSource": false
     },
     "archive": {
         "outputFile": "archive.zip",
@@ -262,8 +255,6 @@ Options:
         "extraFileSearchLocations": [
             "C:/Program Files (x86)/Common Files/AMXShare"
         ],
-        "extraFileArchiveLocation": ".genlinx",
-        "all": false,
         "ignoredFiles": [
             "G4API.axi",
             "NetLinx.axi",
@@ -281,24 +272,15 @@ Options:
             "snapirouter2.jar"
         ]
     },
-    "build": {
-        "nlrc": {
-            "path": "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
-            "includePath": [
-                "C:/Program Files (x86)/Common Files/AMXShare/AXIs"
-            ],
-            "modulePath": [
-                "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
-                "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
-                "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
-            ],
-            "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"]
-        },
-        "shell": {
-            "path": "C:/Windows/System32/cmd.exe"
-        },
-        "all": false,
-        "createCfg": true
+    "compiler": {
+        "path": "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
+        "includePath": ["C:/Program Files (x86)/Common Files/AMXShare/AXIs"],
+        "modulePath": [
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/bundle",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/lib",
+            "C:/Program Files (x86)/Common Files/AMXShare/Duet/module"
+        ],
+        "libraryPath": ["C:/Program Files (x86)/Common Files/AMXShare/SYCs"]
     }
 }
 ```

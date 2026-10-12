@@ -1,6 +1,6 @@
 % GENLINX(1) genlinx
-% Norgate AV Services Limited
-% August 2024
+% Norgate AV
+% March 2026
 
 # NAME
 
@@ -38,7 +38,7 @@ More then likely.
 
 # COPYRIGHT
 
-Copyright (C) 2024 Norgate AV Services Limited
+Copyright (C) 2010-2026 Norgate AV
 
 The MIT License (MIT)
 

@@ -17,7 +17,7 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/*.js.map": true,
-        "node_modules": true
+        "**/node_modules": true
     },
     "markdownlint.config": {
         // "default": true,
@@ -36,5 +36,28 @@
     },
     "[dotenv]": {
         "editor.formatOnSave": false
+    },
+    "[xml]": {
+        "editor.defaultFormatter": "redhat.vscode-xml"
+    },
+    "[ignore]": {
+        "editor.defaultFormatter": "lumirelle.shell-format-rev"
+    },
+    "gopls": {
+        "ui.semanticTokens": true,
+        "formatting.local": "github.com/Norgate-AV/genlinx"
+    },
+    "[go]": {
+        "editor.defaultFormatter": "golang.go",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    "go.lintTool": "golangci-lint",
+    "go.lintOnSave": "workspace",
+    "github-actions.workflows.pinned.workflows": [".github/workflows/ci.yml"],
+    "[shellscript]": {
+        "editor.defaultFormatter": "lumirelle.shell-format-rev"
     }
 }

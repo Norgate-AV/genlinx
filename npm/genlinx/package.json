@@ -1,0 +1,36 @@
+{
+    "name": "@norgate-av/genlinx",
+    "description": "A CLI utility for NetLinx projects 🚀🚀🚀",
+    "version": "0.0.0",
+    "license": "MIT",
+    "type": "module",
+    "keywords": [
+        "netlinx",
+        "amx",
+        "genlinx"
+    ],
+    "files": [
+        "bin.js"
+    ],
+    "bin": {
+        "genlinx": "bin.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Norgate-AV/genlinx.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Norgate-AV/genlinx/issues"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "optionalDependencies": {
+        "@norgate-av/genlinx-linux-x64": "0.0.0",
+        "@norgate-av/genlinx-linux-arm64": "0.0.0",
+        "@norgate-av/genlinx-darwin-x64": "0.0.0",
+        "@norgate-av/genlinx-darwin-arm64": "0.0.0",
+        "@norgate-av/genlinx-win32-x64": "0.0.0",
+        "@norgate-av/genlinx-win32-arm64": "0.0.0"
+    }
+}

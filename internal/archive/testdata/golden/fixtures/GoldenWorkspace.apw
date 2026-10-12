@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace [
+    <!ELEMENT Workspace (Identifier, CreateVersion, Project*)>
+    <!ATTLIST Workspace CurrentVersion CDATA #REQUIRED>
+    <!ELEMENT Identifier (#PCDATA)>
+    <!ELEMENT CreateVersion (#PCDATA)>
+    <!ELEMENT Project (Identifier, System*)>
+    <!ELEMENT System (Identifier, SysID, File*)>
+    <!ATTLIST System IsActive CDATA #REQUIRED Platform CDATA #REQUIRED Transport CDATA #REQUIRED TransportEx CDATA #REQUIRED>
+    <!ELEMENT SysID (#PCDATA)>
+    <!ELEMENT File (Identifier, FilePathName, Comments?)>
+    <!ATTLIST File CompileType CDATA #REQUIRED Type CDATA #REQUIRED>
+    <!ELEMENT FilePathName (#PCDATA)>
+    <!ELEMENT Comments (#PCDATA)>
+]>
+<Workspace CurrentVersion="4.0">
+    <Identifier>GoldenWorkspace</Identifier>
+    <CreateVersion>4.0</CreateVersion>
+    <Project>
+        <Identifier>ProjectA</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemA1</Identifier>
+            <SysID>1</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainA</Identifier>
+                <FilePathName>Source\MainA.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Module">
+                <Identifier>ModuleA</Identifier>
+                <FilePathName>Module\ModuleA.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+            <File CompileType="Netlinx" Type="Include">
+                <Identifier>LibA</Identifier>
+                <FilePathName>Include\LibA.axi</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+        <System IsActive="false" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemA2</Identifier>
+            <SysID>2</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainA2</Identifier>
+                <FilePathName>Source\MainA2.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+    <Project>
+        <Identifier>ProjectB</Identifier>
+        <System IsActive="true" Platform="Netlinx" Transport="Serial" TransportEx="TCPIP">
+            <Identifier>SystemB</Identifier>
+            <SysID>3</SysID>
+            <File CompileType="Netlinx" Type="MasterSrc">
+                <Identifier>MainB</Identifier>
+                <FilePathName>Source\MainB.axs</FilePathName>
+                <Comments></Comments>
+            </File>
+        </System>
+    </Project>
+</Workspace>

@@ -1,23 +1,104 @@
-# Let Git decide what to do, for every file. More on that later.
-* text=auto
+# Common settings that generally should always be used with your language specific settings
 
-# Overwrite the above and declare files that will always have
-# LF line endings on checkin and checkout. No ESLint/Prettier
-# issues for those files.
-*.js text eol=lf
-*.jsx text eol=lf
-# If you're using TypeScript, also add .ts, .tsx files
-*.ts text eol=lf
-*.tsx text eol=lf
-# If you're using Prettier, you probably want LF in .json, .md, .css,
-# and all the other files you're formatting with Prettier.
-*.json text eol=lf
-# An alternative is to ditch the above and make everything have LF on
-# checkin/checkout, but I'm not sure what will happen with binary files.
-# * text eol=lf
+# Auto detect text files and perform LF normalization
+*          text=auto
 
-# Declare files that are binary so that their eol should not be modified.
-# Git, with the first line of this file, will probably not modify binary
-# files, but add the following just to be safe and explicit.
-*.png binary
-*.jpg binary
+#
+# The above will handle all files NOT found below
+#
+
+# Documents
+*.bibtex   text diff=bibtex
+*.doc      diff=astextplain
+*.DOC      diff=astextplain
+*.docx     diff=astextplain
+*.DOCX     diff=astextplain
+*.dot      diff=astextplain
+*.DOT      diff=astextplain
+*.pdf      diff=astextplain
+*.PDF      diff=astextplain
+*.rtf      diff=astextplain
+*.RTF      diff=astextplain
+*.md       text diff=markdown
+*.mdx      text diff=markdown
+*.tex      text diff=tex
+*.adoc     text
+*.textile  text
+*.mustache text
+*.csv      text eol=crlf
+*.tab      text
+*.tsv      text
+*.txt      text
+*.sql      text
+*.epub     diff=astextplain
+
+# Graphics
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.tif      binary
+*.tiff     binary
+*.ico      binary
+# SVG treated as text by default.
+*.svg      text
+# If you want to treat it as binary,
+# use the following line instead.
+# *.svg    binary
+*.eps      binary
+
+# Scripts
+*.bash     text eol=lf
+*.fish     text eol=lf
+*.ksh      text eol=lf
+*.sh       text eol=lf
+*.zsh      text eol=lf
+# These are explicitly windows files and should use crlf
+*.bat      text eol=crlf
+*.cmd      text eol=crlf
+*.ps1      text eol=crlf
+
+# Serialisation
+*.json     text
+*.toml     text
+*.xml      text
+*.yaml     text
+*.yml      text
+
+# Archives
+*.7z       binary
+*.bz       binary
+*.bz2      binary
+*.bzip2    binary
+*.gz       binary
+*.lz       binary
+*.lzma     binary
+*.rar      binary
+*.tar      binary
+*.taz      binary
+*.tbz      binary
+*.tbz2     binary
+*.tgz      binary
+*.tlz      binary
+*.txz      binary
+*.xz       binary
+*.Z        binary
+*.zip      binary
+*.zst      binary
+
+# Text files where line endings should be preserved
+*.patch    -text
+
+#
+# Exclude files from exporting
+#
+
+.gitattributes export-ignore
+.gitignore     export-ignore
+.gitkeep       export-ignore
+
+# Treat all Go files in this repo as binary, with no git magic updating
+# line endings. Windows users contributing to Go will need to use a
+# modern version of git and editors capable of LF line endings.
+
+*.go -text diff=golang
