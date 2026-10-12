@@ -37,8 +37,6 @@ echo "Target branch: $DEFAULT_BRANCH"
 # Files to check and stage
 FILES=("CHANGELOG.md")
 
-STAGED=false
-
 for file in "${FILES[@]}"; do
     if [ -n "$(git status --porcelain "$file")" ]; then
         echo "Staging $file"
@@ -46,24 +44,19 @@ for file in "${FILES[@]}"; do
             echo "Failed to stage $file"
             exit 1
         }
-
-        STAGED=true
     else
         echo "No changes to $file to commit"
     fi
 done
 
-if ! $STAGED; then
-    echo "Nothing to commit"
-    exit 0
-fi
-
 git commit -m "chore: bump version to $TAG [skip ci]" || {
     echo "Failed to commit changes"
     exit 1
 }
+echo "All changes committed to $DEFAULT_BRANCH"
 
 git push origin HEAD:"$DEFAULT_BRANCH" || {
     echo "Failed to push changes to $DEFAULT_BRANCH"
     exit 1
 }
+echo "Changes pushed to $DEFAULT_BRANCH"
