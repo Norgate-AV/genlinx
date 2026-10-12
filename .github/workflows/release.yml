@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   checks:
@@ -56,10 +55,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./scripts/commit.sh ${{ github.ref_name }}
-
-  npm-publish:
-    name: Publish to npm
-    needs: release
-    uses: ./.github/workflows/npm-publish.yml
-    with:
-      tag: ${{ github.ref_name }}

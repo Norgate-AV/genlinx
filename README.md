@@ -8,7 +8,6 @@
 
 [![CI][ci]](https://github.com/Norgate-AV/genlinx/actions/workflows/ci.yml)
 [![GitHub Release][release]](https://github.com/Norgate-AV/genlinx/releases)
-[![npm][npm]](https://www.npmjs.com/package/@norgate-av/genlinx)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 [![GitHub contributors](https://img.shields.io/github/contributors/Norgate-AV/genlinx)](#contributors-sparkles)
@@ -20,7 +19,6 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 
 [ci]: https://img.shields.io/github/actions/workflow/status/Norgate-AV/genlinx/ci.yml?logo=github&label=CI
 [release]: https://img.shields.io/github/v/release/Norgate-AV/genlinx?logo=github&label=Release
-[npm]: https://img.shields.io/npm/v/@norgate-av/genlinx?logo=npm
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -59,12 +57,6 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 go install github.com/Norgate-AV/genlinx@latest
 ```
 
-### npm
-
-```bash
-npm install -g @norgate-av/genlinx
-```
-
 ### Direct download
 
 Pre-built binaries for Linux, macOS, and Windows are available on the [GitHub Releases](https://github.com/Norgate-AV/genlinx/releases) page.
@@ -80,12 +72,6 @@ genlinx
 <div align="center">
 
 </div>
-
-<!-- ## Output :package:
-
-genlinx will
-
--->
 
 ## Command Line :man_technologist:
 
