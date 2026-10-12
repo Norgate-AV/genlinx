@@ -35,6 +35,8 @@ A CLI utility for Netlinx projects 🚀🚀🚀
     - [cfg](#cfg)
     - [config](#config)
     - [find](#find)
+    - [ftl](#ftl)
+    - [studio](#studio)
 - [Configuration :gear:](#configuration-gear)
     - [Default](#default)
     - [Global](#global)
@@ -51,19 +53,40 @@ A CLI utility for Netlinx projects 🚀🚀🚀
 
 ## Installation :zap:
 
-Install genlinx globally with:
+### Homebrew (macOS / Linux)
 
 ```bash
-pnpm add -g @norgate-av/genlinx
+brew install norgate-av/tap/genlinx
+```
 
-# or
+### Scoop (Windows)
 
-yarn global add @norgate-av/genlinx
+```bash
+scoop bucket add norgate-av https://github.com/Norgate-AV/scoop-bucket
+scoop install genlinx
+```
 
-# or
+### Arch Linux (AUR)
 
+```bash
+yay -S genlinx-bin
+```
+
+### Go install
+
+```bash
+go install github.com/Norgate-AV/genlinx@latest
+```
+
+### npm
+
+```bash
 npm install -g @norgate-av/genlinx
 ```
+
+### Direct download
+
+Pre-built binaries for Linux, macOS, and Windows (including `.deb`, `.rpm`, `.apk`) are available on the [GitHub Releases](https://github.com/Norgate-AV/genlinx/releases) page.
 
 ## Usage :rocket:
 
@@ -88,32 +111,37 @@ genlinx will
 ```bash
                    _ _
    __ _  ___ _ __ | (_)_ __ __  __
-  / _` |/ _ \ '_ \| | | '_ / \/ /
+  / _` |/ _ \ '_ \| | | '_ \/ /
  | (_| |  __/ | | | | | | | |>  <
   \__, |\___|_| |_|_|_|_| |_/_/\_\
   |___/
 
 Open source CLI tool for NetLinx projects
-Copyright (c) 2025, Norgate AV
+Copyright (c) 2026, Norgate AV
 https://github.com/Norgate-AV/genlinx
 
 ===================================================
 
-Usage: genlinx [options] [command]
+Usage:
+  genlinx [command]
 
-cli helper utility for NetLinx projects 🚀🚀🚀
+Available Commands:
+  archive     generate a NetLinx workspace zip archive
+  build       build NetLinx source file(s) or CFG file(s)
+  cfg         generate NetLinx build CFG files
+  completion  Generate the autocompletion script for the specified shell
+  config      view/edit configuration properties for genlinx
+  find        find NetLinx devices on a local broadcast subnet
+  ftl         generate a File Transfer List (.ftl) from a NetLinx workspace
+  help        Help about any command
+  studio      NetLinx Studio utilities
 
-Options:
-  -v, --version                     output the version number
-  -h, --help                        display help for command
+Flags:
+  -h, --help      help for genlinx
+      --verbose   verbose output
+  -v, --version   version for genlinx
 
-Commands:
-  archive [options]                 generate a NetLinx workspace zip archive
-  build [options] [sourceFiles...]  build NetLinx source file(s) or CFG file(s)
-  cfg [options]                     generate NetLinx build CFG files
-  config [options] [key]            view/edit configuration properties for genlinx
-  find [options]                    find NetLinx devices on a local broadcast subnet
-  help [command]                    display help for command
+Use "genlinx [command] --help" for more information about a command.
 
 ===================================================
 
@@ -126,112 +154,153 @@ For more help, make sure to check out the man page:
 Generate a NetLinx workspace zip archive.
 
 ```bash
-Usage: genlinx archive [options]
+Usage:
+  genlinx archive [flags]
 
-generate a NetLinx workspace zip archive
+Flags:
+  -a, --all                                   process all found workspace files without prompting
+  -l, --extra-file-search-locations strings   extra file locations to search
+  -g, --extra-glob-patterns strings           glob patterns for extra files/directories to include in the archive (supports **)
+  -h, --help                                  help for archive
+  -m, --include-compiled-module-files         include compiled module files
+  -s, --include-compiled-source-files         include compiled source files
+  -n, --include-files-not-in-workspace        include files not in workspace
+  -M, --no-include-compiled-module-files      do not include compiled module files
+  -S, --no-include-compiled-source-files      do not include compiled source files
+  -N, --no-include-files-not-in-workspace     do not include files not in workspace
+  -o, --output-file-suffix string             output file suffix
+  -p, --project string                        restrict archive to the named project within the workspace
+  -y, --system string                         restrict archive to a single named system
+  -w, --workspace-files strings               workspace file(s) to generate archive(s) for
 
-Options:
-  -w, --workspace-files <string...>              workspace file(s) to generate archive(s) for (default: search for workspace files in current directory)
-  -o, --output-file-suffix <string>              output file suffix
-  -S, --include-compiled-source-files            include compiled source files
-  -M, --include-compiled-module-files            include compiled module files
-  -N, --include-files-not-in-workspace           include files not in workspace
-  -l, --extra-file-search-locations <string...>  extra file locations to search
-  -p, --extra-file-archive-location <string>     location to place extra files in the archive
-  -g, --extra-glob-patterns <string...>          glob patterns for extra files/directories to include in the archive (supports **)
-  --verbose                                      verbose output
-  -h, --help                                     display help for command
+Global Flags:
+      --verbose   verbose output
 ```
 
 ### build
 
-Build NetLinx source file(s) or CFG file(s)
+Build NetLinx source file(s) or CFG file(s).
 
 ```bash
-Usage: genlinx build [options] [sourceFiles...]
+Usage:
+  genlinx build [sourceFiles...] [flags]
 
-build NetLinx source file(s) or CFG file(s)
+Flags:
+  -a, --all                    select all cfg files without prompting
+  -c, --cfg-files strings      cfg file(s) to build from
+  -h, --help                   help for build
+  -i, --include-path strings   add additional include paths
+  -l, --library-path strings   add additional library paths
+  -m, --module-path strings    add additional module paths
+  -o, --output-path string     set the output path for the compiled files
+  -s, --source-files strings   source file(s) to build (*.axs, *.axi)
 
-Options:
-  -c, --cfg-files <string...>     cfg file(s) to build from (default: [])
-  -s, --source-files <string...>  source file(s) to build (*.axs, *.axi) (default: [])
-  -i, --include-path <string...>  add additional include paths
-  -m, --module-path <string...>   add additional module paths
-  -l, --library-path <string...>  add additional library paths
-  -a, --all                       select all cfg files without prompting
-  -A, --no-all                    select multiple cfg files with a prompt
-  --verbose                       verbose output (default: false)
-  -h, --help                      display help for command
+Global Flags:
+      --verbose   verbose output
 ```
 
 ### cfg
 
-Generate a NetLinx build CFG file
+Generate a NetLinx build CFG file.
 
 ```bash
-Usage: genlinx cfg [options]
+Usage:
+  genlinx cfg [flags]
 
-generate NetLinx build CFG files
+Flags:
+  -a, --all                               process all found workspace files without prompting
+  -d, --build-with-debug-information      build with debug information
+  -s, --build-with-source                 build with source
+  -h, --help                              help for cfg
+  -i, --include-path strings              add additional include paths
+  -l, --library-path strings              add additional library paths
+  -m, --module-path strings               add additional module paths
+  -D, --no-build-with-debug-information   do not build with debug information
+  -S, --no-build-with-source              do not build with source
+  -C, --no-output-log-console-option      do not output log to console
+  -o, --output-file-suffix string         output file suffix
+  -c, --output-log-console-option         output log to console
+  -k, --output-log-file-option string     output log file option (A = append, N = overwrite)
+  -f, --output-log-file-suffix string     output log file suffix
+  -r, --root-directory string             root directory reference (default: parent directory of workspace file)
+  -w, --workspace-files strings           workspace file(s) to generate a CFG for (default: search current directory)
 
-Options:
-  -w, --workspace-files <string...>      workspace file(s) to generate a CFG for (default: search for workspace files in current directory)
-  -r, --root-directory <string>          root directory reference (default: use current directory as root)
-  -o, --output-file-suffix <string>      output file suffix
-  -f, --output-log-file-suffix <string>  output log file suffix
-  -k, --output-log-file-option <string>  output log file option
-                                         A - append
-                                         N - overwrite (choices: "A", "N")
-  -c, --output-log-console-option        output log to console
-  -C, --no-output-log-console-option     do not output log to console
-  -d, --build-with-debug-information     build with debug information
-  -D, --no-build-with-debug-information  do not build with debug information
-  -s, --build-with-source                build with source
-  -S, --no-build-with-source             do not build with source
-  -i, --include-path <string...>         add additional include paths
-  -m, --module-path <string...>          add additional module paths
-  -l, --library-path <string...>         add additional library paths
-  -a, --all                              if no workspace files are specified with the -w option and more than one
-                                         workspace file is found in the current directory, select all of them
-                                         without prompting
-  -A, --no-all                           if no workspace files are specified with the -w option and more than one
-                                         workspace file is found in the current directory, prompt to select which
-                                         workspace files to use
-  --verbose                              verbose output
-  -h, --help                             display help for command
+Global Flags:
+      --verbose   verbose output
 ```
 
 ### config
 
-Edit configuration properties for genlinx
+View/edit configuration properties for genlinx.
 
 ```bash
-Usage: genlinx config [options] [key]
+Usage:
+  genlinx config [key] [flags]
 
-view/edit configuration properties for genlinx
+Flags:
+  -e, --edit     edit the configuration with default text editor
+      --global   use global configuration
+  -h, --help     help for config
+  -l, --list     display the configuration in stdout
+      --local    use local configuration
 
-Arguments:
-  key         configuration key
-
-Options:
-  --global    use global configuration
-  --local     use local configuration
-  -l, --list  display the configuration in stdout
-  -e, --edit  edit the configuration with default text editor
-  -h, --help  display help for command
+Global Flags:
+      --verbose   verbose output
 ```
 
 ### find
 
-Find Netlinx devices on a local broadcast subnet
+Find NetLinx devices on a local broadcast subnet.
 
 ```bash
-Usage: genlinx find [options]
+Usage:
+  genlinx find [flags]
 
-find NetLinx devices on a local broadcast subnet
+Flags:
+  -h, --help   help for find
+  -j, --json   output as JSON
 
-Options:
-  -j, --json  output as JSON
-  -h, --help  display help for command
+Global Flags:
+      --verbose   verbose output
+```
+
+### ftl
+
+Generate a File Transfer List (`.ftl`) from a NetLinx workspace. The output can be imported directly into NetLinx Studio or the AMX File Transfer Tool.
+
+```bash
+Usage:
+  genlinx ftl [workspaceFiles...] [flags]
+
+Flags:
+  -a, --all                       process all discovered workspace files without prompting
+  -h, --help                      help for ftl
+  -o, --output string             output filename (default: <workspace-name>.ftl)
+  -p, --project string            include only systems from this project
+  -s, --system string             include only this system
+  -w, --workspace-files strings   workspace file(s) to process
+
+Global Flags:
+      --verbose   verbose output
+```
+
+### studio
+
+NetLinx Studio utilities (Windows only). Reads and writes settings directly via the Windows registry.
+
+```bash
+Usage:
+  genlinx studio [command]
+
+Available Commands:
+  backup    backup NetLinx Studio settings to an .epx file
+  restore   restore NetLinx Studio settings from an .epx file
+
+Flags:
+  -h, --help   help for studio
+
+Global Flags:
+      --verbose   verbose output
 ```
 
 ## Configuration :gear:
