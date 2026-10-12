@@ -42,6 +42,7 @@ A CLI utility for Netlinx projects 🚀🚀🚀
         - [Example](#example)
     - [Command Line](#command-line)
     - [Precedence](#precedence)
+- [Migrating from v2 :arrows_counterclockwise:](#migrating-from-v2-arrows_counterclockwise)
 - [Team :soccer:](#team-soccer)
 - [Contributors :sparkles:](#contributors-sparkles)
 - [LICENSE :balance_scale:](#license-balance_scale)
@@ -336,6 +337,63 @@ You can download this bash script from [here](./bin/genlinx) which wraps the abo
 ````bash
 genlinx
 ``` -->
+
+## Migrating from v2 :arrows_counterclockwise:
+
+The v3 (Go) rewrite reorganises the configuration file. The config file name (`.genlinxrc.json`) is unchanged.
+
+### Renamed keys
+
+| Section   | v2 key                | v3 key          |
+| --------- | --------------------- | --------------- |
+| `cfg`     | `outputFileSuffix`    | `outputFile`    |
+| `cfg`     | `outputLogFileSuffix` | `outputLogFile` |
+| `archive` | `outputFileSuffix`    | `outputFile`    |
+
+### New `compiler` section
+
+The `build.nlrc` block has been promoted to a top-level `compiler` section, and the per-command path overrides inside `cfg` have moved there too:
+
+```diff
+-  "build": {
+-    "nlrc": {
+-      "path": "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
+-      "includePath": [...],
+-      "modulePath": [...],
+-      "libraryPath": [...]
+-    }
+-  },
+-  "cfg": {
+-    "includePath": [...],
+-    "modulePath": [...],
+-    "libraryPath": [...]
+-  }
++  "compiler": {
++    "path": "C:/Program Files (x86)/Common Files/AMXShare/COM/NLRC.exe",
++    "includePath": [...],
++    "modulePath": [...],
++    "libraryPath": [...]
++  }
+```
+
+### Removed keys
+
+The following keys are no longer valid in the config file. Where applicable, the equivalent behaviour is now a CLI flag.
+
+| Section   | v2 key                     | Replacement      |
+| --------- | -------------------------- | ---------------- |
+| `build`   | `shell.path`               | removed          |
+| `build`   | `all`                      | `--all` CLI flag |
+| `build`   | `createCfg`                | `--cfg` CLI flag |
+| `cfg`     | `all`                      | `--all` CLI flag |
+| `archive` | `all`                      | `--all` CLI flag |
+| `archive` | `extraFileArchiveLocation` | removed          |
+
+### New keys
+
+| Section   | v3 key              | Description                                             |
+| --------- | ------------------- | ------------------------------------------------------- |
+| `archive` | `extraGlobPatterns` | Glob patterns for extra files to include in the archive |
 
 ## Team :soccer:
 
