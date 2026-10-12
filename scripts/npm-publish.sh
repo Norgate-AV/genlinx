@@ -152,11 +152,11 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 # Columns: dist_dir_suffix | node_os | node_arch | binary_name
 PLATFORMS=(
     "linux_amd64_v1|linux|x64|genlinx"
-    "linux_arm64|linux|arm64|genlinx"
+    "linux_arm64_v8.0|linux|arm64|genlinx"
     "darwin_amd64_v1|darwin|x64|genlinx"
-    "darwin_arm64|darwin|arm64|genlinx"
+    "darwin_arm64_v8.0|darwin|arm64|genlinx"
     "windows_amd64_v1|windows|x64|genlinx.exe"
-    "windows_arm64|windows|arm64|genlinx.exe"
+    "windows_arm64_v8.0|windows|arm64|genlinx.exe"
 )
 
 ERRORS=0
