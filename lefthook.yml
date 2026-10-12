@@ -4,36 +4,31 @@ pre-commit:
     # Go formatting
     go-fmt:
       glob: "*.go"
-      run: |
-        go fmt ./...
-        git add .
+      stage_fixed: true
+      run: go fmt ./...
 
     # Go module tidying
     go-mod-tidy:
       files: git diff --name-only --cached
       glob: "{go.mod,go.sum}"
-      run: |
-        go mod tidy
-        git add go.mod go.sum
+      stage_fixed: true
+      run: go mod tidy
 
     # Go vetting
     go-vet:
       glob: "*.go"
-      run: |
-        go vet ./...
+      run: go vet ./...
 
     # Go linting
     golangci-lint:
       glob: "*.go"
-      run: |
-        go tool golangci-lint run --fix
-        git add .
+      stage_fixed: true
+      run: golangci-lint run --fix
 
     # Run tests
     go-test:
       glob: "*.go"
-      run: |
-        go test ./...
+      run: go test ./...
 
     # Trailing whitespace and merge conflict marker checks
     # Exclude testdata/ — golden files must match code output exactly.
