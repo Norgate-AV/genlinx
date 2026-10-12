@@ -372,22 +372,6 @@ The precedence of the configuration options is as follows:
 3. Global Configuration File
 4. Default Configuration
 
-<!-- ## Run with Docker :whale:
-
-If you don't want to install nodejs or any node packages, use this method to run the genlinx from within a Docker container.
-
-```bash
-docker run -it -rm -v $(pwd):/usr/src/app genlinx:latest
-````
-
-> or
-
-You can download this bash script from [here](./bin/genlinx) which wraps the above command into a simple command.
-
-````bash
-genlinx
-``` -->
-
 ## Migrating from v2 :arrows_counterclockwise:
 
 The v3 (Go) rewrite reorganises the configuration file. The config file name (`.genlinxrc.json`) is unchanged.
