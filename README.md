@@ -360,7 +360,21 @@ The precedence of the configuration options is as follows:
 
 ## Migrating from v2 :arrows_counterclockwise:
 
-The v3 (Go) rewrite reorganises the configuration file. The config file name (`.genlinxrc.json`) is unchanged.
+### Installation change
+
+v2 was distributed via npm. v3 is a pure Go binary — it is no longer published to npm. Uninstall the old package and install v3 via `go install` or by downloading a pre-built binary from the [releases page](https://github.com/Norgate-AV/genlinx/releases).
+
+```bash
+npm uninstall -g @norgate-av/genlinx
+```
+
+```bash
+go install github.com/Norgate-AV/genlinx@latest
+```
+
+### Configuration changes
+
+The v3 rewrite reorganises the configuration file. The config file name (`.genlinxrc.json`) is unchanged.
 
 ### Renamed keys
 
